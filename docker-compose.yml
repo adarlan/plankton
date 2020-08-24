@@ -1,0 +1,46 @@
+version: '3.7'
+
+# LABEL dockerflow.target=true indica que aquele serviço ou task é fundamental para o sucesso do pipeline
+# isso significa que quando todos os targets forem SUCCESS todos os serviços não mais requiridos serão encerrados
+
+services:
+
+  dockerflow:
+    image: dockerflow-dev
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/workspace
+    ports:
+      - 1329:1329
+
+  mysql:
+    image: foo-service
+    #command: --port 80
+    labels:
+      dockerflow.type: service
+
+  adminer:
+    image: foo-service
+    #command: --port 80
+    labels:
+      dockerflow.type: service
+      dockerflow.require.service.mysql.port: "80"
+
+  download:
+    image: foo-task
+    command: --time 60 --file /flags/downloaded
+    volumes:
+      - ./flags:/flags
+    labels:
+      dockerflow.type: task
+
+  import:
+    image: foo-task
+    command: --time 45
+    volumes:
+      - ./flags:/flags
+    labels:
+      dockerflow.type: task
+      dockerflow.require.task.download.status: finished
+      dockerflow.require.service.mysql.port: "80"
+      dockerflow.require.file: flags/downloaded

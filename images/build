@@ -1,0 +1,9 @@
+#!/bin/bash
+set -eu
+
+cp -R ~/.m2/repository maven-repository/
+docker build -t dockerflow-dev --file dev.Dockerfile .
+rm -rf maven-repository
+
+docker build -t foo-task --file foo-task.Dockerfile .
+docker build -t foo-service --file foo-service.Dockerfile .
