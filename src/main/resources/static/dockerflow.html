@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dockerflow</title>
+    <style>
+        #pipeline {
+            display: table;
+        }
+
+        #stages {
+            display: table-row;
+        }
+
+        .stage {
+            display: table-cell;
+        }
+
+        .job {
+            margin: 1em;
+            padding: 1em;
+            border-radius: 1em;
+            border-style: solid;
+            border-width: 1pt;
+        }
+
+        .job.waiting {
+            background-color: wheat;
+        }
+
+        .job.running {
+            background-color: cornflowerblue;
+        }
+
+        .job.canceled {
+            background-color: silver;
+        }
+
+        .job.failed {
+            background-color: coral;
+        }
+
+        .job.finished {
+            background-color: mediumaquamarine;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Dockerflow</h1>
+
+    <div id="pipeline">
+        <div id="stages"></div>
+    </div>
+
+    <script>
+        const url = "http://localhost:1329"
+
+        let jobs;
+        let stages;
+
+        refresh();
+        setInterval(refresh, 1000);
+
+        async function refresh() {
+            const response = await fetch(url + "/jobs");
+            jobs = await response.json();
+            console.log(jobs);
+            loadStages();
+            draw();
+        }
+
+        function loadStages() {
+            stages = [];
+            for (let jobIndex in jobs) {
+                let job = jobs[jobIndex];
+                for (i = stages.length; i <= job.dependencyLevel; i++) {
+                    stages.push({ jobs: [] });
+                }
+                let stage = stages[job.dependencyLevel];
+                stage.jobs.push(job);
+            }
+        }
+
+        function draw() {
+            let stagesDiv = document.getElementById("stages");
+            while (stagesDiv.firstChild) stagesDiv.removeChild(stagesDiv.firstChild);
+
+            for (let stageIndex in stages) {
+                let stage = stages[stageIndex];
+
+                let stageDiv = document.createElement("div");
+                stageDiv.setAttribute("class", "stage");
+                stagesDiv.appendChild(stageDiv);
+
+                for (let jobIndex in stage.jobs) {
+                    let job = stage.jobs[jobIndex];
+
+                    let jobDiv = document.createElement("div");
+                    jobDiv.setAttribute("class", "job " + job.status);
+                    stageDiv.appendChild(jobDiv);
+
+                    let jobTitle = document.createElement("div");
+                    jobTitle.setAttribute("class", "title");
+                    jobTitle.innerText = job.name + " (" + job.status + ")";
+                    jobDiv.appendChild(jobTitle);
+
+                    let rulesDiv = document.createElement("div");
+                    rulesDiv.setAttribute("class", "rules");
+                    jobDiv.appendChild(rulesDiv);
+                    for (let ruleIndex in job.rules) {
+                        let rule = job.rules[ruleIndex];
+                        let ruleDiv = document.createElement("div");
+                        ruleDiv.setAttribute("class", "rule");
+                        ruleDiv.innerText = rule.name + "=" + rule.value + " [" + rule.status + "]";
+                        rulesDiv.appendChild(ruleDiv);
+                    }
+                }
+            }
+        }
+
+    </script>
+</body>
+
+</html>
