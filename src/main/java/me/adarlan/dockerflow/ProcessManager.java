@@ -33,6 +33,11 @@ public class ProcessManager {
     public void waitForExitCode(Job job) {
         try {
             job.exitCode = job.process.waitFor();
+            //if (job.process.waitFor(5L, TimeUnit.SECONDS)) {
+            //    job.exitCode = job.process.exitValue();
+            //}else{
+            //    job.setStatus(JobStatus.TIMEOUT);
+            //}
         } catch (InterruptedException e) {
             job.setStatus(JobStatus.INTERRUPTED);
         }
