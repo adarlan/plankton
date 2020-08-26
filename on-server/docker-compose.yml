@@ -1,0 +1,33 @@
+version: '3.7'
+
+volumes:
+  workspace:
+
+services:
+
+  runner:
+    image: dockerflow-runner
+    command:
+      - --dockerflow.id=${DOCKERFLOW_ID}
+      - --dockerflow.file=${DOCKERFLOW_FILE}
+      - --dockerflow.workspace=${DOCKERFLOW_CONTEXT}
+      - --dockerflow.docker.host=tcp://docker:2375
+      - --server.port=1329
+    ports:
+      - 1329:1329
+    volumes:
+      - workspace:/workspace
+
+  docker:
+    image: docker:dind
+    privileged: yes
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    volumes:
+      - workspace:/workspace
+
+  # TODO traefik
+  # O usuário não vai ter labels pra configurar
+  # Todos os serviços que estiverem expondo portas serão automaticamente configurados
+  # https://DOCKERFLOW/NAMESPACE/SERVICE
+  # Se o serviço expõe várias portas, o que fazer?
