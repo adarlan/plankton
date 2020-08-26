@@ -1,0 +1,59 @@
+#!/bin/bash
+set -eu
+
+[ -z ${@+x} ] && cat << EOF
+
+Usage: dockerflow [OPTIONS] COMMAND
+
+Dockerflow is a tool that runs Docker containers in a workflow.
+It can be used to make CI/CD pipelines or any kind of workflow
+you mind using a Docker Compose file.
+
+Options:
+  --file string       A Docker Compose file containing the Dockerflow
+                      configuration (default: "dockerflow.docker-compose.yml")
+  --help              Show this help message
+
+Commands:
+  start               Start Dockerflow
+  status              Show Dockerflow status
+  follow              Follow Dockerflow logs
+  stop                Stop Dockerflow
+
+Learn more: https://github.com/adarlan/dockerflow
+EOF
+
+id="${PWD##*/}"
+file="dockerflow.docker-compose.yml"
+workspace="$(pwd)"
+
+export DOCKERFLOW_ID=${id}
+export DOCKERFLOW_FILE=${file}
+export DOCKERFLOW_WORKSPACE=${workspace}
+
+rm -rf .dockerflow
+mkdir .dockerflow
+cp $file .dockerflow/docker-compose.yml
+mkdir .dockerflow/logs
+
+command="${1}"
+dockerComposeOptions="--project-name $id --file $file --project-directory $workspace"
+containerName="${id}_dockerflow_1"
+
+if [ "$command" = "start" ]; then
+    docker-compose $dockerComposeOptions down \
+    && docker-compose $dockerComposeOptions \
+    up --build --force-recreate --remove-orphans --abort-on-container-exit --exit-code-from dockerflow \
+    dockerflow \
+    || docker-compose $dockerComposeOptions down
+
+elif [ "$command" = "stop" ]; then
+    docker-compose $dockerComposeOptions down
+
+elif [ "$command" = "follow" ]; then
+    docker logs --follow ${containerName}
+
+elif [ "$command" = "status" ]; then
+    docker exec -it ${containerName} bash scripts/${command}
+    # TODO também tem docker-compose exec
+fi

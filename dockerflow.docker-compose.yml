@@ -1,0 +1,56 @@
+version: "3.7"
+
+services:
+  dockerflow:
+    image: runner:dev
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DOCKERFLOW_WORKSPACE}:/workspace
+    ports:
+      - 1329:1329
+    command: -Dspring-boot.run.arguments="--dockerflow.id=${DOCKERFLOW_ID} --dockerflow.file=${DOCKERFLOW_FILE} --dockerflow.workspace=/workspace"
+
+  mysql:
+    image: foo-service
+    #command: --port 80
+
+  adminer:
+    image: foo-service
+    #command: --port 80
+    labels:
+      dockerflow.require.port.mysql: 80
+
+  download:
+    image: foo-task
+    command: --time 60 --file /flags/downloaded
+    volumes:
+      - ./flags:/flags
+
+  save-the-whales:
+    image: ubuntu
+    labels:
+      dockerflow.target: true
+      dockerflow.timeout: 3s
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo hello
+        echo goodbye
+
+  import:
+    image: foo-task
+    command: --time 45
+    volumes:
+      - ./flags:/flags
+    labels:
+      dockerflow.target: true
+      dockerflow.require.status.download: finished
+      dockerflow.require.port.mysql: 80
+      dockerflow.require.file: flags/downloaded
+
+  docker-ls:
+    image: docker
+    command: sh -c 'docker ps'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
