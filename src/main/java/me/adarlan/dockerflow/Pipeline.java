@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
@@ -17,22 +18,33 @@ import me.adarlan.dockerflow.rules.Rule;
 @Component
 public class Pipeline {
 
-    @Autowired
-    private String pipelineId;
+    private String id;
+
+    private String file;
+
+    private String workspace;
 
     @Getter
     private final Set<Job> jobs;
 
     private final Map<String, Job> jobsMap;
 
-    public Pipeline() {
+    @Autowired
+    public Pipeline(String id, String file, String workspace) {
+        this.id = id;
+        this.file = file;
+        this.workspace = workspace;
+
         jobs = new HashSet<>();
         jobsMap = new HashMap<>();
-        Map<String, Object> map = Utils.createMapFromYamlFile("docker-compose.yml");
+        System.out.println(
+                " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+                        + file);
+        Map<String, Object> map = Utils.createMapFromYamlFile(file);
         Map<String, Object> services = Utils.getPropertyMap(map, "services");
         services.forEach((serviceName, serviceData) -> {
             if (!serviceName.equals("dockerflow")) {
-                Job job = new Job(this, serviceName, (Map<String, Object>) serviceData);
+                Job job = new Job(serviceName, (Map<String, Object>) serviceData);
                 jobs.add(job);
                 jobsMap.put(job.getName(), job);
             }
@@ -42,7 +54,15 @@ public class Pipeline {
     }
 
     public String getId() {
-        return pipelineId;
+        return id;
+    }
+
+    public String getFile() {
+        return file;
+    }
+
+    public String getWorkspace() {
+        return workspace;
     }
 
     public Job getJobByName(String name) {
@@ -57,12 +77,12 @@ public class Pipeline {
             if (ss[0].equals("dockerflow")) {
                 // TODO usar regex
                 if (ss[1].equals("require")) {
-                    if (ss[2].equals("service")) {
+                    if (ss[2].equals("port")) {
                         final Job targetJob = this.getJobByName(ss[3]);
-                        final String port = (String) labels.get(ruleName);
+                        final String port = labels.get(ruleName).toString();
                         final Rule rule = new RequireServicePort(job, ruleName, targetJob, port);
                         job.rules.add(rule);
-                    } else if (ss[2].equals("task")) {
+                    } else if (ss[2].equals("status")) {
                         final Job targetJob = this.getJobByName(ss[3]);
                         final String statusString = (String) labels.get(ruleName);
                         final JobStatus jobStatus = JobStatus.valueOf(statusString.toUpperCase());

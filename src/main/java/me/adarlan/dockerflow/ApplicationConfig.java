@@ -7,11 +7,27 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ApplicationConfig {
 
-    @Value("${pipeline.id}")
-    private String pipelineId;
+    @Value("${dockerflow.id}")
+    private String id;
+
+    @Value("${dockerflow.file}")
+    private String file;
+
+    @Value("${dockerflow.workspace}")
+    private String workspace;
 
     @Bean
-    public String pipelineId() {
-        return pipelineId;
+    public String id() {
+        return id;
+    }
+
+    @Bean
+    public String file() {
+        return file;
+    }
+
+    @Bean
+    public String workspace() {
+        return workspace;
     }
 }

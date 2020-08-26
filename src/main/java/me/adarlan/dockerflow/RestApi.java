@@ -18,34 +18,9 @@ public class RestApi {
     private Pipeline pipeline;
 
     @GetMapping("/jobs")
-    public List<JobModel> getJobs() {
-        List<JobModel> jobs = new ArrayList<>();
-        pipeline.getJobs().forEach(job -> {
-
-            JobModel jobModel = new JobModel();
-            jobModel.setName(job.getName());
-            jobModel.setStatus(job.getStatus().toString().toLowerCase());
-
-            List<Map<String, String>> rules = new ArrayList<>();
-            job.getRules().forEach(rule -> {
-                Map<String, String> r = new HashMap<>();
-                r.put("name", rule.getName().substring(11));
-                r.put("value", rule.getValue());
-                r.put("status", rule.getRuleStatus().toString().toLowerCase());
-                rules.add(r);
-            });
-            jobModel.setRules(rules);
-
-            List<String> allDependencies = new ArrayList<>();
-            List<String> directDependencies = new ArrayList<>();
-            job.getAllDependencies().forEach(d -> allDependencies.add(d.getName()));
-            job.getDirectDependencies().forEach(d -> directDependencies.add(d.getName()));
-            jobModel.setAllDependencies(allDependencies);
-            jobModel.setDirectDependencies(directDependencies);
-            jobModel.setDependencyLevel(job.getDependencyLevel());
-
-            jobs.add(jobModel);
-        });
+    public List<Map<String, Object>> getJobs() {
+        List<Map<String, Object>> jobs = new ArrayList<>();
+        pipeline.getJobs().forEach(job -> jobs.add(job.toMap()));
         return jobs;
     }
 

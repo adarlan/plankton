@@ -8,6 +8,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,9 @@ import org.springframework.stereotype.Service;
 @Service
 @EnableAsync
 public class ProcessManager {
+
+    @Autowired
+    private Pipeline pipeline;
 
     public ProcessManager() {
         //
@@ -33,11 +37,11 @@ public class ProcessManager {
     public void waitForExitCode(Job job) {
         try {
             job.exitCode = job.process.waitFor();
-            //if (job.process.waitFor(5L, TimeUnit.SECONDS)) {
-            //    job.exitCode = job.process.exitValue();
-            //}else{
-            //    job.setStatus(JobStatus.TIMEOUT);
-            //}
+            // if (job.process.waitFor(5L, TimeUnit.SECONDS)) {
+            // job.exitCode = job.process.exitValue();
+            // }else{
+            // job.setStatus(JobStatus.TIMEOUT);
+            // }
         } catch (InterruptedException e) {
             job.setStatus(JobStatus.INTERRUPTED);
         }
@@ -54,7 +58,8 @@ public class ProcessManager {
             final PrintWriter printWriter = new PrintWriter(streamWriter);
             printWriter.println("#!/bin/bash");
             printWriter.println("set -eu");
-            printWriter.println("docker-compose --project-name " + job.getPipeline().getId()
+            printWriter.println("docker-compose --project-name " + pipeline.getId() + " --file " + pipeline.getFile()
+                    + " --project-directory " + pipeline.getWorkspace()
                     + " up --force-recreate --abort-on-container-exit --exit-code-from " + job.getName() + " "
                     + job.getName());
             printWriter.close();
