@@ -11,7 +11,7 @@ import me.adarlan.dockerflow.RuleDependency;
 import me.adarlan.dockerflow.RuleStatus;
 
 @EqualsAndHashCode(of = { "parentJob", "name" })
-public class RequireServicePort implements Rule, RuleDependency {
+public class RequirePort implements Rule, RuleDependency {
 
     @Getter
     Job parentJob;
@@ -28,7 +28,7 @@ public class RequireServicePort implements Rule, RuleDependency {
     @Getter
     RuleStatus status = RuleStatus.WAITING;
 
-    public RequireServicePort(Job parentJob, String name, Job requiredJob, Integer port) {
+    public RequirePort(Job parentJob, String name, Job requiredJob, Integer port) {
         this.parentJob = parentJob;
         this.name = name;
         this.requiredJob = requiredJob;
