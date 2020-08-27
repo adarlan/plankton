@@ -7,28 +7,29 @@ export DOCKERFLOW_ENVIRONMENT="example.env"
 export DOCKERFLOW_FILE="example.docker-compose.yml"
 export DOCKERFLOW_METADATA=".dockerflow"
 
-#rm -rf ${DOCKERFLOW_METADATA}
+rm -rf ${DOCKERFLOW_METADATA}
 mkdir -p ${DOCKERFLOW_METADATA}
 mkdir ${DOCKERFLOW_METADATA}/logs
 
-command="${1}"
 dockerComposeOptions="--project-name $DOCKERFLOW_NAME --file $DOCKERFLOW_FILE --project-directory $DOCKERFLOW_WORKSPACE"
 containerName="${DOCKERFLOW_NAME}_dockerflow_1"
 
-if [ "${@}" = "start" ]; then
+[ -z ${@+x} ] && command="" || command="${@}"
+
+if [ "$command" = "start" ]; then
     docker-compose $dockerComposeOptions down \
     && docker-compose $dockerComposeOptions \
     up --build --force-recreate --remove-orphans --abort-on-container-exit --exit-code-from dockerflow \
     dockerflow \
     || docker-compose $dockerComposeOptions down
 
-elif [ "${@}" = "stop" ]; then
+elif [ "$command" = "stop" ]; then
     docker-compose $dockerComposeOptions down
 
-elif [ "${@}" = "follow" ]; then
+elif [ "$command" = "follow" ]; then
     docker logs --follow ${containerName}
 
-elif [ "${@}" = "status" ]; then
+elif [ "$command" = "status" ]; then
     docker exec -it ${containerName} bash scripts/${command}
     # TODO também tem docker-compose exec
 
@@ -42,15 +43,20 @@ It can be used to make CI/CD pipelines or any kind of workflow
 you mind using a Docker Compose file.
 
 Options:
-  --file string       A Docker Compose file containing the Dockerflow
-                      configuration (default: "dockerflow.docker-compose.yml")
-  --help              Show this help message
+  --name string          A name to identify the pipeline execution
+  --workspace string     The context directory
+  --environment string   A bash script file that provides configuration files and
+                         environment variables for the containers (default: dockerflow.env)
+  --file string          A Docker Compose file containing the Dockerflow
+                         configuration (default: "dockerflow.docker-compose.yml")
+  --metadata string      Dockerflow metadata directory path
+  --help                 Show this help message
 
 Commands:
-  start               Start Dockerflow
-  status              Show Dockerflow status
-  follow              Follow Dockerflow logs
-  stop                Stop Dockerflow
+  start                 Start Dockerflow
+  status                Show Dockerflow status
+  follow                Follow Dockerflow logs
+  stop                  Stop Dockerflow
 
 Learn more: https://github.com/adarlan/dockerflow
 EOF
