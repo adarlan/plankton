@@ -8,7 +8,7 @@ services:
       - ${DOCKERFLOW_WORKSPACE}:/workspace
     ports:
       - 1329:1329
-    command: -Dspring-boot.run.arguments="--dockerflow.id=${DOCKERFLOW_ID} --dockerflow.file=${DOCKERFLOW_FILE} --dockerflow.workspace=/workspace"
+    command: -Dspring-boot.run.arguments="--dockerflow.name=${DOCKERFLOW_NAME} --dockerflow.workspace=/workspace --dockerflow.environment=${DOCKERFLOW_ENVIRONMENT} --dockerflow.file=${DOCKERFLOW_FILE} --dockerflow.metadata=${DOCKERFLOW_METADATA}"
 
   mysql:
     image: foo-service
@@ -18,7 +18,7 @@ services:
     image: foo-service
     #command: --port 80
     labels:
-      dockerflow.require.port.mysql: 80
+      dockerflow.require.mysql.port: 80
 
   download:
     image: foo-task
@@ -45,9 +45,10 @@ services:
       - ./flags:/flags
     labels:
       dockerflow.target: true
-      dockerflow.require.status.download: finished
-      dockerflow.require.port.mysql: 80
-      dockerflow.require.file: flags/downloaded
+      dockerflow.enable.if: '[ $$GIT_BRANCH = master ] || [ ! $${BAR:0:4} = bar- ]'
+      dockerflow.wait.download.status: finished
+      dockerflow.wait.mysql.port: 80
+      dockerflow.wait.file: flags/downloaded
 
   docker-ls:
     image: docker

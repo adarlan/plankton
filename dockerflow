@@ -1,7 +1,39 @@
 #!/bin/bash
 set -eu
 
-[ -z ${@+x} ] && cat << EOF
+export DOCKERFLOW_NAME="${PWD##*/}"
+export DOCKERFLOW_WORKSPACE="${PWD}"
+export DOCKERFLOW_ENVIRONMENT="example.env"
+export DOCKERFLOW_FILE="example.docker-compose.yml"
+export DOCKERFLOW_METADATA=".dockerflow"
+
+#rm -rf ${DOCKERFLOW_METADATA}
+mkdir -p ${DOCKERFLOW_METADATA}
+mkdir ${DOCKERFLOW_METADATA}/logs
+
+command="${1}"
+dockerComposeOptions="--project-name $DOCKERFLOW_NAME --file $DOCKERFLOW_FILE --project-directory $DOCKERFLOW_WORKSPACE"
+containerName="${DOCKERFLOW_NAME}_dockerflow_1"
+
+if [ "${@}" = "start" ]; then
+    docker-compose $dockerComposeOptions down \
+    && docker-compose $dockerComposeOptions \
+    up --build --force-recreate --remove-orphans --abort-on-container-exit --exit-code-from dockerflow \
+    dockerflow \
+    || docker-compose $dockerComposeOptions down
+
+elif [ "${@}" = "stop" ]; then
+    docker-compose $dockerComposeOptions down
+
+elif [ "${@}" = "follow" ]; then
+    docker logs --follow ${containerName}
+
+elif [ "${@}" = "status" ]; then
+    docker exec -it ${containerName} bash scripts/${command}
+    # TODO também tem docker-compose exec
+
+else
+cat << EOF
 
 Usage: dockerflow [OPTIONS] COMMAND
 
@@ -22,38 +54,4 @@ Commands:
 
 Learn more: https://github.com/adarlan/dockerflow
 EOF
-
-id="${PWD##*/}"
-file="dockerflow.docker-compose.yml"
-workspace="$(pwd)"
-
-export DOCKERFLOW_ID=${id}
-export DOCKERFLOW_FILE=${file}
-export DOCKERFLOW_WORKSPACE=${workspace}
-
-rm -rf .dockerflow
-mkdir .dockerflow
-cp $file .dockerflow/docker-compose.yml
-mkdir .dockerflow/logs
-
-command="${1}"
-dockerComposeOptions="--project-name $id --file $file --project-directory $workspace"
-containerName="${id}_dockerflow_1"
-
-if [ "$command" = "start" ]; then
-    docker-compose $dockerComposeOptions down \
-    && docker-compose $dockerComposeOptions \
-    up --build --force-recreate --remove-orphans --abort-on-container-exit --exit-code-from dockerflow \
-    dockerflow \
-    || docker-compose $dockerComposeOptions down
-
-elif [ "$command" = "stop" ]; then
-    docker-compose $dockerComposeOptions down
-
-elif [ "$command" = "follow" ]; then
-    docker logs --follow ${containerName}
-
-elif [ "$command" = "status" ]; then
-    docker exec -it ${containerName} bash scripts/${command}
-    # TODO também tem docker-compose exec
 fi
