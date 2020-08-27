@@ -9,7 +9,7 @@ import me.adarlan.dockerflow.RuleDependency;
 import me.adarlan.dockerflow.RuleStatus;
 
 @EqualsAndHashCode(of = { "parentJob", "name" })
-public class RequireTaskStatus implements Rule, RuleDependency {
+public class RequireStatus implements Rule, RuleDependency {
 
     @Getter
     Job parentJob;
@@ -26,7 +26,7 @@ public class RequireTaskStatus implements Rule, RuleDependency {
     @Getter
     RuleStatus status = RuleStatus.WAITING;
 
-    public RequireTaskStatus(Job parentJob, String name, Job requiredJob, JobStatus requiredStatus) {
+    public RequireStatus(Job parentJob, String name, Job requiredJob, JobStatus requiredStatus) {
         this.parentJob = parentJob;
         this.name = name;
         this.requiredJob = requiredJob;
