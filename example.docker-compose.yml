@@ -1,6 +1,7 @@
 version: "3.7"
 
 services:
+
   dockerflow:
     image: runner:dev
     volumes:
@@ -44,8 +45,8 @@ services:
     volumes:
       - ./flags:/flags
     labels:
-      dockerflow.target: true
-      dockerflow.enable.if: '[ $$GIT_BRANCH = master ] || [ ! $${BAR:0:4} = bar- ]'
+      dockerflow.timeout: 1h
+      dockerflow.enable.if: '[ 0 = 1 ] && [ $$GIT_BRANCH = master ] || [ ! $${BAR:0:4} = bar- ]'
       dockerflow.wait.download.status: finished
       dockerflow.wait.mysql.port: 80
       dockerflow.wait.file: flags/downloaded
