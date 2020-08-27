@@ -7,8 +7,13 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.ContextStoppedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
@@ -18,7 +23,12 @@ import org.springframework.stereotype.Service;
 public class ProcessManager {
 
     @Autowired
+    private ApplicationConfig applicationConfig;
+
+    @Autowired
     private Pipeline pipeline;
+
+    private Map<Job, Process> processByJob = new HashMap<>();
 
     public ProcessManager() {
         //
@@ -27,7 +37,8 @@ public class ProcessManager {
     public void startProcess(Job job) {
         final ProcessBuilder pb = processBuilder(job);
         try {
-            job.process = pb.start();
+            Process process = pb.start();
+            processByJob.put(job, process);
         } catch (final IOException e1) {
             throw new DockerflowException(e1);
         }
@@ -36,15 +47,41 @@ public class ProcessManager {
     @Async
     public void waitForExitCode(Job job) {
         try {
-            job.exitCode = job.process.waitFor();
+            Process process = processByJob.get(job);
+            job.exitCode = process.waitFor();
             // if (job.process.waitFor(5L, TimeUnit.SECONDS)) {
             // job.exitCode = job.process.exitValue();
             // }else{
             // job.setStatus(JobStatus.TIMEOUT);
             // }
         } catch (InterruptedException e) {
-            job.setStatus(JobStatus.INTERRUPTED);
+            pipeline.setStatus(job, JobStatus.INTERRUPTED);
         }
+    }
+
+    public void validateProcess(Job job) {
+        Process process = processByJob.get(job);
+        if (!process.isAlive()) {
+            if (job.exitCode.equals(0)) {
+                pipeline.setStatus(job, JobStatus.FINISHED);
+            } else {
+                pipeline.setStatus(job, JobStatus.FAILED);
+            }
+        }
+    }
+
+    @EventListener
+    public void contextClosedEvent(ContextClosedEvent event) {
+        System.out.println(
+                ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+                        + event.getClass().getName() + " >>> " + event);
+    }
+
+    @EventListener
+    public void contextStoppedEvent(ContextStoppedEvent event) {
+        System.out.println(
+                ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+                        + event.getClass().getName() + " >>> " + event);
     }
 
     private ProcessBuilder processBuilder(final Job job) {
@@ -58,8 +95,9 @@ public class ProcessManager {
             final PrintWriter printWriter = new PrintWriter(streamWriter);
             printWriter.println("#!/bin/bash");
             printWriter.println("set -eu");
-            printWriter.println("docker-compose --project-name " + pipeline.getId() + " --file " + pipeline.getFile()
-                    + " --project-directory " + pipeline.getWorkspace()
+            // TODO concatenar arquivo environment
+            printWriter.println("docker-compose --project-name " + applicationConfig.getName() + " --file "
+                    + applicationConfig.getFile() + " --project-directory " + applicationConfig.getWorkspace()
                     + " up --force-recreate --abort-on-container-exit --exit-code-from " + job.getName() + " "
                     + job.getName());
             printWriter.close();
@@ -76,7 +114,8 @@ public class ProcessManager {
     }
 
     public void destroyProcess(final Job job) {
-        job.process.destroy();
+        Process process = processByJob.get(job);
+        process.destroy();
         // TODO aguardar o processo ser criado antes de destruir
     }
 }

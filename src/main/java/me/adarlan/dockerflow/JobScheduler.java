@@ -5,9 +5,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import me.adarlan.dockerflow.rules.Rule;
-import me.adarlan.dockerflow.rules.RuleStatus;
-
 @Service
 @EnableScheduling
 public class JobScheduler {
@@ -32,13 +29,7 @@ public class JobScheduler {
                 break;
             }
             case RUNNING: {
-                if (job.process != null && !job.process.isAlive()) {
-                    if (job.exitCode.equals(0)) {
-                        job.setStatus(JobStatus.FINISHED);
-                    } else {
-                        job.setStatus(JobStatus.FAILED);
-                    }
-                }
+                processManager.validateProcess(job);
                 break;
             }
             default:
@@ -50,7 +41,7 @@ public class JobScheduler {
         boolean passed = true;
         for (final Rule rule : job.getRules()) {
             rule.updateStatus();
-            if (!rule.getRuleStatus().equals(RuleStatus.PASSED)) {
+            if (!rule.getStatus().equals(RuleStatus.PASSED)) {
                 passed = false;
             }
         }
@@ -58,15 +49,20 @@ public class JobScheduler {
     }
 
     private void run(Job job) {
-        job.setStatus(JobStatus.RUNNING);
         processManager.startProcess(job);
         processManager.waitForExitCode(job);
+        pipeline.setStatus(job, JobStatus.RUNNING);
     }
 
     private void cancel(Job job) {
-        job.setStatus(JobStatus.CANCELED);
         if (job.getStatus().equals(JobStatus.RUNNING)) {
             processManager.destroyProcess(job);
         }
+        pipeline.setStatus(job, JobStatus.CANCELED);
+    }
+
+    private void log(Rule rule) {
+        System.out.println(rule.getParentJob().getName() + "::" + rule.getName() + "::" + rule.getValue() + " -> "
+                + rule.getStatus());
     }
 }

@@ -1,33 +1,22 @@
 package me.adarlan.dockerflow;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import lombok.Data;
+
 @Configuration
+@ConfigurationProperties(prefix = "dockerflow")
+@Data
 public class ApplicationConfig {
 
-    @Value("${dockerflow.id}")
-    private String id;
+    private String name;
 
-    @Value("${dockerflow.file}")
     private String file;
 
-    @Value("${dockerflow.workspace}")
     private String workspace;
 
-    @Bean
-    public String id() {
-        return id;
-    }
+    private String environment;
 
-    @Bean
-    public String file() {
-        return file;
-    }
-
-    @Bean
-    public String workspace() {
-        return workspace;
-    }
+    private String metadata;
 }

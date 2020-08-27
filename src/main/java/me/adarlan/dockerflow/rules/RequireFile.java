@@ -2,51 +2,46 @@ package me.adarlan.dockerflow.rules;
 
 import java.io.File;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 import me.adarlan.dockerflow.Job;
+import me.adarlan.dockerflow.Rule;
+import me.adarlan.dockerflow.RuleStatus;
 
-@Getter
-@ToString(of = { "name", "filePath", "ruleStatus" })
+@EqualsAndHashCode(of = { "parentJob", "name" })
 public class RequireFile implements Rule {
 
-    private final Job parentJob;
+    @Getter
+    Job parentJob;
 
-    private final String name;
+    @Getter
+    String name;
 
-    private final String filePath;
+    @Getter
+    String filePath;
 
-    private RuleStatus ruleStatus = RuleStatus.WAITING;
+    @Getter
+    RuleStatus status = RuleStatus.WAITING;
 
     public RequireFile(Job parentJob, String name, String filePath) {
         this.parentJob = parentJob;
         this.name = name;
         this.filePath = filePath;
-        log();
-    }
-
-    @Override
-    public String getValue() {
-        return filePath;
-    }
-
-    @Override
-    public Job getRequiredJob() {
-        return null;
-    }
-
-    private void log() {
-        System.out.println(parentJob.getName() + "::" + name + "=" + getValue() + " [" + ruleStatus + "]");
     }
 
     @Override
     public void updateStatus() {
-        if (ruleStatus.equals(RuleStatus.WAITING)) {
+        if (status.equals(RuleStatus.WAITING)) {
+            // TODO BLOCKED se todos os demais jobs estiverem finalizados
             File file = new File(filePath);
             if (file.exists()) {
-                ruleStatus = RuleStatus.PASSED;
-                log();
+                status = RuleStatus.PASSED;
             }
         }
+    }
+
+    @Override
+    public Object getValue() {
+        return filePath;
     }
 }

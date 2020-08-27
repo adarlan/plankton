@@ -2,21 +2,22 @@ package me.adarlan.dockerflow;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import me.adarlan.dockerflow.rules.Rule;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
+@NoArgsConstructor
 @EqualsAndHashCode(of = "name")
+@ToString
 public class Job {
 
     @Getter
-    private final String name;
+    String name;
 
     @Getter
     Set<Rule> rules;
@@ -34,91 +35,48 @@ public class Job {
     Set<Job> allDependents = new HashSet<>();
 
     @Getter
-    private JobStatus status = JobStatus.WAITING;
+    JobStatus status;
 
     @Getter
-    private JobStatus finalStatus = null;
+    JobStatus finalStatus;
 
     @Getter
-    private Instant initialInstant = null;
+    Instant initialInstant;
 
     @Getter
-    private Instant finalInstant = null;
+    Instant finalInstant;
 
     @Getter
-    Integer exitCode = null;
+    Integer exitCode;
 
-    /*
-     * TODO Tirar daqui todos os atributos não serializáveis Colocá-los em services?
-     * Esta classe tem que ser gravada direto no banco e o runner não se comunica
-     * com a API
-     */
-
-    final Map<String, Object> data;
-
-    Process process = null;
-
-    Job(final String name, final Map<String, Object> data) {
-        this.name = name;
-        this.data = data;
+    @lombok.Data
+    public static class Data {
+        String name;
+        String status;
+        String finalStatus;
+        Instant initialInstant;
+        Instant finalInstant;
+        Integer exitCode;
+        List<Rule.Data> rules = new ArrayList<>();
+        List<String> allDependents = new ArrayList<>();
+        List<String> allDependencies = new ArrayList<>();
+        List<String> directDependencies = new ArrayList<>();
+        Integer dependencyLevel;
     }
 
-    void setStatus(final JobStatus status) {
-        this.status = status;
-        switch (status) {
-            case RUNNING:
-                initialInstant = Instant.now();
-                break;
-            case INTERRUPTED:
-            case CANCELED:
-            case FAILED:
-            case TIMEOUT:
-            case FINISHED:
-                finalInstant = Instant.now();
-                finalStatus = status;
-                break;
-            default:
-                break;
-        }
-        System.out.println(this);
-    }
-
-    @Override
-    public String toString() {
-        return name + ": " + status.toString().toLowerCase();
-    }
-
-    public Map<String, Object> toMap() {
-        Map<String, Object> map = new HashMap<>();
-
-        map.put("name", name);
-        map.put("status", status.toString().toLowerCase());
-        map.put("finalStatus", finalStatus == null ? null : finalStatus.toString().toLowerCase());
-        map.put("initialInstant", initialInstant);
-        map.put("finalInstant", finalInstant);
-        map.put("exitCode", exitCode);
-
-        List<Map<String, String>> rs = new ArrayList<>();
-        rules.forEach(rule -> {
-            Map<String, String> r = new HashMap<>();
-            r.put("name", rule.getName().substring(11));
-            r.put("value", rule.getValue());
-            r.put("status", rule.getRuleStatus().toString().toLowerCase());
-            rs.add(r);
-        });
-        map.put("rules", rs);
-
-        List<String> allDeps = new ArrayList<>();
-        List<String> directDeps = new ArrayList<>();
-        List<String> depdts = new ArrayList<>();
-        allDependencies.forEach(d -> allDeps.add(name));
-        directDependencies.forEach(d -> directDeps.add(name));
-        allDependents.forEach(d -> depdts.add(name));
-        map.put("allDependents", depdts);
-        map.put("allDependencies", allDeps);
-        map.put("directDependencies", directDeps);
-        map.put("dependencyLevel", dependencyLevel);
-
-        return map;
+    public Data getData() {
+        Data data = new Data();
+        data.name = this.name;
+        data.status = this.status.toString().toLowerCase();
+        data.finalStatus = this.finalStatus == null ? null : this.finalStatus.toString().toLowerCase();
+        data.initialInstant = this.initialInstant;
+        data.finalInstant = this.finalInstant;
+        data.exitCode = this.exitCode;
+        this.rules.forEach(rule -> data.rules.add(rule.getData()));
+        this.allDependencies.forEach(d -> data.allDependencies.add(d.name));
+        this.directDependencies.forEach(d -> data.directDependencies.add(d.name));
+        this.allDependents.forEach(d -> data.allDependents.add(d.name));
+        data.dependencyLevel = this.dependencyLevel;
+        return data;
     }
 }

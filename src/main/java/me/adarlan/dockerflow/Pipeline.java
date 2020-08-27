@@ -1,101 +1,127 @@
 package me.adarlan.dockerflow;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import lombok.Getter;
 import me.adarlan.dockerflow.rules.RequireFile;
 import me.adarlan.dockerflow.rules.RequireServicePort;
 import me.adarlan.dockerflow.rules.RequireTaskStatus;
-import me.adarlan.dockerflow.rules.Rule;
 
 @Component
 public class Pipeline {
 
-    private String id;
+    private final ApplicationConfig applicationConfig;
 
-    private String file;
+    private final Map<String, Object> dockerCompose;
 
-    private String workspace;
+    private final Map<String, Object> dockerComposeServices;
 
-    @Getter
-    private final Set<Job> jobs;
+    private final Set<Job> jobs = new HashSet<>();
 
-    private final Map<String, Job> jobsMap;
+    private final Map<String, Job> jobByName = new HashMap<>();
 
     @Autowired
-    public Pipeline(String id, String file, String workspace) {
-        this.id = id;
-        this.file = file;
-        this.workspace = workspace;
+    public Pipeline(ApplicationConfig applicationConfig) {
+        this.applicationConfig = applicationConfig;
 
-        jobs = new HashSet<>();
-        jobsMap = new HashMap<>();
-        System.out.println(
-                " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-                        + file);
-        Map<String, Object> map = Utils.createMapFromYamlFile(file);
-        Map<String, Object> services = Utils.getPropertyMap(map, "services");
-        services.forEach((serviceName, serviceData) -> {
+        this.dockerCompose = Utils.createMapFromYamlFile(this.applicationConfig.getFile());
+        this.dockerComposeServices = Utils.getPropertyMap(dockerCompose, "services");
+
+        dockerComposeServices.forEach((serviceName, serviceObject) -> {
             if (!serviceName.equals("dockerflow")) {
-                Job job = new Job(serviceName, (Map<String, Object>) serviceData);
-                jobs.add(job);
-                jobsMap.put(job.getName(), job);
+
+                Job job = new Job();
+                job.name = serviceName;
+                setStatus(job, JobStatus.WAITING);
+
+                this.jobs.add(job);
+                this.jobByName.put(job.getName(), job);
             }
         });
+
         jobs.forEach(this::initializeRules);
         jobs.forEach(job -> initializeDependencies(job, new HashSet<>()));
     }
 
-    public String getId() {
-        return id;
+    public Set<Job> getJobs() {
+        return new HashSet<>(jobs);
     }
 
-    public String getFile() {
-        return file;
+    public Job getJobByName(String jobName) {
+        return jobByName.get(jobName);
     }
 
-    public String getWorkspace() {
-        return workspace;
-    }
-
-    public Job getJobByName(String name) {
-        return jobsMap.get(name);
+    void setStatus(Job job, JobStatus status) {
+        job.status = status;
+        switch (status) {
+            case WAITING:
+                break;
+            case RUNNING:
+                job.initialInstant = Instant.now();
+                break;
+            case CANCELED:
+            case INTERRUPTED:
+            case FAILED:
+            case TIMEOUT:
+            case FINISHED:
+                job.finalInstant = Instant.now();
+                job.finalStatus = status;
+                break;
+            default:
+                break;
+        }
+        System.out.println(applicationConfig.getName() + "::" + job.name + " -> " + job.status);
     }
 
     private void initializeRules(Job job) {
+
         job.rules = new HashSet<>();
-        Map<String, Object> labels = Utils.getPropertyMap(job.data, "labels");
-        labels.forEach((ruleName, value) -> {
-            final String[] ss = ruleName.split("\\.");
-            if (ss[0].equals("dockerflow")) {
-                // TODO usar regex
-                if (ss[1].equals("require")) {
-                    if (ss[2].equals("port")) {
-                        final Job targetJob = this.getJobByName(ss[3]);
-                        final String port = labels.get(ruleName).toString();
-                        final Rule rule = new RequireServicePort(job, ruleName, targetJob, port);
-                        job.rules.add(rule);
-                    } else if (ss[2].equals("status")) {
-                        final Job targetJob = this.getJobByName(ss[3]);
-                        final String statusString = (String) labels.get(ruleName);
-                        final JobStatus jobStatus = JobStatus.valueOf(statusString.toUpperCase());
-                        final Rule rule = new RequireTaskStatus(job, ruleName, targetJob, jobStatus);
-                        job.rules.add(rule);
-                    } else if (ss[2].equals("file")) {
-                        final String filePath = (String) labels.get(ruleName);
-                        final Rule rule = new RequireFile(job, ruleName, filePath);
-                        job.rules.add(rule);
-                    }
-                }
+
+        Map<String, Object> service = Utils.getPropertyMap(dockerComposeServices, job.getName());
+        Map<String, Object> labels = Utils.getPropertyMap(service, "labels");
+
+        labels.forEach((labelName, labelValue) -> {
+            String[] splitedLabelName = labelName.split("\\.");
+
+            if (matches(labelName, "^dockerflow\\.wait\\.[\\w-]+\\.status$")) {
+                String ruleName = labelName.substring(11);
+                String requiredJobName = splitedLabelName[2];
+                Job requiredJob = this.getJobByName(requiredJobName);
+                JobStatus requiredStatus = JobStatus.valueOf(labelValue.toString().toUpperCase());
+                RequireTaskStatus rule = new RequireTaskStatus(job, ruleName, requiredJob, requiredStatus);
+                job.rules.add(rule);
+            }
+
+            if (matches(labelName, "^dockerflow\\.wait\\.[\\w-]+\\.port$")) {
+                String ruleName = labelName.substring(11);
+                String requiredJobName = splitedLabelName[2];
+                Job requiredJob = this.getJobByName(requiredJobName);
+                Integer port = Integer.parseInt(labelValue.toString());
+                RequireServicePort rule = new RequireServicePort(job, ruleName, requiredJob, port);
+                job.rules.add(rule);
+            }
+
+            if (matches(labelName, "^dockerflow\\.wait\\.file$")) {
+                String ruleName = labelName.substring(11);
+                String filePath = labelValue.toString();
+                RequireFile rule = new RequireFile(job, ruleName, filePath);
+                job.rules.add(rule);
             }
         });
+    }
+
+    private boolean matches(String string, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(string);
+        return matcher.matches();
     }
 
     private int initializeDependencies(Job job, Set<Job> knownDependents) {
@@ -107,8 +133,8 @@ public class Pipeline {
             knownDependents.add(job);
             int maxDepth = -1;
             for (Rule rule : job.rules) {
-                Job dependency = rule.getRequiredJob();
-                if (dependency != null) {
+                if (rule instanceof RuleDependency) {
+                    Job dependency = ((RuleDependency) rule).getRequiredJob();
                     if (knownDependents.contains(dependency)) {
                         throw new DockerflowException("Dependency loop");
                     }
@@ -123,5 +149,16 @@ public class Pipeline {
             job.dependencyLevel = maxDepth + 1;
         }
         return job.dependencyLevel;
+    }
+
+    @lombok.Data
+    public static class Data {
+        Set<Job.Data> jobs = new HashSet<>();
+    }
+
+    public Data getData() {
+        Data data = new Data();
+        this.jobs.forEach(job -> data.jobs.add(job.getData()));
+        return data;
     }
 }

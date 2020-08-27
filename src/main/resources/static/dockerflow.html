@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <title>Dockerflow</title>
     <style>
         #pipeline {
@@ -74,6 +75,7 @@
 
         let jobs;
         let stages;
+        let firstTime = true;
 
         refresh();
         setInterval(refresh, 1000);
@@ -83,7 +85,11 @@
             jobs = await response.json();
             console.log(jobs);
             loadStages();
-            draw();
+            if (firstTime) {
+                drawFirstTime();
+                firstTime = false;
+            }
+            else { drawUpdate(); }
         }
 
         function loadStages() {
@@ -98,40 +104,30 @@
             }
         }
 
-        function draw() {
-            let stagesDiv = document.getElementById("stages");
-            while (stagesDiv.firstChild) stagesDiv.removeChild(stagesDiv.firstChild);
-
+        function drawFirstTime() {
+            let stagesDiv = $("#stages");
+            stagesDiv.empty();
             for (let stageIndex in stages) {
                 let stage = stages[stageIndex];
-
-                let stageDiv = document.createElement("div");
-                stageDiv.setAttribute("class", "stage");
-                stagesDiv.appendChild(stageDiv);
-
+                let stageDiv = $("<div></div>").addClass("stage").appendTo(stagesDiv);
                 for (let jobIndex in stage.jobs) {
                     let job = stage.jobs[jobIndex];
-
-                    let jobDiv = document.createElement("div");
-                    jobDiv.setAttribute("class", "job " + job.status);
-                    stageDiv.appendChild(jobDiv);
-
-                    let jobTitle = document.createElement("div");
-                    jobTitle.setAttribute("class", "title");
-                    jobTitle.innerText = job.name + " (" + job.status + ")";
-                    jobDiv.appendChild(jobTitle);
-
-                    let rulesDiv = document.createElement("div");
-                    rulesDiv.setAttribute("class", "rules");
-                    jobDiv.appendChild(rulesDiv);
+                    let jobDiv = $("<div></div>").attr("id", "job_" + job.name).addClass("job").addClass(job.status).appendTo(stageDiv);
+                    let jobTitle = $("<div></div>").addClass("title").text(job.name + " (" + job.status + ")").appendTo(jobDiv);
+                    let rulesDiv = $("<div></div>").addClass("rules").appendTo(jobDiv);
                     for (let ruleIndex in job.rules) {
                         let rule = job.rules[ruleIndex];
-                        let ruleDiv = document.createElement("div");
-                        ruleDiv.setAttribute("class", "rule");
-                        ruleDiv.innerText = rule.name + "=" + rule.value + " [" + rule.status + "]";
-                        rulesDiv.appendChild(ruleDiv);
+                        let ruleDiv = $("<div></div>").addClass("rule").text(rule.name + "=" + rule.value + " [" + rule.status + "]").appendTo(rulesDiv);
                     }
                 }
+            }
+        }
+
+        function drawUpdate() {
+            for (let jobIndex in jobs) {
+                let job = jobs[jobIndex];
+                let jobDiv = $("#job_" + job.name).removeClass().addClass("job").addClass(job.status);
+                let jobTitle = jobDiv.children(".title").text(job.name + " (" + job.status + ")x");
             }
         }
 

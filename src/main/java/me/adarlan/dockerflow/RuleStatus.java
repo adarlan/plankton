@@ -1,4 +1,4 @@
-package me.adarlan.dockerflow.rules;
+package me.adarlan.dockerflow;
 
 public enum RuleStatus {
     WAITING, PASSED, BLOCKED;

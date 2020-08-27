@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,10 +22,7 @@ public class RestApi {
     private Pipeline pipeline;
 
     @GetMapping("/jobs")
-    public List<Map<String, Object>> getJobs() {
-        List<Map<String, Object>> jobs = new ArrayList<>();
-        pipeline.getJobs().forEach(job -> jobs.add(job.toMap()));
-        return jobs;
+    public Set<Job.Data> getJobs() {
+        return pipeline.getData().jobs;
     }
-
 }

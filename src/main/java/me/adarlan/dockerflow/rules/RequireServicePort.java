@@ -3,46 +3,46 @@ package me.adarlan.dockerflow.rules;
 import java.io.IOException;
 import java.net.Socket;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 import me.adarlan.dockerflow.Job;
+import me.adarlan.dockerflow.Rule;
+import me.adarlan.dockerflow.RuleDependency;
+import me.adarlan.dockerflow.RuleStatus;
 
-@Getter
-@ToString(of = { "name", "port", "ruleStatus" })
-public class RequireServicePort implements Rule {
+@EqualsAndHashCode(of = { "parentJob", "name" })
+public class RequireServicePort implements Rule, RuleDependency {
 
-    private final Job parentJob;
+    @Getter
+    Job parentJob;
 
-    private final String name;
+    @Getter
+    String name;
 
-    private final Job requiredJob;
+    @Getter
+    Job requiredJob;
 
-    private final String port;
+    @Getter
+    Integer port;
 
-    private RuleStatus ruleStatus = RuleStatus.WAITING;
+    @Getter
+    RuleStatus status = RuleStatus.WAITING;
 
-    public RequireServicePort(Job parentJob, String name, Job requiredJob, String port) {
+    public RequireServicePort(Job parentJob, String name, Job requiredJob, Integer port) {
         this.parentJob = parentJob;
         this.name = name;
         this.requiredJob = requiredJob;
         this.port = port;
-        log();
-    }
-
-    private void log() {
-        System.out.println(parentJob.getName() + "::" + name + "=" + getValue() + " [" + ruleStatus + "]");
     }
 
     @Override
     public void updateStatus() {
-        if (ruleStatus.equals(RuleStatus.WAITING)) {
+        if (status.equals(RuleStatus.WAITING)) {
             if (requiredJob.getFinalStatus() != null) {
-                this.ruleStatus = RuleStatus.PASSED;
-                log();
+                status = RuleStatus.BLOCKED;
             } else {
-                try (Socket s = new Socket(requiredJob.getName(), Integer.parseInt(port))) {
-                    this.ruleStatus = RuleStatus.PASSED;
-                    log();
+                try (Socket s = new Socket(requiredJob.getName(), port)) {
+                    status = RuleStatus.PASSED;
                 } catch (IOException ex) {
                     /* ignore */
                 }
@@ -51,7 +51,7 @@ public class RequireServicePort implements Rule {
     }
 
     @Override
-    public String getValue() {
+    public Integer getValue() {
         return port;
     }
 }
