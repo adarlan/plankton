@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -18,6 +19,15 @@ public class Job {
 
     @Getter
     String name;
+
+    @Getter
+    Long timeout;
+
+    @Getter
+    TimeUnit timeoutUnit;
+
+    @Getter
+    String expression;
 
     @Getter
     Set<Rule> rules;
@@ -52,6 +62,8 @@ public class Job {
     @lombok.Data
     public static class Data {
         String name;
+        String timeout;
+        String expression;
         String status;
         String finalStatus;
         Instant initialInstant;
@@ -67,6 +79,8 @@ public class Job {
     public Data getData() {
         Data data = new Data();
         data.name = this.name;
+        data.timeout = this.timeout.toString() + this.timeoutUnit.toString().substring(0, 1).toLowerCase();
+        data.expression = this.expression;
         data.status = this.status.toString().toLowerCase();
         data.finalStatus = this.finalStatus == null ? null : this.finalStatus.toString().toLowerCase();
         data.initialInstant = this.initialInstant;
