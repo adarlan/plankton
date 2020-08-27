@@ -55,7 +55,9 @@ public class Pipeline {
         Map<String, Object> dcService = (Map<String, Object>) dockerComposeServices.get(job.name);
         Object dcLabels = dcService.get("labels");
         Map<String, Object> labelsByName;
-        if (dcLabels instanceof Map) {
+        if (dcLabels == null) {
+            labelsByName = new HashMap<>();
+        } else if (dcLabels instanceof Map) {
             labelsByName = (Map<String, Object>) dcLabels;
         } else {
             List<String> dcLabelsList = (List<String>) dcLabels;
