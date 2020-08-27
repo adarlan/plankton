@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 public class JobScheduler {
 
     @Autowired
-    private ApplicationConfig applicationConfig;
+    private DockerflowConfig dockerflowConfig;
 
     @Autowired
     private Pipeline pipeline;
@@ -107,8 +107,8 @@ public class JobScheduler {
             printWriter.println("#!/bin/bash");
             printWriter.println("set -eu");
             // TODO concatenar arquivo environment
-            printWriter.println("docker-compose --project-name " + applicationConfig.getName() + " --file "
-                    + applicationConfig.getFile() + " --project-directory " + applicationConfig.getWorkspace()
+            printWriter.println("docker-compose --project-name " + dockerflowConfig.getName() + " --file "
+                    + dockerflowConfig.getFile() + " --project-directory " + dockerflowConfig.getWorkspace()
                     + " up --force-recreate --abort-on-container-exit --exit-code-from " + job.getName() + " "
                     + job.getName());
             printWriter.close();

@@ -5,10 +5,10 @@ import org.springframework.context.annotation.Configuration;
 
 import lombok.Data;
 
+@Data
 @Configuration
 @ConfigurationProperties(prefix = "dockerflow")
-@Data
-public class ApplicationConfig {
+public class DockerflowConfig {
 
     private String name;
 

@@ -1,6 +1,5 @@
 package me.adarlan.dockerflow;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,7 +18,7 @@ import me.adarlan.dockerflow.rules.RequireStatus;
 @Component
 public class Pipeline {
 
-    private final ApplicationConfig applicationConfig;
+    private final DockerflowConfig dockerflowConfig;
 
     private final Map<String, Object> dockerCompose;
 
@@ -32,9 +31,9 @@ public class Pipeline {
     private final Map<Job, Map<String, Object>> labelsByJobAndName = new HashMap<>();
 
     @Autowired
-    public Pipeline(ApplicationConfig applicationConfig) {
-        this.applicationConfig = applicationConfig;
-        this.dockerCompose = Utils.createMapFromYamlFile(this.applicationConfig.getFile());
+    public Pipeline(DockerflowConfig dockerflowConfig) {
+        this.dockerflowConfig = dockerflowConfig;
+        this.dockerCompose = Utils.createMapFromYamlFile(this.dockerflowConfig.getFile());
         this.dockerComposeServices = Utils.getPropertyMap(dockerCompose, "services");
         dockerComposeServices.forEach((serviceName, serviceObject) -> {
             if (!serviceName.equals("dockerflow")) {
@@ -173,31 +172,6 @@ public class Pipeline {
         if (!jobsByName.containsKey(jobName))
             throw new DockerflowException("Job not found: " + jobName);
         return jobsByName.get(jobName);
-    }
-
-    private void setStatusOLD(Job job, JobStatus status) {
-        switch (status) {
-            case WAITING:
-                break;
-            case DISABLED:
-            case BLOCKED:
-                job.finalStatus = status;
-                break;
-            case RUNNING:
-                job.initialInstant = Instant.now();
-                break;
-            case CANCELED:
-            case INTERRUPTED:
-            case FAILED:
-            case TIMEOUT:
-            case FINISHED:
-                if (job.initialInstant != null)
-                    job.finalInstant = Instant.now();
-                job.finalStatus = status;
-                break;
-        }
-        job.status = status;
-        System.out.println(applicationConfig.getName() + "::" + job.name + " -> " + job.status);
     }
 
     @lombok.Data
