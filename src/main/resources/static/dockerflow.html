@@ -7,6 +7,10 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <title>Dockerflow</title>
     <style>
+        body {
+            padding: 1em;
+        }
+
         #pipeline {
             display: table;
         }
@@ -20,7 +24,7 @@
         }
 
         .job {
-            margin: 1em;
+            margin: 1em 5em 1em 0;
             padding: 1em;
             border-radius: 1em;
             border-style: solid;
@@ -47,10 +51,35 @@
             background-color: mediumaquamarine;
         }
 
-        svg {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .job-header {
+            display: table-row;
+        }
+
+        .job-name {
+            display: table-cell;
+            padding: 0 4pt 0 0;
+            font-size: 1.2em;
+        }
+
+        .job-status {
+            display: table-cell;
+            padding: 0 4pt;
+            background-color: white;
+            border-radius: 8pt;
+        }
+
+        .job-rules {}
+
+        .rule {
+            display: table-row;
+        }
+
+        .rule-description {
+            display: table-cell;
+        }
+
+        .rule-status {
+            display: table-cell;
         }
     </style>
 </head>
@@ -59,16 +88,10 @@
     <h1>Dockerflow</h1>
 
     <div id="pipeline">
-        <div id="stages"></div>
-    </div>
+        <div id="stages">
 
-    <!--
-    <svg height="100%" width="100%">
-        <polyline points="0,0 40,25 60,40 80,120 120,140 120,80 200,200 500,490 50,50"
-            style="fill:none;stroke:black;stroke-width:3" />
-        Sorry, your browser does not support inline SVG.
-    </svg>
-    -->
+        </div>
+    </div>
 
     <script>
         const url = "http://localhost:1329"
@@ -78,7 +101,7 @@
         let firstTime = true;
 
         refresh();
-        setInterval(refresh, 1000);
+        //setInterval(refresh, 1000);
 
         async function refresh() {
             const response = await fetch(url + "/jobs");
@@ -86,10 +109,13 @@
             console.log(jobs);
             loadStages();
             if (firstTime) {
+                console.log("firstTime");
                 drawFirstTime();
                 firstTime = false;
             }
-            else { drawUpdate(); }
+            else {
+                console.log("not firstTime"); drawUpdate();
+            }
         }
 
         function loadStages() {
@@ -105,19 +131,31 @@
         }
 
         function drawFirstTime() {
-            let stagesDiv = $("#stages");
-            stagesDiv.empty();
+
+            let stages_div = $("#stages");
+
             for (let stageIndex in stages) {
                 let stage = stages[stageIndex];
-                let stageDiv = $("<div></div>").addClass("stage").appendTo(stagesDiv);
+
+                let stage_div = $("<div></div>").addClass("stage").appendTo(stages_div);
+
                 for (let jobIndex in stage.jobs) {
                     let job = stage.jobs[jobIndex];
-                    let jobDiv = $("<div></div>").attr("id", "job_" + job.name).addClass("job").addClass(job.status).appendTo(stageDiv);
-                    let jobTitle = $("<div></div>").addClass("title").text(job.name + " (" + job.status + ")").appendTo(jobDiv);
-                    let rulesDiv = $("<div></div>").addClass("rules").appendTo(jobDiv);
+
+                    let job_div = $("<div></div>").attr("id", "job_" + job.name).addClass("job").addClass(job.status).appendTo(stage_div);
+
+                    let job_header = $("<div></div>").addClass("job-header").appendTo(job_div);
+                    let job_name = $("<div></div>").addClass("job-name").text(job.name).appendTo(job_header);
+                    let job_status = $("<div></div>").addClass("job-status").text(job.status).appendTo(job_header);
+
+                    let job_rules = $("<div></div>").addClass("job-rules").appendTo(job_div);
+
                     for (let ruleIndex in job.rules) {
                         let rule = job.rules[ruleIndex];
-                        let ruleDiv = $("<div></div>").addClass("rule").text(rule.name + "=" + rule.value + " [" + rule.status + "]").appendTo(rulesDiv);
+
+                        let rule_div = $("<div></div>").addClass("rule").appendTo(job_rules);
+                        let rule_description = $("<div></div>").addClass("rule-description").text(rule.name + "=" + rule.value).appendTo(rule_div);
+                        let rule_status = $("<div></div>").addClass("rule-status").text(rule.status).appendTo(rule_div);
                     }
                 }
             }
@@ -126,8 +164,10 @@
         function drawUpdate() {
             for (let jobIndex in jobs) {
                 let job = jobs[jobIndex];
-                let jobDiv = $("#job_" + job.name).removeClass().addClass("job").addClass(job.status);
-                let jobTitle = jobDiv.children(".title").text(job.name + " (" + job.status + ")x");
+
+                let job_div = $("#job_" + job.name).removeClass().addClass("job").addClass(job.status);
+                let job_status = jobDiv.children(".job-status").text(job.status);
+                // TODO update rule-status
             }
         }
 
