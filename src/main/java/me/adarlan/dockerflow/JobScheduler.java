@@ -34,21 +34,24 @@ public class JobScheduler {
     @Scheduled(fixedRate = 1000)
     public void scheduleJobs() {
         pipeline.getJobsByStatus(JobStatus.WAITING).forEach(job -> {
-            if (isRulesPassed(job)) {
+            boolean passed = true;
+            boolean blocked = false;
+            for (final Rule rule : job.getRules()) {
+                rule.updateStatus();
+                RuleStatus ruleStatus = rule.getStatus();
+                if (!ruleStatus.equals(RuleStatus.PASSED)) {
+                    passed = false;
+                }
+                if (ruleStatus.equals(RuleStatus.BLOCKED)) {
+                    blocked = true;
+                }
+            }
+            if (passed) {
                 runJob(job);
+            } else if (blocked) {
+                job.status = JobStatus.BLOCKED;
             }
         });
-    }
-
-    private boolean isRulesPassed(Job job) {
-        boolean passed = true;
-        for (final Rule rule : job.getRules()) {
-            rule.updateStatus();
-            if (!rule.getStatus().equals(RuleStatus.PASSED)) {
-                passed = false;
-            }
-        }
-        return passed;
     }
 
     @Async
