@@ -1,25 +1,30 @@
 version: "3.7"
 
 services:
+  lambada:
+    image: alpine
+    command: ash -c 'for x in $$FOO; do echo $$x; sleep 1; done'
+    environment:
+      FOO: "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z"
 
-  dockerflow:
-    image: runner:dev
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ${DOCKERFLOW_WORKSPACE}:/workspace
-    ports:
-      - 1329:1329
-    command: -Dspring-boot.run.arguments="--dockerflow.name=${DOCKERFLOW_NAME} --dockerflow.workspace=/workspace --dockerflow.environment=${DOCKERFLOW_ENVIRONMENT} --dockerflow.file=${DOCKERFLOW_FILE} --dockerflow.metadata=${DOCKERFLOW_METADATA}"
+  tango:
+    image: alpine
+    command: ash -c 'for x in $$BAR; do echo $$x; sleep 1; done'
+    environment:
+      BAR: "0 1 2 3 4 5 6 7 8 9"
 
   mysql:
     image: foo-service
-    #command: --port 80
+    ports:
+      - 85:80
 
   adminer:
     image: foo-service
-    #command: --port 80
+    ports:
+      - 86:80
     labels:
-      dockerflow.require.mysql.port: 80
+      dockerflow.wait.port: 85
+      dockerflow.timeout: 1
 
   download:
     image: foo-task
@@ -30,8 +35,7 @@ services:
   save-the-whales:
     image: ubuntu
     labels:
-      dockerflow.target: true
-      dockerflow.timeout: 3s
+      dockerflow.timeout: 1
     entrypoint:
       - /bin/bash
       - -c
@@ -45,11 +49,12 @@ services:
     volumes:
       - ./flags:/flags
     labels:
-      dockerflow.timeout: 1h
-      dockerflow.enable.if: '[ 0 = 1 ] && [ $$GIT_BRANCH = master ] || [ ! $${BAR:0:4} = bar- ]'
-      dockerflow.wait.download.status: finished
-      dockerflow.wait.mysql.port: 80
-      dockerflow.wait.file: flags/downloaded
+      dockerflow.timeout: 60
+      dockerflow.enable.if: "[ 0 = 1 ] && [ $$GIT_BRANCH = master ] || [ ! $${BAR:0:4} = bar- ]"
+      dockerflow.wait.success.of: download
+      dockerflow.wait.ports: 85
+      dockerflow.wait.files: flags/downloaded
+      dockerflow.wait.humans: click
 
   docker-ls:
     image: docker
