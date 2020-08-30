@@ -45,9 +45,6 @@ public class Job {
     Set<Job> allDependents = new HashSet<>();
 
     @Getter
-    JobStatus status;
-
-    @Getter
     JobStatus finalStatus;
 
     @Getter
@@ -58,6 +55,9 @@ public class Job {
 
     @Getter
     Integer exitCode;
+
+    @Getter
+    JobStatus status;
 
     @lombok.Data
     public static class Data {

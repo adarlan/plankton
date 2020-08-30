@@ -10,7 +10,7 @@ public interface Rule {
 
     RuleStatus getStatus();
 
-    void updateStatus();
+    boolean updateStatus();
 
     @lombok.Data
     public static class Data {

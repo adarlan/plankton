@@ -19,4 +19,6 @@ public class DockerflowConfig {
     private String environment;
 
     private String metadata;
+
+    private boolean local;
 }

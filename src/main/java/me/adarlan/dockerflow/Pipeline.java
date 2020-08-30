@@ -6,36 +6,48 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import lombok.NonNull;
+import me.adarlan.dockerflow.compose.DockerCompose;
+import me.adarlan.dockerflow.rules.RequireFailure;
 import me.adarlan.dockerflow.rules.RequireFile;
 import me.adarlan.dockerflow.rules.RequirePort;
-import me.adarlan.dockerflow.rules.RequireStatus;
+import me.adarlan.dockerflow.rules.RequireSuccess;
 
 @Component
 public class Pipeline {
 
-    private final DockerflowConfig dockerflowConfig;
-
-    private final Map<String, Object> dockerCompose;
-
-    private final Map<String, Object> dockerComposeServices;
+    private final DockerCompose dockerCompose;
 
     private final Set<Job> jobs = new HashSet<>();
 
     private final Map<String, Job> jobsByName = new HashMap<>();
 
-    private final Map<Job, Map<String, Object>> labelsByJobAndName = new HashMap<>();
+    private final Map<Job, Map<String, String>> labelsByJobAndName = new HashMap<>();
+
+    private final Map<Integer, Job> externalPorts = new HashMap<>();
 
     @Autowired
-    public Pipeline(DockerflowConfig dockerflowConfig) {
-        this.dockerflowConfig = dockerflowConfig;
-        this.dockerCompose = Utils.createMapFromYamlFile(this.dockerflowConfig.getFile());
-        this.dockerComposeServices = Utils.getPropertyMap(dockerCompose, "services");
-        dockerComposeServices.forEach((serviceName, serviceObject) -> {
+    public Pipeline(DockerCompose dockerCompose) {
+        this.dockerCompose = dockerCompose;
+        instantiateJobs();
+        jobs.forEach(this::initializeJobLabels);
+        jobs.forEach(this::initializeJobExpression);
+        jobs.forEach(this::initializeJobTimeout);
+        jobs.forEach(this::initializeExternalPorts);
+        jobs.forEach(this::initializeJobRules);
+        jobs.forEach(job -> initializeJobDependencies(job, new HashSet<>()));
+        jobs.forEach(this::initializeJobStatus);
+    }
+
+    private void instantiateJobs() {
+        dockerCompose.getServices().forEach((serviceName, serviceObject) -> {
             if (!serviceName.equals("dockerflow")) {
                 Job job = new Job();
                 job.name = serviceName;
@@ -43,91 +55,82 @@ public class Pipeline {
                 this.jobsByName.put(job.name, job);
             }
         });
-        jobs.forEach(this::initializeJobLabels);
-        jobs.forEach(this::initializeJobExpression);
-        jobs.forEach(this::initializeJobStatus);
-        jobs.forEach(this::initializeJobTimeout);
-        jobs.forEach(this::initializeJobRules);
-        jobs.forEach(job -> initializeJobDependencies(job, new HashSet<>()));
     }
 
     private void initializeJobLabels(Job job) {
-        Map<String, Object> dcService = (Map<String, Object>) dockerComposeServices.get(job.name);
-        Object dcLabels = dcService.get("labels");
-        Map<String, Object> labelsByName;
-        if (dcLabels == null) {
-            labelsByName = new HashMap<>();
-        } else if (dcLabels instanceof Map) {
-            labelsByName = (Map<String, Object>) dcLabels;
-        } else {
-            List<String> dcLabelsList = (List<String>) dcLabels;
-            labelsByName = new HashMap<>();
-            dcLabelsList.forEach(labelString -> {
-                int separatorIndex = labelString.indexOf("=");
-                String labelKey = labelString.substring(0, separatorIndex).trim();
-                String labelValue = labelString.substring(separatorIndex + 1).trim();
-                labelsByName.put(labelKey, labelValue);
-            });
-        }
-        Map<String, Object> onlyDockerflowLabels = new HashMap<>();
-        labelsByName.forEach((k, v) -> {
-            if (k.startsWith("dockerflow."))
-                onlyDockerflowLabels.put(k, v);
-        });
-        labelsByJobAndName.put(job, onlyDockerflowLabels);
+        Map<String, String> labelsByName = dockerCompose.getServicePropertyAsKeyValueMap(job.name, "labels");
+        labelsByJobAndName.put(job, labelsByName);
     }
 
     private void initializeJobExpression(Job job) {
-        Object labelValue = labelsByJobAndName.get(job).get("dockerflow.enable.if");
-        if (labelValue != null) {
-            job.expression = (String) labelValue;
+        Map<String, String> labelsByName = labelsByJobAndName.get(job);
+        String labelName = "dockerflow.enable.if";
+        if (labelsByName.containsKey(labelName)) {
+            job.expression = labelsByName.get(labelName);
         }
     }
 
-    private void initializeJobStatus(Job job) {
-        job.status = JobStatus.WAITING;
-        // TODO calcular expression
-    }
-
     private void initializeJobTimeout(Job job) {
-        Object labelValue = labelsByJobAndName.get(job).get("dockerflow.timeout");
-        if (labelValue != null) {
-            job.timeout = Long.parseLong(labelValue.toString());
-            job.timeoutUnit = TimeUnit.MINUTES;
+        Map<String, String> labelsByName = labelsByJobAndName.get(job);
+        String labelName = "dockerflow.timeout";
+        if (labelsByName.containsKey(labelName)) {
+            String labelValue = labelsByName.get(labelName);
+            job.timeout = Long.parseLong(labelValue);
+            job.timeoutUnit = TimeUnit.MINUTES; // TODO aceitar formatos: 1s, 1m, 1h, 1d etc
         } else {
             job.timeout = 3L;// TODO Usar uma configuração --dockerflow.timeout.max ou algo assim
             job.timeoutUnit = TimeUnit.MINUTES;
         }
     }
 
+    private void initializeExternalPorts(Job job) {
+        List<String> list = dockerCompose.getServicePropertyAsStringList(job.name, "ports");
+        list.forEach(string -> {
+            String[] spl = string.split("\\:");
+            Integer externalPort = Integer.parseInt(spl[0]);
+            externalPorts.put(externalPort, job);
+        });
+    }
+
     private void initializeJobRules(Job job) {
         job.rules = new HashSet<>();
-        labelsByJobAndName.get(job).forEach((labelName, labelValue) -> {
+        Map<String, String> labelsByName = labelsByJobAndName.get(job);
+        labelsByName.forEach((labelName, labelValue) -> {
             String ruleName = labelName.substring(11);
-            String[] splitedLabelName = labelName.split("\\.");
 
-            if (Utils.stringMatchesRegex(labelName, "^dockerflow\\.wait\\.[\\w-]+\\.status$")) {
-                String requiredJobName = splitedLabelName[2];
+            if (stringMatchesRegex(labelName, "^dockerflow\\.wait\\.success\\.of$")) {
+                String requiredJobName = labelValue;
                 Job requiredJob = this.getJobByName(requiredJobName);
-                JobStatus requiredStatus = JobStatus.valueOf(((String) labelValue).toUpperCase());
-                RequireStatus rule = new RequireStatus(job, ruleName, requiredJob, requiredStatus);
+                RequireSuccess rule = new RequireSuccess(job, ruleName, requiredJob);
                 job.rules.add(rule);
             }
 
-            else if (Utils.stringMatchesRegex(labelName, "^dockerflow\\.wait\\.[\\w-]+\\.port$")) {
-                String requiredJobName = splitedLabelName[2];
+            if (stringMatchesRegex(labelName, "^dockerflow\\.wait\\.failure\\.of$")) {
+                String requiredJobName = labelValue;
                 Job requiredJob = this.getJobByName(requiredJobName);
-                Integer port = Integer.parseInt(labelValue.toString());
+                RequireFailure rule = new RequireFailure(job, ruleName, requiredJob);
+                job.rules.add(rule);
+            }
+
+            else if (stringMatchesRegex(labelName, "^dockerflow\\.wait\\.ports$")) {
+                Integer port = Integer.parseInt(labelValue);
+                Job requiredJob = externalPorts.get(port);
                 RequirePort rule = new RequirePort(job, ruleName, requiredJob, port);
                 job.rules.add(rule);
             }
 
-            else if (Utils.stringMatchesRegex(labelName, "^dockerflow\\.wait\\.file$")) {
+            else if (stringMatchesRegex(labelName, "^dockerflow\\.wait\\.files$")) {
                 String filePath = ((String) labelValue);
                 RequireFile rule = new RequireFile(job, ruleName, filePath);
                 job.rules.add(rule);
             }
         });
+    }
+
+    private static boolean stringMatchesRegex(String string, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(string);
+        return matcher.matches();
     }
 
     private int initializeJobDependencies(Job job, Set<Job> knownDependents) {
@@ -139,8 +142,8 @@ public class Pipeline {
             knownDependents.add(job);
             int maxDepth = -1;
             for (Rule rule : job.rules) {
-                if (rule instanceof RuleDependency) {
-                    Job dependency = ((RuleDependency) rule).getRequiredJob();
+                if (rule instanceof RuleWithDependency) {
+                    Job dependency = ((RuleWithDependency) rule).getRequiredJob();
                     if (knownDependents.contains(dependency)) {
                         throw new DockerflowException("Dependency loop");
                     }
@@ -157,23 +160,33 @@ public class Pipeline {
         return job.dependencyLevel;
     }
 
+    private void initializeJobStatus(Job job) {
+        job.status = JobStatus.WAITING;
+        // TODO evaluate expression; if false: job.status = JobStatus.DISABLED;
+    }
+
     public Set<Job> getJobs() {
         return new HashSet<>(jobs);
     }
 
     public Set<Job> getJobsByStatus(@NonNull JobStatus status) {
-        Set<Job> set = new HashSet<>(jobs);
-        jobs.forEach(job -> {
-            if (job.status.equals(status))
-                set.add(job);
-        });
-        return set;
+        return jobs.stream().filter(j -> j.getStatus().equals(status)).collect(Collectors.toSet());
     }
 
     public Job getJobByName(@NonNull String jobName) {
         if (!jobsByName.containsKey(jobName))
             throw new DockerflowException("Job not found: " + jobName);
         return jobsByName.get(jobName);
+    }
+
+    public boolean isDone() {
+        boolean done = true;
+        for (Job job : jobs) {
+            if (job.finalStatus == null) {
+                done = false;
+            }
+        }
+        return done;
     }
 
     @lombok.Data

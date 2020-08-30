@@ -30,14 +30,16 @@ public class RequireFile implements Rule {
     }
 
     @Override
-    public void updateStatus() {
+    public boolean updateStatus() {
         if (status.equals(RuleStatus.WAITING)) {
             // TODO BLOCKED se todos os demais jobs estiverem finalizados
             File file = new File(filePath);
             if (file.exists()) {
                 status = RuleStatus.PASSED;
+                return true;
             }
         }
+        return false;
     }
 
     @Override

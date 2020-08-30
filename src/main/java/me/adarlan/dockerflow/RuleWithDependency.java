@@ -1,6 +1,6 @@
 package me.adarlan.dockerflow;
 
-public interface RuleDependency {
+public interface RuleWithDependency {
 
     Job getRequiredJob();
 }

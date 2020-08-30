@@ -5,11 +5,11 @@ import lombok.Getter;
 import me.adarlan.dockerflow.Job;
 import me.adarlan.dockerflow.JobStatus;
 import me.adarlan.dockerflow.Rule;
-import me.adarlan.dockerflow.RuleDependency;
+import me.adarlan.dockerflow.RuleWithDependency;
 import me.adarlan.dockerflow.RuleStatus;
 
 @EqualsAndHashCode(of = { "parentJob", "name" })
-public class RequireStatus implements Rule, RuleDependency {
+public class RequireFailure implements Rule, RuleWithDependency {
 
     @Getter
     Job parentJob;
@@ -21,34 +21,33 @@ public class RequireStatus implements Rule, RuleDependency {
     Job requiredJob;
 
     @Getter
-    JobStatus requiredStatus;
-
-    @Getter
     RuleStatus status = RuleStatus.WAITING;
 
-    public RequireStatus(Job parentJob, String name, Job requiredJob, JobStatus requiredStatus) {
+    public RequireFailure(Job parentJob, String name, Job requiredJob) {
         this.parentJob = parentJob;
         this.name = name;
         this.requiredJob = requiredJob;
-        this.requiredStatus = requiredStatus;
     }
 
     @Override
-    public void updateStatus() {
+    public boolean updateStatus() {
         if (status.equals(RuleStatus.WAITING)) {
             JobStatus finalStatus = requiredJob.getFinalStatus();
             if (finalStatus != null) {
-                if (finalStatus.equals(requiredStatus)) {
-                    status = RuleStatus.PASSED;
-                } else {
+                if (finalStatus.equals(JobStatus.FINISHED)) {
                     status = RuleStatus.BLOCKED;
+                    return true;
+                } else {
+                    status = RuleStatus.PASSED;
+                    return true;
                 }
             }
         }
+        return false;
     }
 
     @Override
     public String getValue() {
-        return requiredStatus.toString().toLowerCase();
+        return requiredJob.getName();
     }
 }

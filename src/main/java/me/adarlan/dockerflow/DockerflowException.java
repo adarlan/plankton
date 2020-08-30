@@ -12,4 +12,7 @@ public class DockerflowException extends RuntimeException {
         super(msg);
     }
 
+    public DockerflowException(String msg, Throwable e) {
+        super(msg, e);
+    }
 }
