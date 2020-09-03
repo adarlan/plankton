@@ -31,19 +31,44 @@
             border-width: 1pt;
         }
 
+        .job.disabled {
+            background-color: white;
+            border-color: silver;
+        }
+
+        .job.disabled * {
+            color: silver;
+        }
+
         .job.waiting {
-            background-color: wheat;
+            background-color: lightblue;
+        }
+
+        .job.blocked {
+            background-color: lightgrey;
+        }
+
+        .job.scheduled {
+            background-color: skyblue;
         }
 
         .job.running {
             background-color: cornflowerblue;
         }
 
+        .job.interrupted {
+            background-color: coral;
+        }
+
         .job.canceled {
-            background-color: silver;
+            background-color: coral;
         }
 
         .job.failed {
+            background-color: coral;
+        }
+
+        .job.timeout {
             background-color: coral;
         }
 
@@ -101,7 +126,7 @@
         let firstTime = true;
 
         refresh();
-        //setInterval(refresh, 1000);
+        setInterval(refresh, 1000);
 
         async function refresh() {
             const response = await fetch(url + "/jobs");
@@ -166,7 +191,7 @@
                 let job = jobs[jobIndex];
 
                 let job_div = $("#job_" + job.name).removeClass().addClass("job").addClass(job.status);
-                let job_status = jobDiv.children(".job-status").text(job.status);
+                let job_status = job_div.children(".job-status").text(job.status);
                 // TODO update rule-status
             }
         }
