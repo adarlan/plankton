@@ -2,22 +2,37 @@ package me.adarlan.dockerflow;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 public class Logger {
+
     private Logger() {
         super();
     }
 
     public static final String ANSI_RESET = "\u001B[0m";
-    public static final String ANSI_BLACK = "\u001B[30m";
-    public static final String ANSI_RED = "\u001B[31m";
-    public static final String ANSI_GREEN = "\u001B[32m";
-    public static final String ANSI_YELLOW = "\u001B[33m";
-    public static final String ANSI_BLUE = "\u001B[34m";
-    public static final String ANSI_PURPLE = "\u001B[35m";
-    public static final String ANSI_CYAN = "\u001B[36m";
-    public static final String ANSI_WHITE = "\u001B[37m";
+
+    public static final String BLACK = "\u001B[30m";
+    public static final String RED = "\u001B[31m";
+    public static final String GREEN = "\u001B[32m";
+    public static final String YELLOW = "\u001B[33m";
+    public static final String BLUE = "\u001B[34m";
+    public static final String PURPLE = "\u001B[35m";
+    public static final String CYAN = "\u001B[36m";
+    public static final String WHITE = "\u001B[37m";
+
+    public static final String BRIGHT_BLACK = "\u001b[30;1m";
+    public static final String BRIGHT_RED = "\u001b[31;1m";
+    public static final String BRIGHT_GREEN = "\u001b[32;1m";
+    public static final String BRIGHT_YELLOW = "\u001b[33;1m";
+    public static final String BRIGHT_BLUE = "\u001b[34;1m";
+    public static final String BRIGHT_PURPLE = "\u001b[35;1m";
+    public static final String BRIGHT_CYAN = "\u001b[36;1m";
+    public static final String BRIGHT_WHITE = "\u001b[37;1m";
 
     private static final int TRACE = 0;
     private static final int DEBUG = 1;
@@ -36,7 +51,7 @@ public class Logger {
         level = FOLLOW;
     }
 
-    public static void follow(Supplier<String> supplier) {
+    private static void follow(Supplier<String> supplier) {
         if (level <= FOLLOW)
             print(FOLLOW, supplier.get());
     }
@@ -66,46 +81,60 @@ public class Logger {
             print(FATAL, supplier.get());
     }
 
-    private static void print(int LEVEL, String string) {
+    private static void print(int LEVEL, String text) {
         Long time = Duration.between(begin, Instant.now()).toMillis();
-        String color = null;
-        String string1;
-        String string2 = time.toString();
+        String tag = null;
+        String tagColor = null;
+        String timestamp = time.toString();
+        String textColor = null;
         switch (LEVEL) {
             case TRACE:
-                string1 = "[TRACE]";
+                tag = "TRACE";
+                tagColor = BRIGHT_BLACK;
+                textColor = BRIGHT_BLACK;
                 break;
             case DEBUG:
-                string1 = "[DEBUG]";
+                tag = "DEBUG";
+                tagColor = BRIGHT_BLACK;
+                textColor = BRIGHT_BLACK;
                 break;
             case FOLLOW:
-                string1 = "";
+                tag = "FOLLOW";
+                tagColor = WHITE;
+                textColor = WHITE;
                 break;
             case INFO:
-                color = ANSI_CYAN;
-                string1 = "[INFO]";
+                tag = "INFO";
+                tagColor = WHITE;
+                textColor = WHITE;
                 break;
             case WARN:
-                color = ANSI_YELLOW;
-                string1 = "[WARN]";
+                tag = "WARN";
+                tagColor = YELLOW;
+                textColor = YELLOW;
                 break;
             case ERROR:
-                color = ANSI_RED;
-                string1 = "[ERROR]";
+                tag = "ERROR";
+                tagColor = BRIGHT_RED;
+                textColor = BRIGHT_RED;
                 break;
             case FATAL:
-                color = ANSI_RED;
-                string1 = "[FATAL]";
+                tag = "FATAL";
+                tagColor = BRIGHT_RED;
+                textColor = BRIGHT_RED;
                 break;
             default:
-                string1 = "";
         }
-        string1 = alignLeft(string1, 8);
-        if (color != null) {
-            string1 = color + string1 + ANSI_RESET;
+        tag = tag != null ? "[" + tag + "]" : "";
+        tag = alignLeft(tag, 9);
+        if (tagColor != null) {
+            tag = tagColor + tag + ANSI_RESET;
         }
-        string2 = alignRight(string2, 10);
-        System.out.println(string1 + string2 + " - " + string);
+        timestamp = BRIGHT_BLACK + alignRight(timestamp, 10) + " - " + ANSI_RESET;
+        if (textColor != null) {
+            text = textColor + text + ANSI_RESET;
+        }
+        System.out.println(tag + timestamp + text);
     }
 
     public static String alignLeft(String string, int spaces) {
@@ -121,5 +150,44 @@ public class Logger {
             str += " ";
         str += string;
         return str;
+    }
+
+    private static final List<String> followColors = Arrays.asList(BLUE, GREEN, PURPLE, CYAN, YELLOW, RED);
+    private static final Map<Job, String> followColorByJob = new HashMap<>();
+    private static int followBiggestNameSize = 0;
+    private static String followProjectName;
+
+    static void initializeFollow(Pipeline pipeline, DockerCompose dockerCompose) {
+        int jobIndex = 0;
+        for (Job job : pipeline.jobs) {
+            int colorIndex = jobIndex % followColors.size();
+            followColorByJob.put(job, followColors.get(colorIndex));
+            for (int i = 1; i <= job.scale; i++) {
+                String name = job.name + "_" + i;
+                int len = name.length();
+                if (len > followBiggestNameSize) {
+                    followBiggestNameSize = len;
+                }
+            }
+            jobIndex++;
+        }
+        followProjectName = dockerCompose.projectName;
+    }
+
+    static void follow(Job job, String containerName, String msg) {
+        Logger.follow(() -> {
+            String color = followColorByJob.get(job);
+            String name;
+            if (containerName == null) {
+                name = job.name;
+            } else {
+                name = containerName.substring(followProjectName.length() + 1);
+                if (job.scale == 1) {
+                    name = name.substring(0, name.lastIndexOf("_"));
+                }
+            }
+            name = Logger.alignLeft(name, followBiggestNameSize);
+            return "" + color + name + " | " + Logger.ANSI_RESET + msg;
+        });
     }
 }
