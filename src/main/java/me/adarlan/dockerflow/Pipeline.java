@@ -1,6 +1,7 @@
 package me.adarlan.dockerflow;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -46,6 +47,7 @@ public class Pipeline {
         jobs.forEach(this::initializeJobVariables);
         jobs.forEach(this::evaluateJobExpression);
         jobs.forEach(this::initializeJobStatus);
+        Logger.initializeFollow(this, dockerCompose);
     }
 
     private void instantiateJobs() {

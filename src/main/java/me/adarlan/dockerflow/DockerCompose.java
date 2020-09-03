@@ -108,15 +108,14 @@ public class DockerCompose {
     }
 
     private void prune() {
-        String scriptName = "prune-docker";
+        String scriptName = "docker-compose-down";
         BashScript script = new BashScript(scriptName);
-        // script.command("docker container prune -f");
-        // script.command("docker network prune -f");
         script.command(BASE_COMMAND + " " + options + " down --volumes --remove-orphans");
-        // script.command("docker container prune -f");
-        // script.command("docker network prune -f");
         script.forEachOutput(line -> Logger.debug(() -> scriptName + " >> " + line));
-        script.forEachError(line -> Logger.error(() -> scriptName + " >> " + line));
+        script.forEachError(line -> {
+            // Logger.error(() -> scriptName + " >> " + line);
+            Logger.debug(() -> scriptName + " >> " + line);
+        });
         try {
             script.run();
         } catch (InterruptedException e) {
@@ -164,25 +163,12 @@ public class DockerCompose {
         script.forEachOutputAndError(line -> {
             synchronized (logs) {
                 logs.add(line);
-                Logger.debug(() -> scriptName + " >> " + line);
+                Logger.follow(job, null, line);
             }
         });
         script.run();
         return script.getExitCode() == 0;
     }
-
-    /*
-     * private void initializeMaxServiceName() { for (String name :
-     * services.keySet()) if (name.length() > Logger.maxJobName)
-     * Logger.setMaxJobName(name.length()); }
-     */
-
-    /*
-     * public List<String> containerNamesOf(Job job) { List<String> containerNames =
-     * new ArrayList<>(); for (int i = 1; i <= job.scale; i++) { String
-     * containerName = projectName + "_" + job.name + "_" + i;
-     * containerNames.add(containerName); } return containerNames; }
-     */
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> getService(String serviceName) {

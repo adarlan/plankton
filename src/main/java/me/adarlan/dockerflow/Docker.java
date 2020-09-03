@@ -22,7 +22,7 @@ public class Docker {
         script.forEachOutputAndError(line -> {
             synchronized (logs) {
                 logs.add(line);
-                Logger.follow(() -> "          " + containerName + " >> " + line);
+                Logger.follow(job, containerName, line);
             }
         });
         script.run();
@@ -42,7 +42,6 @@ public class Docker {
         script.run();
         final String json = scriptOutput.stream().collect(Collectors.joining());
         final ContainerState state = parseContainerState(json);
-        Logger.debug(state::toString);
         return state;
     }
 
