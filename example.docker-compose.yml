@@ -1,6 +1,7 @@
 version: "3.7"
 
 services:
+
   lambada:
     image: alpine
     command: ash -c 'for x in $$FOO; do echo $$x; sleep 1; done'
@@ -12,52 +13,3 @@ services:
     command: ash -c 'for x in $$BAR; do echo $$x; sleep 1; done'
     environment:
       BAR: "0 1 2 3 4 5 6 7 8 9"
-
-  mysql:
-    image: foo-service
-    ports:
-      - 85:80
-
-  adminer:
-    image: foo-service
-    ports:
-      - 86:80
-    labels:
-      dockerflow.wait.port: 85
-      dockerflow.timeout: 1
-
-  download:
-    image: foo-task
-    command: --time 60 --file /flags/downloaded
-    volumes:
-      - ./flags:/flags
-
-  save-the-whales:
-    image: ubuntu
-    labels:
-      dockerflow.timeout: 1
-    entrypoint:
-      - /bin/bash
-      - -c
-      - |
-        echo hello
-        echo goodbye
-
-  import:
-    image: foo-task
-    command: --time 45
-    volumes:
-      - ./flags:/flags
-    labels:
-      dockerflow.timeout: 60
-      dockerflow.enable.if: "[ 0 = 1 ] && [ $$GIT_BRANCH = master ] || [ ! $${BAR:0:4} = bar- ]"
-      dockerflow.wait.success.of: download
-      dockerflow.wait.ports: 85
-      dockerflow.wait.files: flags/downloaded
-      dockerflow.wait.humans: click
-
-  docker-ls:
-    image: docker
-    command: sh -c 'docker ps'
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
