@@ -33,4 +33,5 @@ build/
 .vscode/
 .dockerflow/
 flags/
-.dockerflow.docker-compose.yml .dockerflow.docker-compose.yml.temp
+.dockerflow.docker-compose.yml
+.dockerflow.docker-compose.yml.temp
