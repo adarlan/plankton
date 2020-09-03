@@ -1,4 +1,4 @@
-package me.adarlan.dockerflow;
+package me.adarlan.dockerflow.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +18,7 @@ public class DockerflowConfig {
 
     private String environment;
 
-    private String metadata;
+    //private String metadata;
 
-    private boolean local;
+    //private boolean local;
 }

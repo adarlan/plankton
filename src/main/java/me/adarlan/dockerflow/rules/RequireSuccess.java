@@ -32,7 +32,7 @@ public class RequireSuccess implements Rule, RuleWithDependency {
     @Override
     public boolean updateStatus() {
         if (status.equals(RuleStatus.WAITING)) {
-            JobStatus finalStatus = requiredJob.getFinalStatus();
+            JobStatus finalStatus = requiredJob.state.getFinalStatus();
             if (finalStatus != null) {
                 if (finalStatus.equals(JobStatus.FINISHED)) {
                     status = RuleStatus.PASSED;

@@ -6,6 +6,7 @@ import java.net.Socket;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import me.adarlan.dockerflow.Job;
+import me.adarlan.dockerflow.JobStatus;
 import me.adarlan.dockerflow.Rule;
 import me.adarlan.dockerflow.RuleWithDependency;
 import me.adarlan.dockerflow.RuleStatus;
@@ -38,10 +39,10 @@ public class RequirePort implements Rule, RuleWithDependency {
     @Override
     public boolean updateStatus() {
         if (status.equals(RuleStatus.WAITING)) {
-            if (requiredJob.getFinalStatus() != null) {
+            if (requiredJob.state.getFinalStatus() != null) {
                 status = RuleStatus.BLOCKED;
                 return true;
-            } else {
+            } else if (requiredJob.state.getStatus().equals(JobStatus.RUNNING)) {
                 try (Socket s = new Socket("localhost", port)) {
                     status = RuleStatus.PASSED;
                     return true;

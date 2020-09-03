@@ -15,8 +15,8 @@ public class JobController {
     @Autowired
     private Pipeline pipeline;
 
-    @Autowired
-    private JobScheduler jobScheduler;
+    //@Autowired
+    //private JobScheduler jobScheduler;
 
     @GetMapping("/jobs")
     public Set<Job.Data> getJobs() {
@@ -28,7 +28,7 @@ public class JobController {
         return pipeline.getJobByName(name).getData();
     }
 
-    @GetMapping("/jobs/{name}/cancel")
+    /*@GetMapping("/jobs/{name}/cancel")
     public Job.Data cancelJob(@PathVariable String name) {
         Job job = pipeline.getJobByName(name);
         jobScheduler.cancel(job);
@@ -37,5 +37,5 @@ public class JobController {
                 return job.getData();
             }
         }
-    }
+    }*/
 }

@@ -6,13 +6,16 @@ public class DockerflowException extends RuntimeException {
 
     public DockerflowException(Throwable e) {
         super(e);
+        Logger.fatal(() -> e.getClass().getName() + " >> " + e.getMessage());
     }
 
     public DockerflowException(String msg) {
         super(msg);
+        Logger.fatal(() -> msg);
     }
 
     public DockerflowException(String msg, Throwable e) {
         super(msg, e);
+        Logger.fatal(() -> msg + ": " + e.getClass().getName() + " >> " + e.getMessage());
     }
 }

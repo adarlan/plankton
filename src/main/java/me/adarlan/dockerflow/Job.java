@@ -1,8 +1,6 @@
 package me.adarlan.dockerflow;
 
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -14,20 +12,21 @@ import lombok.ToString;
 
 @NoArgsConstructor
 @EqualsAndHashCode(of = "name")
-@ToString
+@ToString(of = "name")
 public class Job {
 
     @Getter
     String name;
 
     @Getter
-    Long timeout;
+    Integer scale;
 
-    @Getter
-    TimeUnit timeoutUnit;
+    List<String> variables;
 
     @Getter
     String expression;
+
+    Boolean expressionResult;
 
     @Getter
     Set<Rule> rules;
@@ -42,33 +41,68 @@ public class Job {
     Integer dependencyLevel;
 
     @Getter
-    Set<Job> allDependents = new HashSet<>();
+    Set<Job> allDependents;
 
     @Getter
-    JobStatus finalStatus;
+    Long timeout;
 
     @Getter
-    Instant initialInstant;
+    TimeUnit timeoutUnit;
 
-    @Getter
-    Instant finalInstant;
+    public final List<String> logs = new ArrayList<>();
 
-    @Getter
-    Integer exitCode;
+    public final State state = new State();
 
-    @Getter
-    JobStatus status;
+    public class State {
+
+        @Getter
+        private JobStatus status;
+
+        @Getter
+        private JobStatus finalStatus;
+
+        @Getter
+        int exitedCount = 0;
+
+        private State() {
+        }
+
+        void increaseExitedCount() {
+            exitedCount++;
+        }
+
+        void set(JobStatus status) {
+            this.status = status;
+            switch (status) {
+                case WAITING:
+                    break;
+                case SCHEDULED:
+                    break;
+                case RUNNING:
+                    break;
+                case DISABLED:
+                case BLOCKED:
+                case INTERRUPTED:
+                case CANCELED:
+                case FAILED:
+                case TIMEOUT:
+                case FINISHED:
+                    this.finalStatus = status;
+            }
+            Logger.info(() -> Job.this.name + ".status: " + this.status);
+        }
+    }
 
     @lombok.Data
     public static class Data {
         String name;
-        String timeout;
+        Integer scale;
+        List<String> variables = new ArrayList<>();
         String expression;
+        Boolean expressionResult;
+        String timeout;
         String status;
         String finalStatus;
-        Instant initialInstant;
-        Instant finalInstant;
-        Integer exitCode;
         List<Rule.Data> rules = new ArrayList<>();
         List<String> allDependents = new ArrayList<>();
         List<String> allDependencies = new ArrayList<>();
@@ -79,17 +113,17 @@ public class Job {
     public Data getData() {
         Data data = new Data();
         data.name = this.name;
-        data.timeout = this.timeout.toString() + this.timeoutUnit.toString().substring(0, 1).toLowerCase();
+        data.scale = this.scale;
+        this.variables.forEach(data.variables::add);
         data.expression = this.expression;
-        data.status = this.status.toString().toLowerCase();
-        data.finalStatus = this.finalStatus == null ? null : this.finalStatus.toString().toLowerCase();
-        data.initialInstant = this.initialInstant;
-        data.finalInstant = this.finalInstant;
-        data.exitCode = this.exitCode;
+        data.expressionResult = this.expressionResult;
+        data.timeout = this.timeout.toString() + this.timeoutUnit.toString().substring(0, 1).toLowerCase();
+        data.status = this.state.status.toString().toLowerCase();
+        data.finalStatus = this.state.finalStatus == null ? null : this.state.finalStatus.toString().toLowerCase();
         this.rules.forEach(rule -> data.rules.add(rule.getData()));
+        this.allDependents.forEach(d -> data.allDependents.add(d.name));
         this.allDependencies.forEach(d -> data.allDependencies.add(d.name));
         this.directDependencies.forEach(d -> data.directDependencies.add(d.name));
-        this.allDependents.forEach(d -> data.allDependents.add(d.name));
         data.dependencyLevel = this.dependencyLevel;
         return data;
     }
