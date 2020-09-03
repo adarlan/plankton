@@ -2,6 +2,7 @@ package me.adarlan.dockerflow;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -21,6 +22,7 @@ public class DockerflowRunner implements CommandLineRunner {
 
     private boolean thereAreJobsToSchedule = true;
     private boolean thereAreJobsToRun = true;
+    private boolean thereAreActiveJobs = true;
 
     private Set<Thread> startJob_threads = new HashSet<>();
     private Set<Thread> runContainer_threads = new HashSet<>();
@@ -32,6 +34,28 @@ public class DockerflowRunner implements CommandLineRunner {
         setDefaultUncaughtExceptionHandler();
         new Thread(this::scheduleJobs).start();
         new Thread(this::startJobs).start();
+        new Thread(this::checkPipelineExit).start();
+    }
+
+    private void checkPipelineExit() {
+        Logger.trace(() -> "DockerflowRunner.checkPipelineExit()");
+        while (thereAreActiveJobs) {
+            Set<Job> activeJobs;
+            synchronized (pipeline) {
+                activeJobs = pipeline.getJobs().stream().filter(job -> job.state.getFinalStatus() == null)
+                        .collect(Collectors.toSet());
+            }
+            Logger.debug(() -> "activeJobs = " + activeJobs);
+            if (activeJobs.isEmpty()) {
+                thereAreActiveJobs = false;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        Logger.info(() -> "All jobs have exited!");
     }
 
     private void setDefaultUncaughtExceptionHandler() {
