@@ -1,74 +1,45 @@
 package me.adarlan.dockerflow.bash;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import lombok.Getter;
+import java.util.function.Consumer;
 
 public class BashScript {
 
-    List<String> commands = new ArrayList<>();
+    private String name;
 
-    List<String> variables = new ArrayList<>();
+    private List<String> commands = new ArrayList<>();
 
-    String outputFilePath;
+    private List<String> variables = new ArrayList<>();
 
-    String errorFilePath;
+    private Process process;
 
-    Long timeoutLimit;
+    private Integer exitCode;
 
-    TimeUnit timeoutUnit;
+    private Consumer<String> forEachOutput;
 
-    public Process process;
+    private Consumer<String> forEachError;
 
-    @Getter
-    Integer exitCode;
-
-    Runnable onStart;
-
-    Runnable onCancel;
-
-    Runnable onSuccess;
-
-    Runnable onFailure;
-
-    Runnable onTimeout;
-
-    Runnable onInterruption;
-
-    Runnable onExit;
-
-    boolean cancel = false;
-
-    boolean exited = false;
-
-    public boolean exitedBySuccess = false;
-
-    boolean exitedByCancel = false;
-
-    public boolean exitedByFailure = false;
-
-    public boolean exitedByTimeout = false;
-
-    public boolean exitedByInterruption = false;
-
-    public BashScript() {
+    public BashScript(String name) {
+        this.name = name;
         this.commands.add("#!/bin/bash");
         this.commands.add("set -e");
     }
 
-    public BashScript(String command) {
-        this();
-        this.commands.add(command);
-    }
-
-    public BashScript add(String command) {
+    public BashScript command(String command) {
         this.commands.add(command);
         return this;
     }
 
-    public BashScript add(List<String> commands) {
+    public BashScript commands(List<String> commands) {
         this.commands.addAll(commands);
         return this;
     }
@@ -83,54 +54,95 @@ public class BashScript {
         return this;
     }
 
-    public BashScript outputFilePath(String outputFilePath) {
-        this.outputFilePath = outputFilePath;
+    public BashScript forEachOutput(Consumer<String> forEachOutput) {
+        this.forEachOutput = forEachOutput;
         return this;
     }
 
-    public BashScript errorFilePath(String errorFilePath) {
-        this.errorFilePath = errorFilePath;
+    public BashScript forEachError(Consumer<String> forEachError) {
+        this.forEachError = forEachError;
         return this;
     }
 
-    public BashScript timeout(Long limit, TimeUnit unit) {
-        this.timeoutLimit = limit;
-        this.timeoutUnit = unit;
+    public BashScript forEachOutputAndError(Consumer<String> forEachOutputAndError) {
+        this.forEachOutput = forEachOutputAndError;
+        this.forEachError = forEachOutputAndError;
         return this;
     }
 
-    public BashScript onStart(Runnable onStart) {
-        this.onStart = onStart;
+    public BashScript run() throws InterruptedException {
+        ProcessBuilder processBuilder = createProcessBuilder();
+        try {
+            process = processBuilder.start();
+        } catch (IOException e) {
+            throw new BashScriptException("Unable to start the process of script: " + name, e);
+        }
+        followOutput();
+        followError();
+        exitCode = process.waitFor();
         return this;
     }
 
-    public BashScript onCancel(Runnable onCancel) {
-        this.onCancel = onCancel;
-        return this;
+    public int getExitCode() {
+        if (exitCode == null) {
+            throw new BashScriptException("The script was not run");
+        }
+        return exitCode;
     }
 
-    public BashScript onSuccess(Runnable onSuccess) {
-        this.onSuccess = onSuccess;
-        return this;
+    private ProcessBuilder createProcessBuilder() {
+        File tempScript;
+        try {
+            tempScript = File.createTempFile(name, null);
+        } catch (final IOException e) {
+            throw new BashScriptException("Unable to create the bash script file of script: " + name, e);
+        }
+        try (Writer streamWriter = new OutputStreamWriter(new FileOutputStream(tempScript));) {
+            final PrintWriter printWriter = new PrintWriter(streamWriter);
+            commands.forEach(printWriter::println);
+            printWriter.close();
+            final ProcessBuilder processBuilder = new ProcessBuilder("bash", tempScript.toString());
+            variables.forEach(keyValue -> {
+                int separatorIndex = keyValue.indexOf("=");
+                String key = keyValue.substring(0, separatorIndex).trim();
+                String value = keyValue.substring(separatorIndex + 1).trim();
+                processBuilder.environment().put(key, value);
+            });
+            return processBuilder;
+        } catch (final IOException e) {
+            throw new BashScriptException("Unable to create the process builder of script: " + name, e);
+        }
     }
 
-    public BashScript onFailure(Runnable onFailure) {
-        this.onFailure = onFailure;
-        return this;
+    private void followOutput() {
+        if (forEachOutput != null) {
+            new Thread(() -> {
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                try {
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        forEachOutput.accept(line);
+                    }
+                } catch (IOException e) {
+                    throw new BashScriptException("Unable to follow the output stream of script: " + name, e);
+                }
+            }).start();
+        }
     }
 
-    public BashScript onTimeout(Runnable onTimeout) {
-        this.onTimeout = onTimeout;
-        return this;
-    }
-
-    public BashScript onInterruption(Runnable onInterruption) {
-        this.onInterruption = onInterruption;
-        return this;
-    }
-
-    public BashScript onExit(Runnable onExit) {
-        this.onExit = onExit;
-        return this;
+    private void followError() {
+        if (forEachError != null) {
+            new Thread(() -> {
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                try {
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        forEachError.accept(line);
+                    }
+                } catch (IOException e) {
+                    throw new BashScriptException("Unable to follow the error stream of script: " + name, e);
+                }
+            }).start();
+        }
     }
 }
