@@ -1,5 +1,0 @@
-#!/bin/bash
-set -eu
-
-#cp docker-compose.yml .dockerflow/docker-compose.yml
-java -jar /dockerflow/run.jar ${@}
