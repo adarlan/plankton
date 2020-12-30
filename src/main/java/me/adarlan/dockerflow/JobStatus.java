@@ -1,5 +1,0 @@
-package me.adarlan.dockerflow;
-
-public enum JobStatus {
-    DISABLED, WAITING, BLOCKED, SCHEDULED, RUNNING, FAILED, INTERRUPTED, CANCELED, TIMEOUT, FINISHED;
-}
