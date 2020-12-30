@@ -15,7 +15,7 @@ services:
       BAR: "0 1 2 3 4 5 6 7 8 9"
 
   mysql:
-    image: foo-service
+    build: foo-service
     ports:
       - 85:80
     labels:
@@ -23,7 +23,7 @@ services:
       dockerflow.stop.when: dependents-exited    # stop when all dependent jobs have exited
 
   adminer:
-    image: foo-service
+    build: foo-service
     ports:
       - 86:80
     labels:
@@ -33,7 +33,7 @@ services:
       dockerflow.timeout: 1
 
   download:
-    image: foo-task
+    build: foo-task
     command: --time 60 --file /flags/downloaded
     volumes:
       - ./flags:/flags
@@ -44,7 +44,6 @@ services:
       dockerflow.enable.if: '[ oi = oi ]'
 
   save-the-whales:
-    dockerflow.start.when: manual  # start when human call 'start' action, which is enabled if status='rules-passed' (something between waitind and scheduled)
     image: ubuntu
     entrypoint:
       - /bin/bash
@@ -53,16 +52,17 @@ services:
         echo hello
         echo goodbye
     labels:
+      dockerflow.start.when: manual  # start when human call 'start' action, which is enabled if status='rules-passed' (something between waitind and scheduled)
       dockerflow.timeout: 1
       dockerflow.enable.if: '[ 0 = 1 ]'
 
   import:
-    image: foo-task
+    build: foo-task
     command: --time 45
     volumes:
       - ./flags:/flags
     labels:
-      dockerflow.timeout: 60
+      dockerflow.timeout: 2
       dockerflow.enable.if: '[ 0 = 1 ] && [ "$$GIT_REF" = master ] || [ ! "$${BAR:0:4}" = "bar-" ]'
       dockerflow.wait.success.of: download
       dockerflow.wait.ports: 85
