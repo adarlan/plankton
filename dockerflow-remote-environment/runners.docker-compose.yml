@@ -1,0 +1,17 @@
+version: '3.7'
+
+services:
+
+  runner-1:
+    image: dockerflow:remote-runner
+    ports:
+      - 1329:1329
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - $HOME/.dockerflow/runner-1:/working_dir
+      - $HOME/Desktop/dockerflow-test:/test
+    working_dir: /working_dir
+    environment:
+      RUNNER_ID: runner-1
+      RUNNER_EXTERNAL_DIRECTORY: $HOME/.dockerflow/runner-1
+      RUNNER_INTERNAL_DIRECTORY: /working_dir
