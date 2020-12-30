@@ -1,8 +1,51 @@
-# Dockerflow Runner
+# Dockerflow
 
 Dockerflow is a tool that runs Docker containers in a workflow.
 It can be used to make CI/CD pipelines or any kind of workflow
-you mind using a Docker Compose file.
+you mind using a Docker Compose configuration file.
+
+## Getting started
+
+If you already know the Docker Compose file format,
+Dockerflow is quite simple.
+
+All you need to know is a few labels to use in you Docker Compose file.
+
+Example:
+
+```yml
+example...
+```
+
+[See more examples...](dockerflow-examples)
+
+## Labels
+
+* `dockerflow.start.when`
+* `dockerflow.stop.when`
+* `dockerflow.timeout`
+* `dockerflow.enable.if`
+* `dockerflow.wait.success.of`
+* `dockerflow.wait.ports`
+* `dockerflow.wait.files`
+
+## Install
+
+```shell
+cd core
+mvn install
+cd ..
+docker build -t dockerflow:mvn -f mvn.Dockerfile ~/.m2
+docker build -t dockerflow:local -f on-local/Dockerfile on-local
+```
+
+Na versão cloud, o usuário pode cadastrar arquivos e definir expressões para determinar em quais
+situações cada arquivo fica disponível.
+Esses arquivos serão simplesmente colocados na workspace.
+Podem ser arquivos de variáveis ou qualquer outro tipo de arquivo.
+Para usar os arquivos, basta referenciá-los no docker-compose.
+Cada arquivo tem um path (relativo à workspace), não precisa ser necessariamente na raiz.
+Esses arquivos substituem os da workspace, se houver.
 
 ## Test
 
