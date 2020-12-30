@@ -1,9 +1,0 @@
-#!/bin/bash
-set -eu
-
-curl -s \
--H "Content-Type: application/json" \
--X GET http://localhost:1329/jobs \
--o jobs.json
-
-jq --color-output . jobs.json
