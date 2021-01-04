@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class DockerflowApplication {
 
 	public static void main(String[] args) {
-		Logger.setLevel(Logger.Level.FOLLOW);
+		Logger.setLevel(Logger.Level.DEBUG);
 		SpringApplication.run(DockerflowApplication.class, args);
 	}
 }
