@@ -74,7 +74,7 @@ public class DockerCompose {
 
     private void initializeFile() {
         BashScript script = new BashScript("initializeFile");
-        script.command(BASE_COMMAND + " --file " + originalFile + " config >> " + file);
+        script.command(BASE_COMMAND + " --file " + originalFile + " config > " + file);
         script.command("cat " + file);
         script.runSuccessfully();
     }
