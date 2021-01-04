@@ -22,6 +22,9 @@ public class DockerflowBeans {
     @Value("${dockerflow.metadata}")
     private String metadata;
 
+    @Value("${dockerflow.docker-host}")
+    private String dockerHost;
+
     @Bean
     public DockerflowConfig config() {
         DockerflowConfig config = new DockerflowConfig();
@@ -30,6 +33,7 @@ public class DockerflowBeans {
         config.setWorkspace(workspace);
         //config.setEnvironment(environment);
         config.setMetadata(metadata);
+        config.setDockerHost(dockerHost);
         return config;
     }
 
