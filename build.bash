@@ -3,9 +3,9 @@ set -ex
 
 MAVEN_TAG="3.6-jdk-11"
 
-CORE_LIBRARY="dockerflow-core-library"
-LOCAL_RUNNER="dockerflow-local-runner"
-REMOTE_RUNNER="dockerflow-remote-runner"
+CORE_LIBRARY="core-library"
+LOCAL_RUNNER="local-runner"
+REMOTE_RUNNER="remote-runner"
 
 # build and install core-library jar
 docker run -it --rm \

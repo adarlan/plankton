@@ -1,23 +1,23 @@
-dockerflow-examples/*/.dockerflow/
+examples/*/.dockerflow/
 
 .vscode/
 
-dockerflow-core-library/target/
-dockerflow-local-runner/target/
-dockerflow-remote-runner/target/
+core-library/target/
+local-runner/target/
+remote-runner/target/
 
-dockerflow-core-library/.settings/
-dockerflow-local-runner/.settings/
-dockerflow-remote-runner/.settings/
+core-library/.settings/
+local-runner/.settings/
+remote-runner/.settings/
 
-dockerflow-core-library/.factorypath
-dockerflow-local-runner/.factorypath
-dockerflow-remote-runner/.factorypath
+core-library/.factorypath
+local-runner/.factorypath
+remote-runner/.factorypath
 
-dockerflow-core-library/.classpath
-dockerflow-local-runner/.classpath
-dockerflow-remote-runner/.classpath
+core-library/.classpath
+local-runner/.classpath
+remote-runner/.classpath
 
-dockerflow-core-library/.project
-dockerflow-local-runner/.project
-dockerflow-remote-runner/.project
+core-library/.project
+local-runner/.project
+remote-runner/.project
