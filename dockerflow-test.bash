@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-TEST_APPLICATION="demo-application-1"
+TEST_APPLICATION="demo-1"
 
 # run the local-runner container
 [ $RUNNER = "local" ] && docker run -it --rm \
