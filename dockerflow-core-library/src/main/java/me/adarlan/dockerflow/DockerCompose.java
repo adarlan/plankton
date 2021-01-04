@@ -36,7 +36,6 @@ public class DockerCompose {
     @Getter
     private final String metadata;
 
-    private final String dockerHost;
     private final String dockerHostVariable;
     private static final String BASE_COMMAND = "docker-compose";
     private String options;
@@ -53,8 +52,11 @@ public class DockerCompose {
         this.originalFile = config.getFile();
         this.metadata = config.getMetadata();
         this.file = metadata + "/docker-compose.yml";
-        this.dockerHost = config.getDockerHost();
-        this.dockerHostVariable = "DOCKER_HOST=" + config.getDockerHost();
+        if (config.getDockerHost() == null) {
+            this.dockerHostVariable = "DOCKER_HOST=unix:///var/run/docker.sock";
+        } else {
+            this.dockerHostVariable = "DOCKER_HOST=" + config.getDockerHost();
+        }
         this.initializeMetadata();
         this.initializeFile();
         this.initializeOptions();
@@ -80,7 +82,6 @@ public class DockerCompose {
     private void initializeOptions() {
         List<String> list = new ArrayList<>();
         list.add("--no-ansi");
-        list.add("--host " + dockerHost);
         list.add("--project-name " + projectName);
         list.add("--file " + file);
         list.add("--project-directory " + projectDirectory);
@@ -89,6 +90,7 @@ public class DockerCompose {
 
     private void prune() {
         BashScript script = new BashScript("prune");
+        script.env(dockerHostVariable);
         script.command(BASE_COMMAND + " " + options + " down --volumes --remove-orphans");
         script.runSuccessfully();
     }
@@ -122,6 +124,7 @@ public class DockerCompose {
     public boolean buildImage(Job job) {
         final BashScript script = new BashScript("buildImage_" + job.getName());
         final String createOptions = ""; // TODO --force-rm --no-cache --pull --memory MEM
+        script.env(dockerHostVariable);
         script.command(BASE_COMMAND + " " + options + " build " + createOptions + " " + job.getName());
         script.forEachOutputAndError(line -> logger.log(job, line));
         script.run();
@@ -130,6 +133,7 @@ public class DockerCompose {
 
     public boolean pullImage(Job job) {
         final BashScript script = new BashScript("pullImage_" + job.getName());
+        script.env(dockerHostVariable);
         script.command(BASE_COMMAND + " " + options + " pull " + job.getName());
         script.forEachOutputAndError(line -> logger.log(job, line));
         script.run();
@@ -139,6 +143,7 @@ public class DockerCompose {
     public boolean createContainers(Job job) {
         final BashScript script = new BashScript("createContainers_" + job.getName());
         final String upOptions = "--no-start --scale " + job.getName() + "=" + job.getScale();
+        script.env(dockerHostVariable);
         script.command(BASE_COMMAND + " " + options + " up " + upOptions + " " + job.getName());
         script.forEachOutputAndError(line -> logger.log(job, line));
         script.run();
