@@ -17,7 +17,7 @@ public class DockerflowApplication {
     private static String runnerDirectoryOnRunner;
 
     private static String customerId = null;
-    private static String dindVolumeName;
+    private static String sandboxVolumeName;
 
     private static String pipelineId;
     private static String pipelineDirectoryOnHost;
@@ -25,17 +25,17 @@ public class DockerflowApplication {
     private static String metadataDirectoryOnHost;
     private static String metadataDirectoryOnRunner;
 
-    private static String dindNetworkName;
-    private static String dindContainerName;
+    private static String sandboxNetworkName;
+    private static String sandboxContainerName;
 
     private static String workspaceDirectoryOnHost;
     private static String workspaceDirectoryOnRunner;
-    private static String workspaceDirectoryOnDind;
+    private static String workspaceDirectoryOnSandbox;
     private static String secretsDirectoryOnHost;
     private static String secretsDirectoryOnRunner;
-    private static String secretsDirectoryOnDind;
+    private static String secretsDirectoryOnSandbox;
 
-    private static Thread runDindContainer;
+    private static Thread runSandboxContainer;
 
     private static String gitUrl;
     private static String dockerflowFile;
@@ -51,8 +51,8 @@ public class DockerflowApplication {
 
         initializeCustomerId();
         if (customerId != null) {
-            dindVolumeName = runnerId + "_" + customerId;
-            createDindVolume();
+            sandboxVolumeName = runnerId + "_" + customerId;
+            createSandboxVolume();
         }
 
         initializePipelineId();
@@ -62,32 +62,32 @@ public class DockerflowApplication {
         metadataDirectoryOnHost = pipelineDirectoryOnHost + "/metadata";
         metadataDirectoryOnRunner = pipelineDirectoryOnRunner + "/metadata";
 
-        dindNetworkName = runnerId + "_" + pipelineId;
-        dindContainerName = runnerId + "_" + pipelineId;
+        sandboxNetworkName = runnerId + "_" + pipelineId;
+        sandboxContainerName = runnerId + "_" + pipelineId;
 
         String slashWorkspace = "/workspace";
         workspaceDirectoryOnHost = pipelineDirectoryOnHost + slashWorkspace;
         workspaceDirectoryOnRunner = pipelineDirectoryOnRunner + slashWorkspace;
-        workspaceDirectoryOnDind = slashWorkspace;
+        workspaceDirectoryOnSandbox = slashWorkspace;
 
         String slashSecrets = "/secrets";
         secretsDirectoryOnHost = pipelineDirectoryOnHost + slashSecrets;
         secretsDirectoryOnRunner = pipelineDirectoryOnRunner + slashSecrets;
-        secretsDirectoryOnDind = slashSecrets;
+        secretsDirectoryOnSandbox = slashSecrets;
 
         cleanContainers();
         cleanNetworks();
 
         createDirectories();
-        createDindNetwork();
-        connectDindNetwork();
-        inspectDindNetwork();
-        runDindContainer();
-        checkDindContainer();
+        createSandboxNetwork();
+        connectSandboxNetwork();
+        inspectSandboxNetwork();
+        runSandboxContainer();
+        checkSandboxContainer();
         if (customerId != null) {
-            cleanDindContainer();
+            cleanSandboxContainer();
         }
-        inspectDindNetwork();
+        inspectSandboxNetwork();
 
         gitUrl = "/test";
         dockerflowFile = "foo.docker-compose.yml";
@@ -95,16 +95,16 @@ public class DockerflowApplication {
         makeSecrets();
         runPipeline();
 
-        stopDindContainer();
-        // disconnectDindNetwork();
-        // removeDindNetwork();
+        stopSandboxContainer();
+        // disconnectSandboxNetwork();
+        // removeSandboxNetwork();
     }
 
     private static void addShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                stopDindContainer();
+                stopSandboxContainer();
                 cleanContainers();
                 cleanNetworks();
             }
@@ -117,10 +117,10 @@ public class DockerflowApplication {
         customerId = "public";
     }
 
-    private static void createDindVolume() {
+    private static void createSandboxVolume() {
         // it will create only once
-        BashScript script = new BashScript("createDindVolume");
-        script.command("docker volume create " + dindVolumeName);
+        BashScript script = new BashScript("createSandboxVolume");
+        script.command("docker volume create " + sandboxVolumeName);
         script.runSuccessfully();
         // TODO Esse volume tem que ser compartilhado entre os workers,
         // pois não se sabe em qual worker o runner vai rodar cada pipeline.
@@ -174,75 +174,75 @@ public class DockerflowApplication {
         script.runSuccessfully();
     }
 
-    private static void createDindNetwork() {
-        BashScript script = new BashScript("createDindNetwork");
-        script.command("docker network create --driver bridge --attachable " + dindNetworkName);
+    private static void createSandboxNetwork() {
+        BashScript script = new BashScript("createSandboxNetwork");
+        script.command("docker network create --driver bridge --attachable " + sandboxNetworkName);
         script.runSuccessfully();
     }
 
-    private static void connectDindNetwork() {
-        BashScript script = new BashScript("connectDindNetwork");
-        script.command("docker network connect " + dindNetworkName + " " + pipelineId);
+    private static void connectSandboxNetwork() {
+        BashScript script = new BashScript("connectSandboxNetwork");
+        script.command("docker network connect " + sandboxNetworkName + " " + pipelineId);
         script.runSuccessfully();
     }
 
-    private static void inspectDindNetwork() {
-        BashScript script = new BashScript("inspectDindNetwork");
-        script.command("docker network inspect " + dindNetworkName);
+    private static void inspectSandboxNetwork() {
+        BashScript script = new BashScript("inspectSandboxNetwork");
+        script.command("docker network inspect " + sandboxNetworkName);
         script.runSuccessfully();
     }
 
-    private static void runDindContainer() {
-        runDindContainer = new RunDindContainer();
-        runDindContainer.start();
+    private static void runSandboxContainer() {
+        runSandboxContainer = new RunSandboxContainer();
+        runSandboxContainer.start();
     }
 
-    private static class RunDindContainer extends Thread {
-        private RunDindContainer() {
+    private static class RunSandboxContainer extends Thread {
+        private RunSandboxContainer() {
         }
 
         @Override
         public void run() {
-            BashScript script = new BashScript("runDindContainer");
+            BashScript script = new BashScript("runSandboxContainer");
             List<String> runOptions = new ArrayList<>();
             runOptions.add("--runtime sysbox-runc");
-            runOptions.add("--name " + dindContainerName);
+            runOptions.add("--name " + sandboxContainerName);
             runOptions.add("--tty");
             runOptions.add("--rm");
-            runOptions.add("--network " + dindNetworkName);
-            runOptions.add("-v " + workspaceDirectoryOnHost + ":" + workspaceDirectoryOnDind);
-            runOptions.add("-v " + secretsDirectoryOnHost + ":" + secretsDirectoryOnDind);
+            runOptions.add("--network " + sandboxNetworkName);
+            runOptions.add("-v " + workspaceDirectoryOnHost + ":" + workspaceDirectoryOnSandbox);
+            runOptions.add("-v " + secretsDirectoryOnHost + ":" + secretsDirectoryOnSandbox);
             if (customerId != null) {
-                runOptions.add("--mount source=" + dindVolumeName + ",target=/var/lib/docker");
+                runOptions.add("--mount source=" + sandboxVolumeName + ",target=/var/lib/docker");
             }
             List<String> dockerdOptions = new ArrayList<>();
             dockerdOptions.add("-H tcp://0.0.0.0:2375");
             dockerdOptions.add("-H unix:///var/run/docker.sock");
-            script.command("docker run " + runOptions.stream().collect(Collectors.joining(" ")) + " dockerflow:dind "
+            script.command("docker run " + runOptions.stream().collect(Collectors.joining(" ")) + " dockerflow:remote-runner-sandbox "
                     + dockerdOptions.stream().collect(Collectors.joining(" ")));
             script.run();
             if (script.getExitCode() != 0) {
-                throw new DockerflowException("Unable to runDindContainer");
+                throw new DockerflowException("Unable to runSandboxContainer");
             }
         }
     }
 
-    private static void checkDindContainer() throws InterruptedException {
-        boolean dindReady = false;
-        while (!dindReady) {
-            try (Socket s = new Socket(dindContainerName, 2375)) {
-                dindReady = true;
-                logger.debug(() -> "Dind container is ready");
+    private static void checkSandboxContainer() throws InterruptedException {
+        boolean sandboxReady = false;
+        while (!sandboxReady) {
+            try (Socket s = new Socket(sandboxContainerName, 2375)) {
+                sandboxReady = true;
+                logger.debug(() -> "Sandbox container is ready");
             } catch (IOException ex) {
-                logger.debug(() -> "Waiting for dind container to be ready");
+                logger.debug(() -> "Waiting for sandbox container to be ready");
                 Thread.sleep(1000);
             }
         }
     }
 
-    private static void cleanDindContainer() {
-        BashScript script = new BashScript("cleanDindContainer");
-        script.env("DOCKER_HOST=tcp://" + dindContainerName + ":2375");
+    private static void cleanSandboxContainer() {
+        BashScript script = new BashScript("cleanSandboxContainer");
+        script.env("DOCKER_HOST=tcp://" + sandboxContainerName + ":2375");
         script.command("while Containers=\"$(docker ps -a --format {{.Names}} | grep " + runnerId + "_" + ")\"; do");
         script.command("  docker stop $Containers");
         script.command("  docker container prune -f");
@@ -273,7 +273,7 @@ public class DockerflowApplication {
         config.setFile(workspaceDirectoryOnRunner + "/" + dockerflowFile);
         config.setWorkspace(workspaceDirectoryOnRunner);
         config.setMetadata(metadataDirectoryOnRunner);
-        config.setDockerHost("tcp://" + dindContainerName + ":2375");
+        config.setDockerHost("tcp://" + sandboxContainerName + ":2375");
         DockerCompose dockerCompose = new DockerCompose(config);
         Pipeline pipeline = new Pipeline(dockerCompose);
         pipeline.run();
@@ -281,9 +281,9 @@ public class DockerflowApplication {
 
     // ==========
 
-    private static void stopDindContainer() {
-        BashScript script = new BashScript("stopDindContainer");
-        script.command("docker stop " + dindContainerName);
+    private static void stopSandboxContainer() {
+        BashScript script = new BashScript("stopSandboxContainer");
+        script.command("docker stop " + sandboxContainerName);
         script.runSuccessfully();
     }
 }
