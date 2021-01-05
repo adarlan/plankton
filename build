@@ -2,40 +2,44 @@
 set -ex
 
 MAVEN_TAG="3.6-jdk-11"
+BASE_DIR="$(pwd)"
 
-# build and install core-library jar
+cd $BASE_DIR/core
 docker run -it --rm \
   -u $(id -u $USER):$(id -g $USER) \
   -v /etc/passwd:/etc/passwd:ro \
   -v $HOME/.m2/repository:$HOME/.m2/repository \
-  -v $PWD/core-library:/workspace \
+  -v $PWD:/workspace \
   -w /workspace \
   --entrypoint "" \
   maven:$MAVEN_TAG \
   mvn install
 
-# build local-runner jar
+cd $BASE_DIR/local-runner
 docker run -it --rm \
   -u $(id -u $USER):$(id -g $USER) \
   -v /etc/passwd:/etc/passwd:ro \
   -v $HOME/.m2/repository:$HOME/.m2/repository \
-  -v $PWD/local-runner:/workspace \
+  -v $PWD:/workspace \
   -w /workspace \
   --entrypoint "" \
   maven:$MAVEN_TAG \
   mvn package
 
-# build remote-runner jar
+cd $BASE_DIR/remote-runner
 docker run -it --rm \
   -u $(id -u $USER):$(id -g $USER) \
   -v /etc/passwd:/etc/passwd:ro \
   -v $HOME/.m2/repository:$HOME/.m2/repository \
-  -v $PWD/remote-runner:/workspace \
+  -v $PWD:/workspace \
   -w /workspace \
   --entrypoint "" \
   maven:$MAVEN_TAG \
   mvn package
 
+cd $BASE_DIR/local-runner
 docker build -t dockerflow:local-runner local-runner
-docker build -t dockerflow:remote-runner remote-runner
-docker build -t dockerflow:remote-runner-sandbox remote-runner-sandbox
+
+cd $BASE_DIR/remote-runner
+docker build -t dockerflow:remote-runner .
+docker build -t dockerflow:remote-runner-sandbox -f sandbox.Dockerfile .
