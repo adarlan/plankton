@@ -4,7 +4,7 @@ Dockerflow is a tool that runs Docker containers in a workflow.
 It can be used to make CI/CD pipelines using a Docker Compose configuration file.
 
 If you already know the Docker Compose file format, Dockerflow is quite simple.
-All you need to know are some labels to use in your Docker Compose file.
+All you need to learn are a few labels to use in your Docker Compose file.
 
 ## System requirements
 
