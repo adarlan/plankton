@@ -1,14 +1,12 @@
 # Dockerflow
 
 Dockerflow is a tool that runs Docker containers in a workflow.
-It can be used to make CI/CD pipelines or any kind of workflow
-you mind using a Docker Compose configuration file.
+It can be used to make CI/CD pipelines using a Docker Compose configuration file.
 
-If you already know Docker and the Docker Compose file format,
-Dockerflow is quite simple.
-All you need to know is a few labels to use in your Docker Compose file.
+If you already know the Docker Compose file format, Dockerflow is quite simple.
+All you need to know are some labels to use in your Docker Compose file.
 
-## Requirements
+## System requirements
 
 * Docker (version ???)
 
@@ -21,8 +19,6 @@ with the following content:
 ...
 ```
 
-> The labels used here means that...
-
 Run with Docker:
 
 ```shell
@@ -31,9 +27,7 @@ docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.s
 
 Track in your browser: [http://localhost:1329](http://localhost:1329)
 
-[See more examples...](examples)
-
-## Labels
+## Label reference
 
 * `dockerflow.timeout`
 * `dockerflow.enable.if`
@@ -42,7 +36,7 @@ Track in your browser: [http://localhost:1329](http://localhost:1329)
 * `dockerflow.wait.ports`
 * `dockerflow.wait.files`
 
-## Arguments
+## Argument reference
 
 * `--dockerflow.name`
 * `--dockerflow.file`
