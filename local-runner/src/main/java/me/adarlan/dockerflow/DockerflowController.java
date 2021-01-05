@@ -1,5 +1,6 @@
 package me.adarlan.dockerflow;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,13 +10,21 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import me.adarlan.dockerflow.data.DockerflowData;
+import me.adarlan.dockerflow.data.Job;
+
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/api")
 public class DockerflowController {
 
     @Autowired
-    private Pipeline pipeline;
+    DockerflowData dockerflowData;
+
+    @GetMapping("/jobs")
+    public List<Job> getJobs() {
+        return dockerflowData.getJobs();
+    }
 
     /*
      * @GetMapping("/jobs") public Set<Job.Data> getJobs() { return

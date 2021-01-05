@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import me.adarlan.dockerflow.data.DockerflowData;
+
 @Configuration
 public class DockerflowBeans {
 
@@ -16,8 +18,8 @@ public class DockerflowBeans {
     @Value("${dockerflow.workspace}")
     private String workspace;
 
-    //@Value("${dockerflow.environment}")
-    //private String environment;
+    // @Value("${dockerflow.environment}")
+    // private String environment;
 
     @Value("${dockerflow.metadata}")
     private String metadata;
@@ -31,7 +33,7 @@ public class DockerflowBeans {
         config.setName(name);
         config.setFile(file);
         config.setWorkspace(workspace);
-        //config.setEnvironment(environment);
+        // config.setEnvironment(environment);
         config.setMetadata(metadata);
         config.setDockerHost(dockerHost);
         return config;
@@ -45,5 +47,10 @@ public class DockerflowBeans {
     @Bean
     public Pipeline pipeline() {
         return new Pipeline(dockerCompose());
+    }
+
+    @Bean
+    DockerflowData dockerflowData() {
+        return new DockerflowData(pipeline());
     }
 }
