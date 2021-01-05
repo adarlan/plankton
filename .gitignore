@@ -2,22 +2,22 @@ examples/*/.dockerflow/
 
 .vscode/
 
-core-library/target/
+core/target/
 local-runner/target/
 remote-runner/target/
 
-core-library/.settings/
+core/.settings/
 local-runner/.settings/
 remote-runner/.settings/
 
-core-library/.factorypath
+core/.factorypath
 local-runner/.factorypath
 remote-runner/.factorypath
 
-core-library/.classpath
+core/.classpath
 local-runner/.classpath
 remote-runner/.classpath
 
-core-library/.project
+core/.project
 local-runner/.project
 remote-runner/.project
