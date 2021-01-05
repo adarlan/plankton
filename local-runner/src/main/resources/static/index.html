@@ -119,7 +119,7 @@
     </div>
 
     <script>
-        const url = "http://localhost:1329"
+        const apiUrl = "http://localhost:1329/api"
 
         let jobs;
         let stages;
@@ -129,7 +129,7 @@
         setInterval(refresh, 1000);
 
         async function refresh() {
-            const response = await fetch(url + "/jobs");
+            const response = await fetch(apiUrl + "/jobs");
             jobs = await response.json();
             console.log(jobs);
             loadStages();
