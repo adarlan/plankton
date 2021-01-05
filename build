@@ -38,7 +38,7 @@ docker run -it --rm \
   mvn package
 
 cd $BASE_DIR/local-runner
-docker build -t dockerflow:local-runner local-runner
+docker build -t dockerflow .
 
 cd $BASE_DIR/remote-runner
 docker build -t dockerflow:remote-runner .

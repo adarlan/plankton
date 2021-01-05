@@ -1,12 +1,6 @@
 #!/bin/bash
 set -ex
 
-TEST_APPLICATION="${1}"
+NAME=$1
 
-# run the local-runner container
-docker run -it --rm \
-  -v $PWD/examples/$TEST_APPLICATION:/workspace \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  --network host \
-  dockerflow:local-runner \
-  --dockerflow.name=$TEST_APPLICATION
+docker run -it --rm -v $PWD/examples/$NAME:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host dockerflow --dockerflow.name=$NAME
