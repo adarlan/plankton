@@ -1,4 +1,5 @@
 FROM docker:19.03
+RUN apk update
 RUN apk add bash docker-compose openjdk11-jre
 RUN apk add git curl jq gettext
 
