@@ -1,12 +1,12 @@
-# Dockerflow
+# Plankton
 
-Dockerflow is a tool for running CI/CD pipelines using [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
+Plankton is a tool for running CI/CD pipelines using [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
 
 Some labels can be used to define the rules for pipelines, such as the step order, timeout, expressions to enable or disable operations, among other rules.
 
 ## Try it yourself
 
-Create the file `dockerflow.compose.yaml` with the following content:
+Create the file `plankton.compose.yaml` with the following content:
 
 ```yml
 ...
@@ -15,24 +15,24 @@ Create the file `dockerflow.compose.yaml` with the following content:
 Run using the `docker run` command:
 
 ```shell
-docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host -p 1329:1329 adarlan/dockerflow
+docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host -p 1329:1329 adarlan/plankton
 ```
 
 View the pipeline in your browser: [http://localhost:1329](http://localhost:1329)
 
 ## Label reference
 
-* `dockerflow.timeout`
-* `dockerflow.enable.if`
-* `dockerflow.wait.success.of`
-* `dockerflow.wait.failure.of`
-* `dockerflow.wait.ports`
-* `dockerflow.wait.files`
+* `plankton.timeout`
+* `plankton.enable.if`
+* `plankton.wait.success.of`
+* `plankton.wait.failure.of`
+* `plankton.wait.ports`
+* `plankton.wait.files`
 
 ## Argument reference
 
-* `--dockerflow.name`
-* `--dockerflow.file`
-* `--dockerflow.workspace`
-* `--dockerflow.metadata`
-* `--dockerflow.docker-host`
+* `--plankton.name`
+* `--plankton.file`
+* `--plankton.workspace`
+* `--plankton.metadata`
+* `--plankton.docker-host`

@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>me.adarlan</groupId>
-    <artifactId>dockerflow-remote-runner</artifactId>
+    <artifactId>plankton-remote-runner</artifactId>
     <version>0.1.0</version>
     <packaging>jar</packaging>
 
@@ -10,7 +10,7 @@
 
         <dependency>
             <groupId>me.adarlan</groupId>
-            <artifactId>dockerflow-core</artifactId>
+            <artifactId>plankton-core</artifactId>
             <version>0.1.0</version>
         </dependency>
 
@@ -25,7 +25,7 @@
     </properties>
 
     <build>
-        <finalName>dockerflow-remote-runner</finalName>
+        <finalName>plankton-remote-runner</finalName>
 
         <plugins>
 
@@ -36,7 +36,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>me.adarlan.dockerflow.DockerflowApplication</mainClass>
+                            <mainClass>me.adarlan.plankton.PlanktonApplication</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

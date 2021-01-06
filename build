@@ -38,8 +38,8 @@ docker run -it --rm \
   mvn package
 
 cd $BASE_DIR/local-runner
-docker build -t dockerflow .
+docker build -t plankton .
 
 cd $BASE_DIR/remote-runner
-docker build -t dockerflow:remote-runner .
-docker build -t dockerflow:remote-runner-sandbox -f sandbox.Dockerfile .
+docker build -t plankton:remote-runner .
+docker build -t plankton:remote-runner-sandbox -f sandbox.Dockerfile .

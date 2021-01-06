@@ -1,4 +1,4 @@
-examples/*/.dockerflow/
+examples/*/.plankton/
 
 .vscode/
 

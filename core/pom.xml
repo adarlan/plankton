@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>me.adarlan</groupId>
-    <artifactId>dockerflow-core</artifactId>
+    <artifactId>plankton-core</artifactId>
     <version>0.1.0</version>
     <packaging>jar</packaging>
 

@@ -3,4 +3,4 @@ set -ex
 
 NAME=$1
 
-docker run -it --rm -v $PWD/examples/$NAME:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host dockerflow --dockerflow.name=$NAME
+docker run -it --rm -v $PWD/examples/$NAME:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host plankton --plankton.name=$NAME

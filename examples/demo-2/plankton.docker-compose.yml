@@ -1,0 +1,77 @@
+version: "3.7"
+
+services:
+
+  lambada:
+    image: alpine
+    command: ash -c 'for x in $$FOO; do echo $$x; sleep 1; done'
+    environment:
+      FOO: "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z"
+
+  tango:
+    image: alpine
+    command: ash -c 'for x in $$BAR; do echo $$x; sleep 1; done'
+    environment:
+      BAR: "0 1 2 3 4 5 6 7 8 9"
+
+  mysql:
+    build: foo-service
+    ports:
+      - 85:80
+    labels:
+      plankton.start.when: dependents-waiting  # start when there is at least one direct dependent job waiting
+      plankton.stop.when: dependents-exited    # stop when all dependent jobs have exited
+
+  adminer:
+    build: foo-service
+    ports:
+      - 86:80
+    labels:
+      plankton.start.when: scheduled  # default; start when all rules passed
+      plankton.stop.when: manual      # stop when human call 'stop' action, which is enabled if status='running'
+      plankton.wait.ports: 85
+      plankton.timeout: 1
+
+  download:
+    build: foo-task
+    command: --time 60 --file /flags/downloaded
+    volumes:
+      - ./flags:/flags
+    labels:
+      plankton.start.when: scheduled  # default
+      plankton.stop.when: finished    # defaul; enable 'cancel' action if status = waiting|scheduled|running
+      plankton.timeout: 1
+      plankton.enable.if: '[ oi = oi ]'
+
+  save-the-whales:
+    image: ubuntu
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo hello
+        echo goodbye
+    labels:
+      plankton.start.when: manual  # start when human call 'start' action, which is enabled if status='rules-passed' (something between waitind and scheduled)
+      plankton.timeout: 1
+      plankton.enable.if: '[ 0 = 1 ]'
+
+  import:
+    build: foo-task
+    command: --time 45
+    volumes:
+      - ./flags:/flags
+    labels:
+      plankton.timeout: 2
+      plankton.enable.if: '[ 0 = 1 ] && [ "$$GIT_REF" = master ] || [ ! "$${BAR:0:4}" = "bar-" ]'
+      plankton.wait.success.of: download
+      plankton.wait.ports: 85
+      plankton.wait.files: flags/downloaded
+
+  docker-ls:
+    image: docker
+    command: sh -c 'docker ps'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      plankton.wait.success.of: tango

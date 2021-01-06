@@ -3,5 +3,5 @@ RUN apk update
 RUN apk add bash docker-compose openjdk11-jre
 RUN apk add git curl jq gettext
 
-ENTRYPOINT [ "java", "-jar", "/dockerflow/remote-runner.jar" ]
-COPY target/dockerflow-remote-runner.jar /dockerflow/remote-runner.jar
+ENTRYPOINT [ "java", "-jar", "/plankton/remote-runner.jar" ]
+COPY target/plankton-remote-runner.jar /plankton/remote-runner.jar
