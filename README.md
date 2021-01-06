@@ -12,7 +12,7 @@ Create the file `plankton.compose.yaml` with the following content:
 ...
 ```
 
-Run using the `docker run` command:
+Run the pipeline using the `docker run` command:
 
 ```shell
 docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host -p 1329:1329 adarlan/plankton
