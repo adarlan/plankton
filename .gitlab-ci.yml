@@ -1,0 +1,9 @@
+stages:
+  - BuildCore
+
+BuildCore:
+  stage: BuildCore
+  image: maven:3.6-jdk-11
+  script:
+    - cd core
+    - mvn package
