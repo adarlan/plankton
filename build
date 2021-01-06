@@ -43,3 +43,7 @@ docker build -t plankton .
 cd $BASE_DIR/remote-runner
 docker build -t plankton:remote-runner .
 docker build -t plankton:remote-runner-sandbox -f sandbox.Dockerfile .
+
+docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY_URL
+docker image tag plankton adarlan/plankton
+docker push adarlan/plankton
