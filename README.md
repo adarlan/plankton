@@ -1,8 +1,8 @@
 # Plankton
 
-Plankton is a tool for running CI/CD pipelines using [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
+Plankton is a tool for running Container-Native CI/CD using [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
 
-Some labels can be used to define the rules for pipelines, such as the step order, timeout, expressions to enable or disable operations, among other rules.
+Compose labels can be used to define the rules for pipelines, such as the step order, expressions to enable or disable operations, among other rules.
 
 ## Try it yourself
 
