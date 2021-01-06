@@ -11,7 +11,7 @@ TEST_APPLICATION="demo-1"
   --network host \
   plankton:local-runner \
   --plankton.name=$TEST_APPLICATION \
-  --plankton.file=plankton.docker-compose.yml
+  --plankton.file=plankton.compose.yml
 
 # run the remote-runner container
 [ $RUNNER = "remote" ] && docker run -it --rm \
