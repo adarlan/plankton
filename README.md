@@ -2,7 +2,7 @@
 
 Dockerflow is a tool for running CI/CD pipelines using [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
 
-Some labels can be used to define the rules for pipelines, such as the order of the steps, timeout, expressions to enable or disable tasks, among other rules.
+Some labels can be used to define the rules for pipelines, such as the step order, timeout, expressions to enable or disable operations, among other rules.
 
 ## Try it yourself
 
