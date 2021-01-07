@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Configuration;
 
 import me.adarlan.plankton.DockerCompose;
 import me.adarlan.plankton.PlanktonConfig;
+import me.adarlan.plankton.serializable.PlanktonSerializer;
 import me.adarlan.plankton.Pipeline;
-import me.adarlan.plankton.data.PlanktonData;
 
 @Configuration
 public class PlanktonBeans {
@@ -53,7 +53,7 @@ public class PlanktonBeans {
     }
 
     @Bean
-    PlanktonData planktonData() {
-        return new PlanktonData(pipeline());
+    PlanktonSerializer planktonSerializer() {
+        return new PlanktonSerializer(pipeline());
     }
 }

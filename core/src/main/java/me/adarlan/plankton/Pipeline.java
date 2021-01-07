@@ -150,26 +150,6 @@ public class Pipeline {
     }
 
     /*
-     * private void initializeJobDependencies(Job job) {
-     * initializeJobDependencies(job, new HashSet<>()); }
-     * 
-     * private int initializeJobDependencies(Job job, Set<Job> knownDependents) { if
-     * (job.allDependents == null) { job.allDependents = new HashSet<>(); }
-     * knownDependents.forEach(kd -> job.allDependents.add(kd)); job.allDependencies
-     * = new HashSet<>(); job.directDependencies = new HashSet<>();
-     * job.dependencyLevel = null; if (job.dependencyLevel == null) {
-     * knownDependents.add(job); int maxDepth = -1; for (Rule rule : job.rules) { if
-     * (rule instanceof RuleWithDependency) { Job dependency = ((RuleWithDependency)
-     * rule).getRequiredJob(); if (knownDependents.contains(dependency)) { throw new
-     * PlanktonException("Dependency loop"); } int d =
-     * initializeJobDependencies(dependency, knownDependents); if (d > maxDepth)
-     * maxDepth = d; job.allDependencies.add(dependency);
-     * job.allDependencies.addAll(dependency.allDependencies);
-     * job.directDependencies.add(dependency); } } job.dependencyLevel = maxDepth +
-     * 1; } return job.dependencyLevel; }
-     */
-
-    /*
      * private void initializeJobVariables(Job job) { job.setVariables(new
      * ArrayList<>()); // TODO add all variables in .env (it is Docker (or Docker
      * Compose?) default) // TODO add all variables in SERVICE.env_file // TODO add
@@ -188,7 +168,7 @@ public class Pipeline {
             }
             Thread.sleep(1000);
         }
-        logger.info(() -> "That's All Folks!");
+        logger.info(() -> "Pipeline finished");
         // TODO mostrar resumo... quantos SUCCESS, quantos FAILURE, etc
         // TODO salvar o estado em um arquivo nos metradados
     }

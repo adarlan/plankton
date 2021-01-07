@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import me.adarlan.plankton.data.PlanktonData;
-import me.adarlan.plankton.data.Job;
+import me.adarlan.plankton.serializable.SerializableJob;
+import me.adarlan.plankton.serializable.PlanktonSerializer;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -19,11 +19,11 @@ import me.adarlan.plankton.data.Job;
 public class PlanktonController {
 
     @Autowired
-    PlanktonData planktonData;
+    PlanktonSerializer planktonSerializer;
 
     @GetMapping("/jobs")
-    public List<Job> getJobs() {
-        return planktonData.getJobs();
+    public List<SerializableJob> getJobs() {
+        return planktonSerializer.getSerializableJobs();
     }
 
     /*
