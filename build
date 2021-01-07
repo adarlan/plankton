@@ -4,46 +4,59 @@ set -ex
 MAVEN_TAG="3.6-jdk-11"
 BASE_DIR="$(pwd)"
 
-cd $BASE_DIR/core
-docker run -it --rm \
-  -u $(id -u $USER):$(id -g $USER) \
-  -v /etc/passwd:/etc/passwd:ro \
-  -v $HOME/.m2/repository:$HOME/.m2/repository \
-  -v $PWD:/workspace \
-  -w /workspace \
-  --entrypoint "" \
-  maven:$MAVEN_TAG \
-  mvn install
+buildCore () {
+    cd $BASE_DIR/core
+    docker run -it --rm \
+        -u $(id -u $USER):$(id -g $USER) \
+        -v /etc/passwd:/etc/passwd:ro \
+        -v $HOME/.m2/repository:$HOME/.m2/repository \
+        -v $PWD:/workspace \
+        -w /workspace \
+        --entrypoint "" \
+        maven:$MAVEN_TAG \
+        mvn install
+}
 
-cd $BASE_DIR/local-runner
-docker run -it --rm \
-  -u $(id -u $USER):$(id -g $USER) \
-  -v /etc/passwd:/etc/passwd:ro \
-  -v $HOME/.m2/repository:$HOME/.m2/repository \
-  -v $PWD:/workspace \
-  -w /workspace \
-  --entrypoint "" \
-  maven:$MAVEN_TAG \
-  mvn package
+buildLocalRunner () {
+    cd $BASE_DIR/local-runner
+    docker run -it --rm \
+        -u $(id -u $USER):$(id -g $USER) \
+        -v /etc/passwd:/etc/passwd:ro \
+        -v $HOME/.m2/repository:$HOME/.m2/repository \
+        -v $PWD:/workspace \
+        -w /workspace \
+        --entrypoint "" \
+        maven:$MAVEN_TAG \
+        mvn package
+    docker build -t plankton .
+}
 
-cd $BASE_DIR/remote-runner
-docker run -it --rm \
-  -u $(id -u $USER):$(id -g $USER) \
-  -v /etc/passwd:/etc/passwd:ro \
-  -v $HOME/.m2/repository:$HOME/.m2/repository \
-  -v $PWD:/workspace \
-  -w /workspace \
-  --entrypoint "" \
-  maven:$MAVEN_TAG \
-  mvn package
+buildRemoteRunner () {
+    cd $BASE_DIR/remote-runner
+    docker run -it --rm \
+        -u $(id -u $USER):$(id -g $USER) \
+        -v /etc/passwd:/etc/passwd:ro \
+        -v $HOME/.m2/repository:$HOME/.m2/repository \
+        -v $PWD:/workspace \
+        -w /workspace \
+        --entrypoint "" \
+        maven:$MAVEN_TAG \
+        mvn package
+    docker build -t plankton:remote-runner .
+    docker build -t plankton:remote-runner-sandbox -f sandbox.Dockerfile .
+}
 
-cd $BASE_DIR/local-runner
-docker build -t plankton .
+pushImages () {
+    docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
+    docker image tag plankton adarlan/plankton
+    docker image tag plankton:remote-runner adarlan/plankton:remote-runner
+    docker image tag plankton:remote-runner-sandbox adarlan/plankton:remote-runner-sandbox
+    docker push adarlan/plankton
+    docker push adarlan/plankton:remote-runner
+    docker push adarlan/plankton:remote-runner-sandbox
+}
 
-cd $BASE_DIR/remote-runner
-docker build -t plankton:remote-runner .
-docker build -t plankton:remote-runner-sandbox -f sandbox.Dockerfile .
-
-docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY_URL
-docker image tag plankton adarlan/plankton
-docker push adarlan/plankton
+buildCore
+buildLocalRunner
+buildRemoteRunner
+pushImages
