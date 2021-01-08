@@ -2,7 +2,7 @@
 
 Plankton is a tool for running Container-Native CI/CD using [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
 
-Compose labels can be used to define the rules for pipelines, such as the step order, expressions to enable or disable operations, among other rules.
+Compose labels can be used to define pipeline rules, such as the step order, expressions to enable or disable operations, among other rules.
 
 ## Try it yourself
 
@@ -24,15 +24,15 @@ View the pipeline in your browser: [http://localhost:1329](http://localhost:1329
 
 * `plankton.timeout`
 * `plankton.enable.if`
+* `plankton.disable.if`
 * `plankton.wait.success.of`
 * `plankton.wait.failure.of`
 * `plankton.wait.ports`
-* `plankton.wait.files`
 
 ## Argument reference
 
-* `--plankton.name`
-* `--plankton.file`
-* `--plankton.workspace`
-* `--plankton.metadata`
-* `--plankton.docker-host`
+* `--plankton.pipeline.id` - Defaults to `YYYY-MM-DD...`
+* `--plankton.compose.file` - Defaults to `plankton.compose.yaml`
+* `--plankton.workspace` - Defaults to `/workspace`
+* `--plankton.docker.metadata` - Defaults to `${plankton.workspace}/.plankton/${plankton.pipeline.id}/docker.metadata`
+* `--plankton.docker.host` - Defaults to `unix:///var/run/docker.sock`
