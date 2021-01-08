@@ -45,10 +45,10 @@ public class DockerCompose {
 
     private final Logger logger = Logger.getLogger();
 
-    public DockerCompose(PlanktonConfig config) {
-        this.projectName = config.getName();
+    public DockerCompose(DockerPipelineConfig config) {
+        this.projectName = config.getPipelineId();
         this.projectDirectory = config.getWorkspace();
-        this.originalFile = config.getFile();
+        this.originalFile = config.getComposeFile();
         this.metadata = config.getMetadata();
         this.file = metadata + "/docker-compose.yml";
         if (config.getDockerHost() == null) {
