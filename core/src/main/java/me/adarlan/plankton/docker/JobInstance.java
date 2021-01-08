@@ -1,4 +1,4 @@
-package me.adarlan.plankton;
+package me.adarlan.plankton.docker;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -12,13 +12,13 @@ import lombok.ToString;
 
 @ToString(of = "containerName")
 @EqualsAndHashCode(of = "containerName")
-public class JobInstance {
+public class JobInstance implements me.adarlan.plankton.api.JobInstance {
 
     @Getter
-    private final Job job;
+    private final Job parentJob;
 
     @Getter
-    private final int number;
+    private final Integer number;
 
     @Getter
     private final String containerName;
@@ -50,26 +50,29 @@ public class JobInstance {
 
     private final DockerCompose dockerCompose;
 
-    JobInstance(Job job, int number) {
-        this.job = job;
+    JobInstance(Job parentJob, int number) {
+        this.parentJob = parentJob;
         this.number = number;
-        this.containerName = job.getPipeline().getName() + "_" + job.getName() + "_" + number;
-        this.dockerCompose = job.getPipeline().getDockerCompose();
+        this.containerName = parentJob.getPipeline().getName() + "_" + parentJob.getName() + "_" + number;
+        this.dockerCompose = parentJob.getPipeline().getDockerCompose();
     }
 
     public List<String> getLogs() {
         return Collections.unmodifiableList(logs);
     }
 
-    public boolean hasStarted() {
+    @Override
+    public Boolean hasStarted() {
         return started;
     }
 
-    public boolean isRunning() {
+    @Override
+    public Boolean isRunning() {
         return running;
     }
 
-    public boolean hasEnded() {
+    @Override
+    public Boolean hasEnded() {
         return ended;
     }
 

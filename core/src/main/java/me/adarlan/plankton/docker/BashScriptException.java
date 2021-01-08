@@ -1,6 +1,4 @@
-package me.adarlan.plankton.bash;
-
-import me.adarlan.plankton.PlanktonException;
+package me.adarlan.plankton.docker;
 
 public class BashScriptException extends PlanktonException {
 

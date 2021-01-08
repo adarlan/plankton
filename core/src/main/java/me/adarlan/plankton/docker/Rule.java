@@ -1,4 +1,4 @@
-package me.adarlan.plankton;
+package me.adarlan.plankton.docker;
 
 import lombok.ToString;
 

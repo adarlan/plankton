@@ -4,9 +4,9 @@ import java.io.File;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import me.adarlan.plankton.Job;
-import me.adarlan.plankton.Rule;
-import me.adarlan.plankton.RuleStatus;
+import me.adarlan.plankton.docker.Job;
+import me.adarlan.plankton.docker.Rule;
+import me.adarlan.plankton.docker.RuleStatus;
 
 @EqualsAndHashCode(of = { "parentJob", "name" })
 public class RequireFile implements Rule {

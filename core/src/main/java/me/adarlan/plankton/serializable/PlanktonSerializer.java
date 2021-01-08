@@ -9,8 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import lombok.RequiredArgsConstructor;
-import me.adarlan.plankton.Job;
-import me.adarlan.plankton.Pipeline;
+import me.adarlan.plankton.api.Pipeline;
 
 public class PlanktonSerializer {
 
@@ -34,37 +33,38 @@ public class PlanktonSerializer {
     }
 
     // private void initializeJobDependencies(SerializableJob serializableJob) {
-    //     initializeJobDependencies(serializableJob, new HashSet<>());
+    // initializeJobDependencies(serializableJob, new HashSet<>());
     // }
 
-    // private int initializeJobDependencies(SerializableJob serializableJob, Set<SerializableJob> knownDependents) {
-    //     //if (job.allDependents == null) {
-    //     //    job.allDependents = new HashSet<>();
-    //     //}
-    //     // knownDependents.forEach(kd -> job.allDependents.add(kd));
-    //     // job.allDependencies = new HashSet<>();
-    //     // job.directDependencies = new HashSet<>();
-    //     serializableJob.dependencyLevel = null;
-    //     if (serializableJob.dependencyLevel == null) {
-    //         knownDependents.add(serializableJob);
-    //         int maxDepth = -1;
-    //         for (Rule rule : serializableJob.rules) {
-    //             if (rule instanceof RuleWithDependency) {
-    //                 Job dependency = ((RuleWithDependency) rule).getRequiredJob();
-    //                 if (knownDependents.contains(dependency)) {
-    //                     throw new PlanktonException("Dependency loop");
-    //                 }
-    //                 int d = initializeJobDependencies(dependency, knownDependents);
-    //                 if (d > maxDepth)
-    //                     maxDepth = d;
-    //                 // job.allDependencies.add(dependency);
-    //                 // job.allDependencies.addAll(dependency.allDependencies);
-    //                 // job.directDependencies.add(dependency);
-    //             }
-    //         }
-    //         serializableJob.dependencyLevel = maxDepth + 1;
-    //     }
-    //     return serializableJob.dependencyLevel;
+    // private int initializeJobDependencies(SerializableJob serializableJob,
+    // Set<SerializableJob> knownDependents) {
+    // //if (job.allDependents == null) {
+    // // job.allDependents = new HashSet<>();
+    // //}
+    // // knownDependents.forEach(kd -> job.allDependents.add(kd));
+    // // job.allDependencies = new HashSet<>();
+    // // job.directDependencies = new HashSet<>();
+    // serializableJob.dependencyLevel = null;
+    // if (serializableJob.dependencyLevel == null) {
+    // knownDependents.add(serializableJob);
+    // int maxDepth = -1;
+    // for (Rule rule : serializableJob.rules) {
+    // if (rule instanceof RuleWithDependency) {
+    // Job dependency = ((RuleWithDependency) rule).getRequiredJob();
+    // if (knownDependents.contains(dependency)) {
+    // throw new PlanktonException("Dependency loop");
+    // }
+    // int d = initializeJobDependencies(dependency, knownDependents);
+    // if (d > maxDepth)
+    // maxDepth = d;
+    // // job.allDependencies.add(dependency);
+    // // job.allDependencies.addAll(dependency.allDependencies);
+    // // job.directDependencies.add(dependency);
+    // }
+    // }
+    // serializableJob.dependencyLevel = maxDepth + 1;
+    // }
+    // return serializableJob.dependencyLevel;
     // }
 
 }

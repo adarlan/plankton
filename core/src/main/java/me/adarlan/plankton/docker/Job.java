@@ -1,4 +1,4 @@
-package me.adarlan.plankton;
+package me.adarlan.plankton.docker;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -13,11 +13,12 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import me.adarlan.plankton.bash.BashScript;
+import me.adarlan.plankton.api.JobDependency;
+import me.adarlan.plankton.api.JobStatus;
 
 @EqualsAndHashCode(of = "name")
 @ToString(of = "name")
-public class Job {
+public class Job implements me.adarlan.plankton.api.Job {
 
     @Getter
     private final Pipeline pipeline;
@@ -59,7 +60,7 @@ public class Job {
     private Duration duration = null;
 
     @Getter
-    private Duration timeout;
+    private Duration timeoutLimit;
 
     final List<String> logs = new ArrayList<>();
 
@@ -80,7 +81,7 @@ public class Job {
     }
 
     void initializeTimeout(Long amount, ChronoUnit unit) {
-        this.timeout = Duration.of(amount, unit);
+        this.timeoutLimit = Duration.of(amount, unit);
     }
 
     void initializeStatus() {
@@ -120,15 +121,22 @@ public class Job {
         return Collections.unmodifiableList(logs);
     }
 
-    public List<JobInstance> getInstances() {
+    public List<me.adarlan.plankton.api.JobInstance> getInstances() {
         return Collections.unmodifiableList(instances);
+    }
+
+    @Override
+    public Set<JobDependency> getDependencies() {
+        return null;
+        // TODO
     }
 
     public Set<Rule> getRules() {
         return Collections.unmodifiableSet(rules);
     }
 
-    public boolean hasEnded() {
+    @Override
+    public Boolean hasEnded() {
         return ended;
     }
 
@@ -235,7 +243,7 @@ public class Job {
 
     private void checkTimeout() {
         Duration d = getDuration();
-        if (d.compareTo(timeout) > 0) {
+        if (d.compareTo(timeoutLimit) > 0) {
             logger.log(this, "Time limit has been reached");
             instances.forEach(JobInstance::stop);
         }

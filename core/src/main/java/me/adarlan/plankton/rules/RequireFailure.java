@@ -2,11 +2,11 @@ package me.adarlan.plankton.rules;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import me.adarlan.plankton.Job;
-import me.adarlan.plankton.JobStatus;
-import me.adarlan.plankton.Rule;
-import me.adarlan.plankton.RuleStatus;
-import me.adarlan.plankton.RuleWithDependency;
+import me.adarlan.plankton.api.JobStatus;
+import me.adarlan.plankton.docker.Job;
+import me.adarlan.plankton.docker.Rule;
+import me.adarlan.plankton.docker.RuleStatus;
+import me.adarlan.plankton.docker.RuleWithDependency;
 
 @EqualsAndHashCode(of = { "parentJob", "name" })
 public class RequireFailure implements Rule, RuleWithDependency {

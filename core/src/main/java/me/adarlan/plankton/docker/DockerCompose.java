@@ -1,4 +1,4 @@
-package me.adarlan.plankton;
+package me.adarlan.plankton.docker;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.yaml.snakeyaml.Yaml;
 
 import lombok.Getter;
-import me.adarlan.plankton.bash.BashScript;
 
 public class DockerCompose {
 

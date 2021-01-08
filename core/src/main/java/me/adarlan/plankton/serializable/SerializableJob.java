@@ -8,7 +8,7 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import me.adarlan.plankton.Job;
+import me.adarlan.plankton.api.Job;
 
 @Getter
 @Setter(AccessLevel.PACKAGE)
@@ -40,7 +40,7 @@ public class SerializableJob {
         serializableJob.initialInstant = job.getInitialInstant();
         serializableJob.finalInstant = job.getFinalInstant();
         serializableJob.duration = job.getDuration();
-        serializableJob.timeout = job.getTimeout();
+        serializableJob.timeout = job.getTimeoutLimit();
         serializableJob.logs = new ArrayList<>();
         serializableJob.status = job.getStatus().toString().toLowerCase();
         return serializableJob;

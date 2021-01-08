@@ -1,4 +1,4 @@
-package me.adarlan.plankton;
+package me.adarlan.plankton.docker;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -16,7 +16,7 @@ import me.adarlan.plankton.rules.RequirePort;
 import me.adarlan.plankton.rules.RequireSuccess;
 import me.adarlan.plankton.util.RegexUtil;
 
-public class Pipeline {
+public class Pipeline implements me.adarlan.plankton.api.Pipeline {
 
     @Getter
     private final DockerCompose dockerCompose;
@@ -177,7 +177,7 @@ public class Pipeline {
     // return Collections.unmodifiableList(variables);
     // }
 
-    public Set<Job> getJobs() {
+    public Set<me.adarlan.plankton.api.Job> getJobs() {
         return Collections.unmodifiableSet(jobs);
     }
 

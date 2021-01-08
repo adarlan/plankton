@@ -1,4 +1,4 @@
-package me.adarlan.plankton.bash;
+package me.adarlan.plankton.docker;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -15,7 +15,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import lombok.Getter;
-import me.adarlan.plankton.Logger;
 
 public class BashScript {
 

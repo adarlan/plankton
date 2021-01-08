@@ -1,4 +1,4 @@
-package me.adarlan.plankton;
+package me.adarlan.plankton.docker;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -7,6 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+
+import me.adarlan.plankton.api.Job;
+import me.adarlan.plankton.api.JobStatus;
+import me.adarlan.plankton.api.Pipeline;
 
 public class Logger {
 
@@ -85,7 +89,7 @@ public class Logger {
             print(Level.INFO, supplier.get());
     }
 
-    void log(Job job, String msg) {
+    void log(me.adarlan.plankton.docker.Job job, String msg) {
         synchronized (job.logs) {
             job.logs.add(msg);
         }
@@ -98,7 +102,7 @@ public class Logger {
             jobInstance.logs.add(msg);
         }
         if (level.accept(Level.FOLLOW))
-            follow(() -> prefix(jobInstance.getJob(), jobInstance.getContainerName()) + " " + msg);
+            follow(() -> prefix(jobInstance.getParentJob(), jobInstance.getContainerName()) + " " + msg);
     }
 
     private void follow(Supplier<String> supplier) {
