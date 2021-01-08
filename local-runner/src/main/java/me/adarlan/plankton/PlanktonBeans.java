@@ -4,19 +4,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import me.adarlan.plankton.docker.DockerCompose;
-import me.adarlan.plankton.docker.PlanktonConfig;
+import me.adarlan.plankton.docker.DockerPipelineConfig;
+import me.adarlan.plankton.docker.DockerPipelineFactory;
 import me.adarlan.plankton.serializable.PlanktonSerializer;
-import me.adarlan.plankton.docker.Pipeline;
+import me.adarlan.plankton.api.Pipeline;
 
 @Configuration
 public class PlanktonBeans {
 
-    @Value("${plankton.name}")
-    private String name;
+    @Value("${plankton.pipeline.id}")
+    private String pipelineId;
 
-    @Value("${plankton.file}")
-    private String file;
+    @Value("${plankton.compose.file}")
+    private String composeFile;
 
     @Value("${plankton.workspace}")
     private String workspace;
@@ -24,32 +24,28 @@ public class PlanktonBeans {
     // @Value("${plankton.environment}")
     // private String environment;
 
-    @Value("${plankton.metadata}")
-    private String metadata;
+    @Value("${plankton.docker.metadata}")
+    private String dockerMetadata;
 
-    @Value("${plankton.docker-host}")
+    @Value("${plankton.docker.host}")
     private String dockerHost;
 
     @Bean
-    public PlanktonConfig config() {
-        PlanktonConfig config = new PlanktonConfig();
-        config.setName(name);
-        config.setFile(file);
+    public DockerPipelineConfig config() {
+        DockerPipelineConfig config = new DockerPipelineConfig();
+        config.setPipelineId(pipelineId);
+        config.setComposeFile(composeFile);
         config.setWorkspace(workspace);
-        // config.setEnvironment(environment);
-        config.setMetadata(metadata);
+        // TODO config.setEnvironment(environment);
+        config.setMetadata(dockerMetadata);
         config.setDockerHost(dockerHost);
         return config;
     }
 
     @Bean
-    public DockerCompose dockerCompose() {
-        return new DockerCompose(config());
-    }
-
-    @Bean
     public Pipeline pipeline() {
-        return new Pipeline(dockerCompose());
+        DockerPipelineFactory pipelineFactory = new DockerPipelineFactory();
+        return pipelineFactory.createPipeline(config());
     }
 
     @Bean
