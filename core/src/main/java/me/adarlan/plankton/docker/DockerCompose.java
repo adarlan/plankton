@@ -110,7 +110,7 @@ public class DockerCompose {
             final Yaml yaml = new Yaml();
             document = yaml.load(fileInputStream);
         } catch (IOException e) {
-            throw new PlanktonException("Unable to initialize the Docker Compose document", e);
+            throw new PlanktonDockerException("Unable to initialize the Docker Compose document", e);
         }
         services = (Map<String, Object>) document.get("services");
         services.keySet().forEach(serviceNames::add);
@@ -181,7 +181,7 @@ public class DockerCompose {
         try {
             return new ObjectMapper().readValue(json, ContainerState.class);
         } catch (JsonProcessingException e) {
-            throw new PlanktonException("Unable to parse container state JSON", e);
+            throw new PlanktonDockerException("Unable to parse container state JSON", e);
         }
     }
 

@@ -80,7 +80,7 @@ public class BashScript {
         try {
             process = processBuilder.start();
         } catch (IOException e) {
-            throw new PlanktonException("Unable to start script: " + name, e);
+            throw new PlanktonDockerException("Unable to start script: " + name, e);
         }
         Thread followOutput = followOutput();
         Thread followError = followError();
@@ -91,7 +91,7 @@ public class BashScript {
             followOutput.join();
             followError.join();
         } catch (InterruptedException e) {
-            PlanktonException exception = new PlanktonException("Unable to run script: " + name, e);
+            PlanktonDockerException exception = new PlanktonDockerException("Unable to run script: " + name, e);
             Thread.currentThread().interrupt();
             throw exception;
         }
@@ -100,7 +100,7 @@ public class BashScript {
 
     public int getExitCode() {
         if (exitCode == null) {
-            throw new PlanktonException("The script was not run");
+            throw new PlanktonDockerException("The script was not run");
         }
         return exitCode;
     }
@@ -113,7 +113,7 @@ public class BashScript {
     }
 
     public void runSuccessfully() {
-        runSuccessfullyOrThrow(() -> new PlanktonException("Script failed: " + name));
+        runSuccessfullyOrThrow(() -> new PlanktonDockerException("Script failed: " + name));
     }
 
     private ProcessBuilder createProcessBuilder() {
@@ -121,7 +121,7 @@ public class BashScript {
         try {
             tempScript = File.createTempFile(name, null);
         } catch (final IOException e) {
-            throw new PlanktonException("Unable to create the bash script file of script: " + name, e);
+            throw new PlanktonDockerException("Unable to create the bash script file of script: " + name, e);
         }
         try (Writer streamWriter = new OutputStreamWriter(new FileOutputStream(tempScript));) {
             final PrintWriter printWriter = new PrintWriter(streamWriter);
@@ -136,7 +136,7 @@ public class BashScript {
             });
             return processBuilder;
         } catch (final IOException e) {
-            throw new PlanktonException("Unable to create the process builder of script: " + name, e);
+            throw new PlanktonDockerException("Unable to create the process builder of script: " + name, e);
         }
     }
 
@@ -154,7 +154,7 @@ public class BashScript {
                     }
                 }
             } catch (IOException e) {
-                throw new PlanktonException("Unable to follow the output stream of script: " + name, e);
+                throw new PlanktonDockerException("Unable to follow the output stream of script: " + name, e);
             }
         });
     }
@@ -173,7 +173,7 @@ public class BashScript {
                     }
                 }
             } catch (IOException e) {
-                throw new PlanktonException("Unable to follow the error stream of script: " + name, e);
+                throw new PlanktonDockerException("Unable to follow the error stream of script: " + name, e);
             }
         });
     }

@@ -122,7 +122,7 @@ public class JobInstance implements me.adarlan.plankton.api.JobInstance {
         } else if (containerState.status.equals("created")) {
             /* ok */
         } else {
-            throw new PlanktonException("Unexpected container state: " + containerState);
+            throw new PlanktonDockerException("Unexpected container state: " + containerState);
             // TODO stop thread? failed?
         }
     }

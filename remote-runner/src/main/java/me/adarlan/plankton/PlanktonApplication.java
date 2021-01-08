@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 import me.adarlan.plankton.docker.DockerCompose;
 import me.adarlan.plankton.docker.PlanktonConfig;
-import me.adarlan.plankton.docker.PlanktonException;
+import me.adarlan.plankton.docker.PlanktonDockerException;
 import me.adarlan.plankton.docker.Logger;
 import me.adarlan.plankton.docker.Pipeline;
 import me.adarlan.plankton.docker.BashScript;
@@ -227,7 +227,7 @@ public class PlanktonApplication {
                     + dockerdOptions.stream().collect(Collectors.joining(" ")));
             script.run();
             if (script.getExitCode() != 0) {
-                throw new PlanktonException("Unable to runSandboxContainer");
+                throw new PlanktonDockerException("Unable to runSandboxContainer");
             }
         }
     }

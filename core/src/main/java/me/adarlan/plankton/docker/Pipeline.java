@@ -173,7 +173,7 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
 
     public Job getJobByName(@NonNull String jobName) {
         if (!jobsByName.containsKey(jobName))
-            throw new PlanktonException("Job not found: " + jobName);
+            throw new PlanktonDockerException("Job not found: " + jobName);
         return jobsByName.get(jobName);
     }
 }
