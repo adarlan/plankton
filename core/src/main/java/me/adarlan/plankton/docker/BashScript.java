@@ -80,7 +80,7 @@ public class BashScript {
         try {
             process = processBuilder.start();
         } catch (IOException e) {
-            throw new BashScriptException("Unable to start script: " + name, e);
+            throw new PlanktonException("Unable to start script: " + name, e);
         }
         Thread followOutput = followOutput();
         Thread followError = followError();
@@ -91,16 +91,16 @@ public class BashScript {
             followOutput.join();
             followError.join();
         } catch (InterruptedException e) {
-            BashScriptException bse = new BashScriptException("Unable to run script: " + name, e);
+            PlanktonException exception = new PlanktonException("Unable to run script: " + name, e);
             Thread.currentThread().interrupt();
-            throw bse;
+            throw exception;
         }
         return this;
     }
 
     public int getExitCode() {
         if (exitCode == null) {
-            throw new BashScriptException("The script was not run");
+            throw new PlanktonException("The script was not run");
         }
         return exitCode;
     }
@@ -113,7 +113,7 @@ public class BashScript {
     }
 
     public void runSuccessfully() {
-        runSuccessfullyOrThrow(() -> new BashScriptException("Script failed: " + name));
+        runSuccessfullyOrThrow(() -> new PlanktonException("Script failed: " + name));
     }
 
     private ProcessBuilder createProcessBuilder() {
@@ -121,7 +121,7 @@ public class BashScript {
         try {
             tempScript = File.createTempFile(name, null);
         } catch (final IOException e) {
-            throw new BashScriptException("Unable to create the bash script file of script: " + name, e);
+            throw new PlanktonException("Unable to create the bash script file of script: " + name, e);
         }
         try (Writer streamWriter = new OutputStreamWriter(new FileOutputStream(tempScript));) {
             final PrintWriter printWriter = new PrintWriter(streamWriter);
@@ -136,7 +136,7 @@ public class BashScript {
             });
             return processBuilder;
         } catch (final IOException e) {
-            throw new BashScriptException("Unable to create the process builder of script: " + name, e);
+            throw new PlanktonException("Unable to create the process builder of script: " + name, e);
         }
     }
 
@@ -154,7 +154,7 @@ public class BashScript {
                     }
                 }
             } catch (IOException e) {
-                throw new BashScriptException("Unable to follow the output stream of script: " + name, e);
+                throw new PlanktonException("Unable to follow the output stream of script: " + name, e);
             }
         });
     }
@@ -173,7 +173,7 @@ public class BashScript {
                     }
                 }
             } catch (IOException e) {
-                throw new BashScriptException("Unable to follow the error stream of script: " + name, e);
+                throw new PlanktonException("Unable to follow the error stream of script: " + name, e);
             }
         });
     }
