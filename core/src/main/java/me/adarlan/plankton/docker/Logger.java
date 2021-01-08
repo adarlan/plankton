@@ -208,7 +208,7 @@ public class Logger {
         if (containerName == null) {
             name = job.getName();
         } else {
-            name = containerName.substring(pipeline.getName().length() + 1);
+            name = containerName.substring(pipeline.getId().length() + 1);
             if (job.getScale() == 1) {
                 name = name.substring(0, name.lastIndexOf("_"));
             }

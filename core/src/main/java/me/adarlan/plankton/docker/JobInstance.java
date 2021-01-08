@@ -53,7 +53,7 @@ public class JobInstance implements me.adarlan.plankton.api.JobInstance {
     JobInstance(Job parentJob, int number) {
         this.parentJob = parentJob;
         this.number = number;
-        this.containerName = parentJob.getPipeline().getName() + "_" + parentJob.getName() + "_" + number;
+        this.containerName = parentJob.getPipeline().getId() + "_" + parentJob.getName() + "_" + number;
         this.dockerCompose = parentJob.getPipeline().getDockerCompose();
     }
 

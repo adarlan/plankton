@@ -22,7 +22,7 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
     private final DockerCompose dockerCompose;
 
     @Getter
-    private final String name;
+    private final String id;
 
     // private final List<String> variables;
 
@@ -35,7 +35,7 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
 
     public Pipeline(DockerCompose dockerCompose) {
         this.dockerCompose = dockerCompose;
-        this.name = dockerCompose.getProjectName();
+        this.id = dockerCompose.getProjectName();
         // this.variables = dockerCompose.variables;
         instantiateJobs();
         jobs.forEach(this::initializeJobLabels);

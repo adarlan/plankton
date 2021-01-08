@@ -4,7 +4,7 @@ import java.util.Set;
 
 public interface Pipeline {
 
-    String getName();
+    String getId();
 
     Job getJobByName(String name);
 
