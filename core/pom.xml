@@ -33,6 +33,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>11</java.version>
+		<repository.id>example</repository.id>
+		<repository.url>http://example.com/archiva/repository/internal/</repository.url>
     </properties>
 
     <build>
@@ -48,5 +50,19 @@
             </plugin>
         </plugins>
     </build>
+
+    <repositories>
+		<repository>
+			<id>${repository.id}</id>
+			<url>${repository.url}</url>
+		</repository>
+	</repositories>
+
+	<distributionManagement>
+		<repository>
+			<id>${repository.id}</id>
+			<url>${repository.url}</url>
+		</repository>
+	</distributionManagement>
 
 </project>

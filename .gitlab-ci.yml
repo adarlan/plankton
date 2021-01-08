@@ -1,9 +1,20 @@
 stages:
   - BuildCore
+  - BuildRunners
 
 BuildCore:
   stage: BuildCore
   image: maven:3.6-jdk-11
   script:
     - cd core
-    - mvn package
+    - mvn -s maven-settings.xml --batch-mode -DskipTests deploy
+
+BuildLocalRunner:
+  stage: BuildRunners
+  image: docker
+  script: echo 1
+
+BuildRemoteRunner:
+  stage: BuildRunners
+  image: docker
+  script: echo 1
