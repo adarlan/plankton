@@ -6,12 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import me.adarlan.plankton.DockerCompose;
-import me.adarlan.plankton.PlanktonConfig;
-import me.adarlan.plankton.PlanktonException;
-import me.adarlan.plankton.Logger;
-import me.adarlan.plankton.Pipeline;
-import me.adarlan.plankton.bash.BashScript;
+import me.adarlan.plankton.docker.DockerCompose;
+import me.adarlan.plankton.docker.PlanktonConfig;
+import me.adarlan.plankton.docker.PlanktonException;
+import me.adarlan.plankton.docker.Logger;
+import me.adarlan.plankton.docker.Pipeline;
+import me.adarlan.plankton.docker.BashScript;
 
 public class PlanktonApplication {
 
