@@ -1,13 +1,25 @@
 package me.adarlan.plankton.api;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
 public abstract class PipelineConfig {
 
+    public PipelineConfig() {
+
+    }
+
+    @Getter
+    @Setter
     private String pipelineId;
 
+    @Getter
+    @Setter
     private String composeFile;
+
+    @Getter
+    @Setter
+    private String workspace;
 
     // private String environment;
 }
