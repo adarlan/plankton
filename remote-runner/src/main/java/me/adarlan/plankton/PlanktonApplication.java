@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import me.adarlan.plankton.docker.DockerCompose;
-import me.adarlan.plankton.docker.PlanktonConfig;
+import me.adarlan.plankton.docker.DockerPipelineConfig;
+import me.adarlan.plankton.docker.DockerPipelineFactory;
 import me.adarlan.plankton.docker.PlanktonDockerException;
 import me.adarlan.plankton.docker.Logger;
 import me.adarlan.plankton.docker.Pipeline;
@@ -223,8 +224,8 @@ public class PlanktonApplication {
             List<String> dockerdOptions = new ArrayList<>();
             dockerdOptions.add("-H tcp://0.0.0.0:2375");
             dockerdOptions.add("-H unix:///var/run/docker.sock");
-            script.command("docker run " + runOptions.stream().collect(Collectors.joining(" ")) + " plankton:remote-runner-sandbox "
-                    + dockerdOptions.stream().collect(Collectors.joining(" ")));
+            script.command("docker run " + runOptions.stream().collect(Collectors.joining(" "))
+                    + " plankton:remote-runner-sandbox " + dockerdOptions.stream().collect(Collectors.joining(" ")));
             script.run();
             if (script.getExitCode() != 0) {
                 throw new PlanktonDockerException("Unable to runSandboxContainer");
@@ -273,14 +274,14 @@ public class PlanktonApplication {
     }
 
     private static void runPipeline() throws InterruptedException {
-        PlanktonConfig config = new PlanktonConfig();
-        config.setName(pipelineId);
-        config.setFile(workspaceDirectoryOnRunner + "/" + planktonFile);
+        DockerPipelineConfig config = new DockerPipelineConfig();
+        config.setPipelineId(pipelineId);
+        config.setComposeFile(workspaceDirectoryOnRunner + "/" + planktonFile);
         config.setWorkspace(workspaceDirectoryOnRunner);
         config.setMetadata(metadataDirectoryOnRunner);
         config.setDockerHost("tcp://" + sandboxContainerName + ":2375");
-        DockerCompose dockerCompose = new DockerCompose(config);
-        Pipeline pipeline = new Pipeline(dockerCompose);
+        DockerPipelineFactory pipelineFactory = new DockerPipelineFactory();
+        Pipeline pipeline = pipelineFactory.createPipeline(config);
         pipeline.run();
     }
 
