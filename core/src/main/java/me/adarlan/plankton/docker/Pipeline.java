@@ -10,10 +10,10 @@ import java.util.Set;
 
 import lombok.Getter;
 import lombok.NonNull;
-import me.adarlan.plankton.rules.RequireFailure;
-import me.adarlan.plankton.rules.RequireFile;
-import me.adarlan.plankton.rules.RequirePort;
-import me.adarlan.plankton.rules.RequireSuccess;
+import me.adarlan.plankton.api.JobDependency;
+import me.adarlan.plankton.api.dependency.WaitDependencyFailure;
+import me.adarlan.plankton.api.dependency.WaitDependencyPort;
+import me.adarlan.plankton.api.dependency.WaitDependencySuccess;
 import me.adarlan.plankton.util.RegexUtil;
 
 public class Pipeline implements me.adarlan.plankton.api.Pipeline {
@@ -44,7 +44,7 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
         jobs.forEach(this::initializeJobScale);
         jobs.forEach(this::initializeJobTimeout);
         jobs.forEach(this::initializeExternalPorts);
-        jobs.forEach(this::initializeJobRules);
+        jobs.forEach(this::initializeJobDependencies);
         // jobs.forEach(this::initializeJobDependencies);
         // jobs.forEach(this::initializeJobVariables);
         jobs.forEach(Job::initializeStatus);
@@ -108,25 +108,24 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
         });
     }
 
-    private void initializeJobRules(Job job) {
-        Set<Rule> rules = new HashSet<>();
-        job.setRules(rules);
+    private void initializeJobDependencies(Job job) {
+        Set<JobDependency> dependencies = new HashSet<>();
+        job.setDependencies(dependencies);
         Map<String, String> labelsByName = labelsByJobAndName.get(job);
         labelsByName.forEach((labelName, labelValue) -> {
-            String ruleName = labelName.substring(11);
 
             if (RegexUtil.stringMatchesRegex(labelName, "^plankton\\.wait\\.success\\.of$")) {
                 String requiredJobName = labelValue;
                 Job requiredJob = this.getJobByName(requiredJobName);
-                RequireSuccess rule = new RequireSuccess(job, ruleName, requiredJob);
-                rules.add(rule);
+                WaitDependencySuccess dependency = new WaitDependencySuccess(job, requiredJob);
+                dependencies.add(dependency);
             }
 
             if (RegexUtil.stringMatchesRegex(labelName, "^plankton\\.wait\\.failure\\.of$")) {
                 String requiredJobName = labelValue;
                 Job requiredJob = this.getJobByName(requiredJobName);
-                RequireFailure rule = new RequireFailure(job, ruleName, requiredJob);
-                rules.add(rule);
+                WaitDependencyFailure dependency = new WaitDependencyFailure(job, requiredJob);
+                dependencies.add(dependency);
             }
 
             else if (RegexUtil.stringMatchesRegex(labelName, "^plankton\\.wait\\.ports$")) {
@@ -134,17 +133,8 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
                 // mas a porta usada internamente pelo container é a 'target'
                 Integer port = Integer.parseInt(labelValue);
                 Job requiredJob = externalPorts.get(port);
-                RequirePort rule = new RequirePort(job, ruleName, requiredJob, port);
-                rules.add(rule);
-            }
-
-            else if (RegexUtil.stringMatchesRegex(labelName, "^plankton\\.wait\\.files$")) {
-                // TODO remover esta rule?
-                // o ruim dela é que não tem como saber se bloqueou, a não ser que todos os
-                // demais jobs tenham terminado
-                String filePath = labelValue;
-                RequireFile rule = new RequireFile(job, ruleName, filePath);
-                rules.add(rule);
+                WaitDependencyPort dependency = new WaitDependencyPort(job, requiredJob, port);
+                dependencies.add(dependency);
             }
         });
     }

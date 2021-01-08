@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import me.adarlan.plankton.api.Job;
+import me.adarlan.plankton.api.JobDependency;
+import me.adarlan.plankton.api.JobDependencyStatus;
 import me.adarlan.plankton.api.JobStatus;
 import me.adarlan.plankton.api.Pipeline;
 
@@ -78,10 +80,9 @@ public class Logger {
             info(() -> prefix(job, null) + " " + status(job.getStatus()));
     }
 
-    void info(Rule rule) {
+    void info(JobDependency dependency) {
         if (level.accept(Level.INFO))
-            info(() -> prefix(rule.getParentJob(), null) + " " + rule.getName() + "(" + rule.getValue() + ") "
-                    + status(rule.getStatus()));
+            info(() -> prefix(dependency.getParentJob(), null) + " " + dependency.toString() + status(dependency.getStatus()));
     }
 
     public void info(Supplier<String> supplier) {
@@ -267,7 +268,7 @@ public class Logger {
         return color + status.toString() + ANSI_RESET;
     }
 
-    private String status(RuleStatus status) {
+    private String status(JobDependencyStatus status) {
         String color = "";
         switch (status) {
             case WAITING:

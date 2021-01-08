@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import me.adarlan.plankton.api.JobDependency;
+import me.adarlan.plankton.api.JobDependencyStatus;
 import me.adarlan.plankton.api.JobStatus;
 
 @EqualsAndHashCode(of = "name")
@@ -39,7 +40,7 @@ public class Job implements me.adarlan.plankton.api.Job {
     private Boolean expressionResult;
 
     @Setter(AccessLevel.PACKAGE)
-    private Set<Rule> rules;
+    private Set<JobDependency> dependencies;
 
     // Set<Job> directDependencies;
     // Set<Job> allDependencies;
@@ -127,12 +128,7 @@ public class Job implements me.adarlan.plankton.api.Job {
 
     @Override
     public Set<JobDependency> getDependencies() {
-        return null;
-        // TODO
-    }
-
-    public Set<Rule> getRules() {
-        return Collections.unmodifiableSet(rules);
+        return Collections.unmodifiableSet(dependencies);
     }
 
     @Override
@@ -144,7 +140,7 @@ public class Job implements me.adarlan.plankton.api.Job {
         synchronized (this) {
             if (!ended) {
                 if (status == JobStatus.WAITING) {
-                    checkRulesAndSetRunningOrBlocked();
+                    checkDependenciesAndSetRunningOrBlocked();
                 }
                 if (status == JobStatus.RUNNING) {
                     if (startedInstances) {
@@ -166,16 +162,16 @@ public class Job implements me.adarlan.plankton.api.Job {
         }
     }
 
-    private void checkRulesAndSetRunningOrBlocked() {
+    private void checkDependenciesAndSetRunningOrBlocked() {
         boolean passed = true;
         boolean blocked = false;
-        for (final Rule rule : rules) {
-            if (rule.updateStatus()) {
-                logger.info(rule);
+        for (final JobDependency dependency : dependencies) {
+            if (dependency.updateStatus()) {
+                logger.info(dependency);
             }
-            if (!rule.getStatus().equals(RuleStatus.PASSED))
+            if (!dependency.getStatus().equals(JobDependencyStatus.PASSED))
                 passed = false;
-            if (rule.getStatus().equals(RuleStatus.BLOCKED))
+            if (dependency.getStatus().equals(JobDependencyStatus.BLOCKED))
                 blocked = true;
         }
         if (passed) {
