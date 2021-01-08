@@ -6,9 +6,9 @@ import java.util.List;
 
 public interface JobInstance {
 
-    String getParentJob();
+    Job getParentJob();
 
-    Integer getIndex();
+    Integer getNumber();
 
     String getContainerName();
 

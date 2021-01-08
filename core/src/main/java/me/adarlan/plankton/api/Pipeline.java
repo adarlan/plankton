@@ -10,5 +10,5 @@ public interface Pipeline {
 
     Set<Job> getJobs();
 
-    void run();
+    void run() throws InterruptedException;
 }
