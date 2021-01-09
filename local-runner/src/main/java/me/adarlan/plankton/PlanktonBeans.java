@@ -21,9 +21,6 @@ public class PlanktonBeans {
     @Value("${plankton.workspace}")
     private String workspace;
 
-    // @Value("${plankton.environment}")
-    // private String environment;
-
     @Value("${plankton.docker.metadata}")
     private String dockerMetadata;
 
@@ -36,7 +33,6 @@ public class PlanktonBeans {
         config.setPipelineId(pipelineId);
         config.setComposeFile(composeFile);
         config.setWorkspace(workspace);
-        // TODO config.setEnvironment(environment);
         config.setMetadata(dockerMetadata);
         config.setDockerHost(dockerHost);
         return config;

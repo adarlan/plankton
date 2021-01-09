@@ -45,11 +45,6 @@ public class JobImplementation implements Job {
     @Setter(AccessLevel.PACKAGE)
     private Set<JobDependency> dependencies;
 
-    // Set<Job> directDependencies;
-    // Set<Job> allDependencies;
-    // Integer dependencyLevel;
-    // Set<Job> allDependents;
-
     @Getter
     private Integer scale;
 

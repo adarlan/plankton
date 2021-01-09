@@ -27,8 +27,6 @@ public class PipelineImplementation implements Pipeline {
     @Getter
     private final String id;
 
-    // private final List<String> variables;
-
     private final Set<JobImplementation> jobs = new HashSet<>();
     private final Map<String, JobImplementation> jobsByName = new HashMap<>();
     private final Map<JobImplementation, Map<String, String>> labelsByJobAndName = new HashMap<>();
@@ -39,7 +37,6 @@ public class PipelineImplementation implements Pipeline {
     public PipelineImplementation(DockerCompose dockerCompose) {
         this.dockerCompose = dockerCompose;
         this.id = dockerCompose.getProjectName();
-        // this.variables = dockerCompose.variables;
         instantiateJobs();
         jobs.forEach(this::initializeJobLabels);
         jobs.forEach(this::initializeJobExpression);
@@ -48,8 +45,6 @@ public class PipelineImplementation implements Pipeline {
         jobs.forEach(this::initializeJobTimeout);
         jobs.forEach(this::initializeExternalPorts);
         jobs.forEach(this::initializeJobDependencies);
-        // jobs.forEach(this::initializeJobDependencies);
-        // jobs.forEach(this::initializeJobVariables);
         jobs.forEach(JobImplementation::initializeStatus);
     }
 
@@ -67,7 +62,6 @@ public class PipelineImplementation implements Pipeline {
     }
 
     private void initializeJobExpression(JobImplementation job) {
-        // TODO validate synthax
         Map<String, String> labelsByName = labelsByJobAndName.get(job);
         String labelName = "plankton.enable.if";
         if (labelsByName.containsKey(labelName)) {
@@ -85,8 +79,6 @@ public class PipelineImplementation implements Pipeline {
     }
 
     private void initializeJobScale(JobImplementation job) {
-        // TODO usar label: plankton.scale
-        // a propriedade deploy.replicas só funciona pra Swarm
         job.setScale(1);
     }
 
@@ -94,11 +86,9 @@ public class PipelineImplementation implements Pipeline {
         Map<String, String> labelsByName = labelsByJobAndName.get(job);
         String labelName = "plankton.timeout";
         if (labelsByName.containsKey(labelName)) {
-            // TODO aceitar formatos: 1s, 1m, 1h, 1d etc
             String labelValue = labelsByName.get(labelName);
             job.initializeTimeout(Long.parseLong(labelValue), ChronoUnit.MINUTES);
         } else {
-            // TODO Usar uma configuração --plankton.timeout.max ou algo assim
             job.initializeTimeout(1L, ChronoUnit.MINUTES);
         }
     }
@@ -106,7 +96,7 @@ public class PipelineImplementation implements Pipeline {
     private void initializeExternalPorts(JobImplementation job) {
         List<Map<String, Object>> ports = dockerCompose.getServicePorts(job.getName());
         ports.forEach(p -> {
-            Integer externalPort = (Integer) p.get("published"); // TODO published pode ser null
+            Integer externalPort = (Integer) p.get("published"); // TODO what if published is null?
             externalPorts.put(externalPort, job);
         });
     }
@@ -132,8 +122,6 @@ public class PipelineImplementation implements Pipeline {
             }
 
             else if (RegexUtil.stringMatchesRegex(labelName, "^plankton\\.wait\\.ports$")) {
-                // TODO isso tá estranho pq a porta informada é a 'published',
-                // mas a porta usada internamente pelo container é a 'target'
                 Integer port = Integer.parseInt(labelValue);
                 JobImplementation requiredJob = externalPorts.get(port);
                 WaitDependencyPort dependency = new WaitDependencyPort(job, requiredJob, port);
@@ -141,13 +129,6 @@ public class PipelineImplementation implements Pipeline {
             }
         });
     }
-
-    /*
-     * private void initializeJobVariables(Job job) { job.setVariables(new
-     * ArrayList<>()); // TODO add all variables in .env (it is Docker (or Docker
-     * Compose?) default) // TODO add all variables in SERVICE.env_file // TODO add
-     * all variables in SERVICE.environment }
-     */
 
     public void run() throws InterruptedException {
         boolean done = false;
@@ -162,13 +143,7 @@ public class PipelineImplementation implements Pipeline {
             Thread.sleep(1000);
         }
         logger.info(() -> "Pipeline finished");
-        // TODO mostrar resumo... quantos SUCCESS, quantos FAILURE, etc
-        // TODO salvar o estado em um arquivo nos metradados
     }
-
-    // public List<String> getVariables() {
-    // return Collections.unmodifiableList(variables);
-    // }
 
     public Set<Job> getJobs() {
         return Collections.unmodifiableSet(jobs);

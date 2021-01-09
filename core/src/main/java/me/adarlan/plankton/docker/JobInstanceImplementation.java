@@ -46,10 +46,6 @@ public class JobInstanceImplementation implements JobInstance {
 
     private Thread runContainerThread = null;
 
-    // private final Logger logger = Logger.getLogger();
-
-    // TODO containerId (definido pelo Job quando criar o container)
-
     private final DockerCompose dockerCompose;
 
     private final Logger logger = Logger.getLogger();
