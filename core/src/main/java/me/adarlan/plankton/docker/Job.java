@@ -16,6 +16,7 @@ import lombok.ToString;
 import me.adarlan.plankton.api.JobDependency;
 import me.adarlan.plankton.api.JobDependencyStatus;
 import me.adarlan.plankton.api.JobStatus;
+import me.adarlan.plankton.api.Logger;
 
 @EqualsAndHashCode(of = "name")
 @ToString(of = "name")
@@ -63,7 +64,7 @@ public class Job implements me.adarlan.plankton.api.Job {
     @Getter
     private Duration timeoutLimit;
 
-    final List<String> logs = new ArrayList<>();
+    private final List<String> logs = new ArrayList<>();
 
     @Getter
     private JobStatus status;
@@ -118,6 +119,13 @@ public class Job implements me.adarlan.plankton.api.Job {
         }
     }
 
+    void log(String message) {
+        synchronized (logs) {
+            logs.add(message);
+        }
+        logger.follow(this, () -> message);
+    }
+
     public List<String> getLogs() {
         return Collections.unmodifiableList(logs);
     }
@@ -153,7 +161,7 @@ public class Job implements me.adarlan.plankton.api.Job {
                             createContainers();
                             startInstances();
                         } else if (buildOrPullImage.isInterrupted()) {
-                            logger.log(this, "Job interrupted when building/pulling image");
+                            log("Job interrupted when building/pulling image");
                             setStatus(JobStatus.FAILURE);
                         }
                     }
@@ -240,7 +248,7 @@ public class Job implements me.adarlan.plankton.api.Job {
     private void checkTimeout() {
         Duration d = getDuration();
         if (d.compareTo(timeoutLimit) > 0) {
-            logger.log(this, "Time limit has been reached");
+            log("Time limit has been reached");
             instances.forEach(JobInstance::stop);
         }
     }

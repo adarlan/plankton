@@ -1,4 +1,4 @@
-package me.adarlan.plankton.docker;
+package me.adarlan.plankton.api;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -7,12 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-
-import me.adarlan.plankton.api.Job;
-import me.adarlan.plankton.api.JobDependency;
-import me.adarlan.plankton.api.JobDependencyStatus;
-import me.adarlan.plankton.api.JobStatus;
-import me.adarlan.plankton.api.Pipeline;
 
 public class Logger {
 
@@ -75,14 +69,15 @@ public class Logger {
         this.begin = Instant.now();
     }
 
-    void info(Job job) {
+    public <T extends Job> void info(T job) {
         if (level.accept(Level.INFO))
             info(() -> prefix(job, null) + " " + status(job.getStatus()));
     }
 
-    void info(JobDependency dependency) {
+    public <T extends JobDependency> void info(T dependency) {
         if (level.accept(Level.INFO))
-            info(() -> prefix(dependency.getParentJob(), null) + " " + dependency.toString() + status(dependency.getStatus()));
+            info(() -> prefix(dependency.getParentJob(), null) + " " + dependency.toString()
+                    + status(dependency.getStatus()));
     }
 
     public void info(Supplier<String> supplier) {
@@ -90,25 +85,15 @@ public class Logger {
             print(Level.INFO, supplier.get());
     }
 
-    void log(me.adarlan.plankton.docker.Job job, String msg) {
-        synchronized (job.logs) {
-            job.logs.add(msg);
-        }
+    public void follow(Job job, Supplier<String> supplier) {
         if (level.accept(Level.FOLLOW))
-            follow(() -> prefix(job, null) + " " + msg);
+            print(Level.FOLLOW, prefix(job, null) + " " + supplier.get());
     }
 
-    void log(JobInstance jobInstance, String msg) {
-        synchronized (jobInstance.logs) {
-            jobInstance.logs.add(msg);
-        }
+    public void follow(JobInstance jobInstance, Supplier<String> supplier) {
         if (level.accept(Level.FOLLOW))
-            follow(() -> prefix(jobInstance.getParentJob(), jobInstance.getContainerName()) + " " + msg);
-    }
-
-    private void follow(Supplier<String> supplier) {
-        if (level.accept(Level.FOLLOW))
-            print(Level.FOLLOW, supplier.get());
+            print(Level.FOLLOW,
+                    prefix(jobInstance.getParentJob(), jobInstance.getContainerName()) + " " + supplier.get());
     }
 
     public void debug(Supplier<String> supplier) {

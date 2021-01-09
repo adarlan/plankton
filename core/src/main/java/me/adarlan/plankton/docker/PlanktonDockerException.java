@@ -1,5 +1,7 @@
 package me.adarlan.plankton.docker;
 
+import me.adarlan.plankton.api.Logger;
+
 public class PlanktonDockerException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;

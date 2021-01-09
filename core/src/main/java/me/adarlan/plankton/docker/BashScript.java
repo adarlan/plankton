@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import lombok.Getter;
+import me.adarlan.plankton.api.Logger;
 
 public class BashScript {
 

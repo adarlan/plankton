@@ -11,6 +11,7 @@ import java.util.Set;
 import lombok.Getter;
 import lombok.NonNull;
 import me.adarlan.plankton.api.JobDependency;
+import me.adarlan.plankton.api.Logger;
 import me.adarlan.plankton.api.dependency.WaitDependencyFailure;
 import me.adarlan.plankton.api.dependency.WaitDependencyPort;
 import me.adarlan.plankton.api.dependency.WaitDependencySuccess;

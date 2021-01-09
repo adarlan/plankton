@@ -10,7 +10,7 @@ import me.adarlan.plankton.docker.DockerCompose;
 import me.adarlan.plankton.docker.DockerPipelineConfig;
 import me.adarlan.plankton.docker.DockerPipelineFactory;
 import me.adarlan.plankton.docker.PlanktonDockerException;
-import me.adarlan.plankton.docker.Logger;
+import me.adarlan.plankton.api.Logger;
 import me.adarlan.plankton.docker.Pipeline;
 import me.adarlan.plankton.docker.BashScript;
 

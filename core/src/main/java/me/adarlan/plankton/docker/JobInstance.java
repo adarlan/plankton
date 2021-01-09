@@ -9,6 +9,7 @@ import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import me.adarlan.plankton.api.Logger;
 
 @ToString(of = "containerName")
 @EqualsAndHashCode(of = "containerName")
@@ -23,7 +24,7 @@ public class JobInstance implements me.adarlan.plankton.api.JobInstance {
     @Getter
     private final String containerName;
 
-    final List<String> logs = new ArrayList<>();
+    private final List<String> logs = new ArrayList<>();
 
     private boolean started = false;
     private boolean running = false;
@@ -50,11 +51,20 @@ public class JobInstance implements me.adarlan.plankton.api.JobInstance {
 
     private final DockerCompose dockerCompose;
 
+    private final Logger logger = Logger.getLogger();
+
     JobInstance(Job parentJob, int number) {
         this.parentJob = parentJob;
         this.number = number;
         this.containerName = parentJob.getPipeline().getId() + "_" + parentJob.getName() + "_" + number;
         this.dockerCompose = parentJob.getPipeline().getDockerCompose();
+    }
+
+    void log(String message) {
+        synchronized (logs) {
+            logs.add(message);
+        }
+        logger.follow(this, () -> message);
     }
 
     public List<String> getLogs() {

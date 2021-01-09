@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.yaml.snakeyaml.Yaml;
 
 import lombok.Getter;
+import me.adarlan.plankton.api.Logger;
 
 public class DockerCompose {
 
@@ -125,7 +126,7 @@ public class DockerCompose {
         final String createOptions = ""; // TODO --force-rm --no-cache --pull --memory MEM
         script.env(dockerHostVariable);
         script.command(BASE_COMMAND + " " + options + " build " + createOptions + " " + job.getName());
-        script.forEachOutputAndError(line -> logger.log(job, line));
+        script.forEachOutputAndError(job::log);
         script.run();
         return script.getExitCode() == 0;
     }
@@ -134,7 +135,7 @@ public class DockerCompose {
         final BashScript script = new BashScript("pullImage_" + job.getName());
         script.env(dockerHostVariable);
         script.command(BASE_COMMAND + " " + options + " pull " + job.getName());
-        script.forEachOutputAndError(line -> logger.log(job, line));
+        script.forEachOutputAndError(job::log);
         script.run();
         return script.getExitCode() == 0;
     }
@@ -144,7 +145,7 @@ public class DockerCompose {
         final String upOptions = "--no-start --scale " + job.getName() + "=" + job.getScale();
         script.env(dockerHostVariable);
         script.command(BASE_COMMAND + " " + options + " up " + upOptions + " " + job.getName());
-        script.forEachOutputAndError(line -> logger.log(job, line));
+        script.forEachOutputAndError(job::log);
         script.run();
         return script.getExitCode() == 0;
     }
@@ -153,7 +154,7 @@ public class DockerCompose {
         final BashScript script = new BashScript("runContainer_" + jobInstance.getContainerName());
         script.env(dockerHostVariable);
         script.command("docker container start --attach " + jobInstance.getContainerName());
-        script.forEachOutputAndError(line -> logger.log(jobInstance, line));
+        script.forEachOutputAndError(jobInstance::log);
         script.run();
     }
 
