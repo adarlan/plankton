@@ -21,5 +21,7 @@ public abstract class PipelineConfig {
     @Setter
     private String workspace;
 
-    // private String environment;
+    @Getter
+    @Setter
+    private String metadata;
 }

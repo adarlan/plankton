@@ -34,7 +34,7 @@ public class DockerCompose {
     private final String projectDirectory;
 
     @Getter
-    private final String metadata;
+    private final String metadataDirectoryPath;
 
     private final String dockerHostVariable;
     private static final String BASE_COMMAND = "docker-compose";
@@ -50,8 +50,8 @@ public class DockerCompose {
         this.projectName = config.getPipelineId();
         this.projectDirectory = config.getWorkspace();
         this.originalFile = config.getComposeFile();
-        this.metadata = config.getMetadata();
-        this.file = metadata + "/docker-compose.yml";
+        this.metadataDirectoryPath = config.getMetadata() + "/" + config.getPipelineId();
+        this.file = metadataDirectoryPath + "/docker-compose.yml";
         if (config.getDockerHost() == null) {
             this.dockerHostVariable = "DOCKER_HOST=unix:///var/run/docker.sock";
         } else {
@@ -67,8 +67,8 @@ public class DockerCompose {
 
     private void initializeMetadata() {
         BashScript script = new BashScript("initializeMetadata");
-        // script.command("rm -rf " + metadata);
-        script.command("mkdir -p " + metadata);
+        script.command("rm -rf " + metadataDirectoryPath);
+        script.command("mkdir -p " + metadataDirectoryPath);
         script.runSuccessfully();
     }
 
@@ -105,8 +105,6 @@ public class DockerCompose {
 
     @SuppressWarnings("unchecked")
     private void initializeDocument() {
-        // TODO validar version = 3.x | x >= (?)
-        // TODO container_name não pode ser usado
         try (FileInputStream fileInputStream = new FileInputStream(file);) {
             final Yaml yaml = new Yaml();
             document = yaml.load(fileInputStream);
@@ -123,9 +121,9 @@ public class DockerCompose {
 
     public boolean buildImage(JobImplementation job) {
         final BashScript script = new BashScript("buildImage_" + job.getName());
-        final String createOptions = ""; // TODO --force-rm --no-cache --pull --memory MEM
+        final String buildOptions = "";
         script.env(dockerHostVariable);
-        script.command(BASE_COMMAND + " " + options + " build " + createOptions + " " + job.getName());
+        script.command(BASE_COMMAND + " " + options + " build " + buildOptions + " " + job.getName());
         script.forEachOutputAndError(job::log);
         script.run();
         return script.getExitCode() == 0;
@@ -162,7 +160,7 @@ public class DockerCompose {
         final List<String> scriptOutput = new ArrayList<>();
         final BashScript script = new BashScript("getContainerState_" + jobInstance.getContainerName());
         script.env(dockerHostVariable);
-        String d = metadata + "/containers";
+        String d = metadataDirectoryPath + "/containers";
         String f = d + "/" + jobInstance.getContainerName();
         script.command("mkdir -p " + d);
         script.command("docker container inspect " + jobInstance.getContainerName() + " > " + f);

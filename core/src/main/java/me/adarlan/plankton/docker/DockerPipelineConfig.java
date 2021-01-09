@@ -12,9 +12,5 @@ public class DockerPipelineConfig extends PipelineConfig {
 
     @Getter
     @Setter
-    private String metadata;
-
-    @Getter
-    @Setter
     private String dockerHost;
 }
