@@ -2,12 +2,12 @@ package me.adarlan.plankton.docker;
 
 import me.adarlan.plankton.api.PipelineFactory;
 
-public class DockerPipelineFactory extends PipelineFactory<Pipeline, DockerPipelineConfig> {
+public class DockerPipelineFactory extends PipelineFactory<PipelineImplementation, DockerPipelineConfig> {
 
     @Override
-    public Pipeline createPipeline(DockerPipelineConfig config) {
+    public PipelineImplementation createPipeline(DockerPipelineConfig config) {
         DockerCompose dockerCompose = new DockerCompose(config);
-        Pipeline pipeline = new Pipeline(dockerCompose);
+        PipelineImplementation pipeline = new PipelineImplementation(dockerCompose);
         return pipeline;
     }
 }

@@ -121,7 +121,7 @@ public class DockerCompose {
         return Collections.unmodifiableSet(serviceNames);
     }
 
-    public boolean buildImage(Job job) {
+    public boolean buildImage(JobImplementation job) {
         final BashScript script = new BashScript("buildImage_" + job.getName());
         final String createOptions = ""; // TODO --force-rm --no-cache --pull --memory MEM
         script.env(dockerHostVariable);
@@ -131,7 +131,7 @@ public class DockerCompose {
         return script.getExitCode() == 0;
     }
 
-    public boolean pullImage(Job job) {
+    public boolean pullImage(JobImplementation job) {
         final BashScript script = new BashScript("pullImage_" + job.getName());
         script.env(dockerHostVariable);
         script.command(BASE_COMMAND + " " + options + " pull " + job.getName());
@@ -140,7 +140,7 @@ public class DockerCompose {
         return script.getExitCode() == 0;
     }
 
-    public boolean createContainers(Job job) {
+    public boolean createContainers(JobImplementation job) {
         final BashScript script = new BashScript("createContainers_" + job.getName());
         final String upOptions = "--no-start --scale " + job.getName() + "=" + job.getScale();
         script.env(dockerHostVariable);
@@ -150,7 +150,7 @@ public class DockerCompose {
         return script.getExitCode() == 0;
     }
 
-    void runContainer(JobInstance jobInstance) {
+    void runContainer(JobInstanceImplementation jobInstance) {
         final BashScript script = new BashScript("runContainer_" + jobInstance.getContainerName());
         script.env(dockerHostVariable);
         script.command("docker container start --attach " + jobInstance.getContainerName());
@@ -158,7 +158,7 @@ public class DockerCompose {
         script.run();
     }
 
-    ContainerState getContainerState(JobInstance jobInstance) {
+    ContainerState getContainerState(JobInstanceImplementation jobInstance) {
         final List<String> scriptOutput = new ArrayList<>();
         final BashScript script = new BashScript("getContainerState_" + jobInstance.getContainerName());
         script.env(dockerHostVariable);
@@ -186,14 +186,14 @@ public class DockerCompose {
         }
     }
 
-    void stopContainer(JobInstance jobInstance) {
+    void stopContainer(JobInstanceImplementation jobInstance) {
         BashScript script = new BashScript("stopContainer_" + jobInstance.getContainerName());
         script.env(dockerHostVariable);
         script.command("docker container stop " + jobInstance.getContainerName());
         script.run();
     }
 
-    boolean killContainer(JobInstance jobInstance) {
+    boolean killContainer(JobInstanceImplementation jobInstance) {
         BashScript script = new BashScript("killContainer_" + jobInstance.getContainerName());
         script.env(dockerHostVariable);
         script.command("docker container kill " + jobInstance.getContainerName());

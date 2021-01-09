@@ -13,17 +13,19 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import me.adarlan.plankton.api.Job;
 import me.adarlan.plankton.api.JobDependency;
 import me.adarlan.plankton.api.JobDependencyStatus;
+import me.adarlan.plankton.api.JobInstance;
 import me.adarlan.plankton.api.JobStatus;
 import me.adarlan.plankton.api.Logger;
 
 @EqualsAndHashCode(of = "name")
 @ToString(of = "name")
-public class Job implements me.adarlan.plankton.api.Job {
+public class JobImplementation implements Job {
 
     @Getter
-    private final Pipeline pipeline;
+    private final PipelineImplementation pipeline;
 
     private final DockerCompose dockerCompose;
 
@@ -51,7 +53,7 @@ public class Job implements me.adarlan.plankton.api.Job {
     @Getter
     private Integer scale;
 
-    private final List<JobInstance> instances = new ArrayList<>();
+    private final List<JobInstanceImplementation> instances = new ArrayList<>();
 
     @Getter
     private Instant initialInstant = null;
@@ -76,7 +78,7 @@ public class Job implements me.adarlan.plankton.api.Job {
 
     private final Logger logger = Logger.getLogger();
 
-    Job(Pipeline pipeline, String name) {
+    JobImplementation(PipelineImplementation pipeline, String name) {
         this.pipeline = pipeline;
         this.dockerCompose = pipeline.getDockerCompose();
         this.name = name;
@@ -102,7 +104,7 @@ public class Job implements me.adarlan.plankton.api.Job {
     void setScale(int scale) {
         this.scale = scale;
         for (int instanceNumber = 1; instanceNumber <= scale; instanceNumber++) {
-            JobInstance instance = new JobInstance(this, instanceNumber);
+            JobInstanceImplementation instance = new JobInstanceImplementation(this, instanceNumber);
             instances.add(instance);
         }
     }
@@ -130,7 +132,7 @@ public class Job implements me.adarlan.plankton.api.Job {
         return Collections.unmodifiableList(logs);
     }
 
-    public List<me.adarlan.plankton.api.JobInstance> getInstances() {
+    public List<JobInstance> getInstances() {
         return Collections.unmodifiableList(instances);
     }
 
@@ -198,11 +200,11 @@ public class Job implements me.adarlan.plankton.api.Job {
         @Override
         public void run() {
             if (needToBuild) {
-                if (!dockerCompose.buildImage(Job.this)) {
+                if (!dockerCompose.buildImage(JobImplementation.this)) {
                     setStatus(JobStatus.FAILURE);
                 }
             } else {
-                if (!dockerCompose.pullImage(Job.this)) {
+                if (!dockerCompose.pullImage(JobImplementation.this)) {
                     setStatus(JobStatus.FAILURE);
                 }
             }
@@ -217,14 +219,14 @@ public class Job implements me.adarlan.plankton.api.Job {
     }
 
     private void startInstances() {
-        instances.forEach(JobInstance::start);
+        instances.forEach(JobInstanceImplementation::start);
         startedInstances = true;
     }
 
     private void checkInstancesAndSetSuccessOrFailure() {
         boolean success = true;
         boolean failure = false;
-        for (JobInstance instance : instances) {
+        for (JobInstanceImplementation instance : instances) {
             instance.refresh();
             if (instance.hasEnded()) {
                 Integer exitCode = instance.getExitCode();
@@ -249,7 +251,7 @@ public class Job implements me.adarlan.plankton.api.Job {
         Duration d = getDuration();
         if (d.compareTo(timeoutLimit) > 0) {
             log("Time limit has been reached");
-            instances.forEach(JobInstance::stop);
+            instances.forEach(JobInstanceImplementation::stop);
         }
     }
 

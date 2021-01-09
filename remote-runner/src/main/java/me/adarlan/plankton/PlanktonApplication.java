@@ -6,12 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import me.adarlan.plankton.docker.DockerCompose;
 import me.adarlan.plankton.docker.DockerPipelineConfig;
 import me.adarlan.plankton.docker.DockerPipelineFactory;
 import me.adarlan.plankton.docker.PlanktonDockerException;
 import me.adarlan.plankton.api.Logger;
-import me.adarlan.plankton.docker.Pipeline;
+import me.adarlan.plankton.docker.PipelineImplementation;
 import me.adarlan.plankton.docker.BashScript;
 
 public class PlanktonApplication {
@@ -281,7 +280,7 @@ public class PlanktonApplication {
         config.setMetadata(metadataDirectoryOnRunner);
         config.setDockerHost("tcp://" + sandboxContainerName + ":2375");
         DockerPipelineFactory pipelineFactory = new DockerPipelineFactory();
-        Pipeline pipeline = pipelineFactory.createPipeline(config);
+        PipelineImplementation pipeline = pipelineFactory.createPipeline(config);
         pipeline.run();
     }
 

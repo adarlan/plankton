@@ -9,14 +9,15 @@ import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import me.adarlan.plankton.api.JobInstance;
 import me.adarlan.plankton.api.Logger;
 
 @ToString(of = "containerName")
 @EqualsAndHashCode(of = "containerName")
-public class JobInstance implements me.adarlan.plankton.api.JobInstance {
+public class JobInstanceImplementation implements JobInstance {
 
     @Getter
-    private final Job parentJob;
+    private final JobImplementation parentJob;
 
     @Getter
     private final Integer number;
@@ -53,7 +54,7 @@ public class JobInstance implements me.adarlan.plankton.api.JobInstance {
 
     private final Logger logger = Logger.getLogger();
 
-    JobInstance(Job parentJob, int number) {
+    JobInstanceImplementation(JobImplementation parentJob, int number) {
         this.parentJob = parentJob;
         this.number = number;
         this.containerName = parentJob.getPipeline().getId() + "_" + parentJob.getName() + "_" + number;

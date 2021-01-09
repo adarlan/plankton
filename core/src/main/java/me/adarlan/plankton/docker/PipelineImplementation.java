@@ -10,14 +10,16 @@ import java.util.Set;
 
 import lombok.Getter;
 import lombok.NonNull;
+import me.adarlan.plankton.api.Job;
 import me.adarlan.plankton.api.JobDependency;
 import me.adarlan.plankton.api.Logger;
+import me.adarlan.plankton.api.Pipeline;
 import me.adarlan.plankton.api.dependency.WaitDependencyFailure;
 import me.adarlan.plankton.api.dependency.WaitDependencyPort;
 import me.adarlan.plankton.api.dependency.WaitDependencySuccess;
 import me.adarlan.plankton.util.RegexUtil;
 
-public class Pipeline implements me.adarlan.plankton.api.Pipeline {
+public class PipelineImplementation implements Pipeline {
 
     @Getter
     private final DockerCompose dockerCompose;
@@ -27,14 +29,14 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
 
     // private final List<String> variables;
 
-    private final Set<Job> jobs = new HashSet<>();
-    private final Map<String, Job> jobsByName = new HashMap<>();
-    private final Map<Job, Map<String, String>> labelsByJobAndName = new HashMap<>();
-    private final Map<Integer, Job> externalPorts = new HashMap<>();
+    private final Set<JobImplementation> jobs = new HashSet<>();
+    private final Map<String, JobImplementation> jobsByName = new HashMap<>();
+    private final Map<JobImplementation, Map<String, String>> labelsByJobAndName = new HashMap<>();
+    private final Map<Integer, JobImplementation> externalPorts = new HashMap<>();
 
     private final Logger logger = Logger.getLogger();
 
-    public Pipeline(DockerCompose dockerCompose) {
+    public PipelineImplementation(DockerCompose dockerCompose) {
         this.dockerCompose = dockerCompose;
         this.id = dockerCompose.getProjectName();
         // this.variables = dockerCompose.variables;
@@ -48,23 +50,23 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
         jobs.forEach(this::initializeJobDependencies);
         // jobs.forEach(this::initializeJobDependencies);
         // jobs.forEach(this::initializeJobVariables);
-        jobs.forEach(Job::initializeStatus);
+        jobs.forEach(JobImplementation::initializeStatus);
     }
 
     private void instantiateJobs() {
         dockerCompose.getServiceNames().forEach(serviceName -> {
-            Job job = new Job(this, serviceName);
+            JobImplementation job = new JobImplementation(this, serviceName);
             this.jobs.add(job);
             this.jobsByName.put(serviceName, job);
         });
     }
 
-    private void initializeJobLabels(Job job) {
+    private void initializeJobLabels(JobImplementation job) {
         Map<String, String> labelsByName = dockerCompose.getServiceLabels(job.getName());
         labelsByJobAndName.put(job, labelsByName);
     }
 
-    private void initializeJobExpression(Job job) {
+    private void initializeJobExpression(JobImplementation job) {
         // TODO validate synthax
         Map<String, String> labelsByName = labelsByJobAndName.get(job);
         String labelName = "plankton.enable.if";
@@ -73,7 +75,7 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
         }
     }
 
-    private void initializeNeedToBuild(Job job) {
+    private void initializeNeedToBuild(JobImplementation job) {
         Map<String, Object> service = dockerCompose.getService(job.getName());
         if (service.containsKey("build")) {
             job.setNeedToBuild(true);
@@ -82,13 +84,13 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
         }
     }
 
-    private void initializeJobScale(Job job) {
+    private void initializeJobScale(JobImplementation job) {
         // TODO usar label: plankton.scale
         // a propriedade deploy.replicas só funciona pra Swarm
         job.setScale(1);
     }
 
-    private void initializeJobTimeout(Job job) {
+    private void initializeJobTimeout(JobImplementation job) {
         Map<String, String> labelsByName = labelsByJobAndName.get(job);
         String labelName = "plankton.timeout";
         if (labelsByName.containsKey(labelName)) {
@@ -101,7 +103,7 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
         }
     }
 
-    private void initializeExternalPorts(Job job) {
+    private void initializeExternalPorts(JobImplementation job) {
         List<Map<String, Object>> ports = dockerCompose.getServicePorts(job.getName());
         ports.forEach(p -> {
             Integer externalPort = (Integer) p.get("published"); // TODO published pode ser null
@@ -109,7 +111,7 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
         });
     }
 
-    private void initializeJobDependencies(Job job) {
+    private void initializeJobDependencies(JobImplementation job) {
         Set<JobDependency> dependencies = new HashSet<>();
         job.setDependencies(dependencies);
         Map<String, String> labelsByName = labelsByJobAndName.get(job);
@@ -117,14 +119,14 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
 
             if (RegexUtil.stringMatchesRegex(labelName, "^plankton\\.wait\\.success\\.of$")) {
                 String requiredJobName = labelValue;
-                Job requiredJob = this.getJobByName(requiredJobName);
+                JobImplementation requiredJob = this.getJobByName(requiredJobName);
                 WaitDependencySuccess dependency = new WaitDependencySuccess(job, requiredJob);
                 dependencies.add(dependency);
             }
 
             if (RegexUtil.stringMatchesRegex(labelName, "^plankton\\.wait\\.failure\\.of$")) {
                 String requiredJobName = labelValue;
-                Job requiredJob = this.getJobByName(requiredJobName);
+                JobImplementation requiredJob = this.getJobByName(requiredJobName);
                 WaitDependencyFailure dependency = new WaitDependencyFailure(job, requiredJob);
                 dependencies.add(dependency);
             }
@@ -133,7 +135,7 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
                 // TODO isso tá estranho pq a porta informada é a 'published',
                 // mas a porta usada internamente pelo container é a 'target'
                 Integer port = Integer.parseInt(labelValue);
-                Job requiredJob = externalPorts.get(port);
+                JobImplementation requiredJob = externalPorts.get(port);
                 WaitDependencyPort dependency = new WaitDependencyPort(job, requiredJob, port);
                 dependencies.add(dependency);
             }
@@ -151,7 +153,7 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
         boolean done = false;
         while (!done) {
             done = true;
-            for (Job job : jobs) {
+            for (JobImplementation job : jobs) {
                 job.refresh();
                 if (!job.hasEnded()) {
                     done = false;
@@ -168,11 +170,11 @@ public class Pipeline implements me.adarlan.plankton.api.Pipeline {
     // return Collections.unmodifiableList(variables);
     // }
 
-    public Set<me.adarlan.plankton.api.Job> getJobs() {
+    public Set<Job> getJobs() {
         return Collections.unmodifiableSet(jobs);
     }
 
-    public Job getJobByName(@NonNull String jobName) {
+    public JobImplementation getJobByName(@NonNull String jobName) {
         if (!jobsByName.containsKey(jobName))
             throw new PlanktonDockerException("Job not found: " + jobName);
         return jobsByName.get(jobName);
