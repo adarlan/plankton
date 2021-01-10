@@ -1,5 +1,7 @@
 package me.adarlan.plankton;
 
+import java.time.Instant;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,9 +12,6 @@ import me.adarlan.plankton.api.Pipeline;
 
 @Configuration
 public class PlanktonBeans {
-
-    @Value("${plankton.pipeline.id}")
-    private String pipelineId;
 
     @Value("${plankton.compose.file}")
     private String composeFile;
@@ -32,7 +31,7 @@ public class PlanktonBeans {
 
             @Override
             public String getPipelineId() {
-                return String.valueOf(this.hashCode());
+                return String.valueOf(Instant.now().getEpochSecond());
             }
 
             @Override
