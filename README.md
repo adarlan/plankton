@@ -4,9 +4,9 @@ Plankton is a Container-Native tool for running CI/CD pipelines using [The Compo
 
 Compose labels can be used to define pipeline rules, such as the order of services, expressions to enable or disable services, among other rules.
 
-## Try it with Docker
+## Example
 
-Create the file `plankton.compose.yaml` with the following content:
+Create a file called `plankton.compose.yaml` with the following content:
 
 ```yml
 version: "3.7"
@@ -33,7 +33,7 @@ services:
 Run the pipeline using the `docker run` command:
 
 ```shell
-docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host -p 1329:1329 adarlan/plankton
+docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host adarlan/plankton
 ```
 
 View the pipeline in your browser: [http://localhost:1329](http://localhost:1329)
