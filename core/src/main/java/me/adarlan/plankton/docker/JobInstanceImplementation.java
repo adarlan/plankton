@@ -54,7 +54,7 @@ public class JobInstanceImplementation implements JobInstance {
         this.parentJob = parentJob;
         this.number = number;
         this.containerName = parentJob.getPipeline().getId() + "_" + parentJob.getName() + "_" + number;
-        this.dockerCompose = parentJob.getPipeline().getDockerCompose();
+        this.dockerCompose = parentJob.getPipeline().dockerCompose;
     }
 
     void log(String message) {

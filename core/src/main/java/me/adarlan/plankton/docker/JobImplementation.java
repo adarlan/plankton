@@ -75,7 +75,7 @@ public class JobImplementation implements Job {
 
     JobImplementation(PipelineImplementation pipeline, String name) {
         this.pipeline = pipeline;
-        this.dockerCompose = pipeline.getDockerCompose();
+        this.dockerCompose = pipeline.dockerCompose;
         this.name = name;
     }
 
@@ -172,7 +172,7 @@ public class JobImplementation implements Job {
         boolean blocked = false;
         for (final JobDependency dependency : dependencies) {
             if (dependency.updateStatus()) {
-                logger.info(dependency);
+                logger.jobDependencyInfo(dependency);
             }
             if (!dependency.getStatus().equals(JobDependencyStatus.PASSED))
                 passed = false;
@@ -271,7 +271,7 @@ public class JobImplementation implements Job {
                 break;
         }
         this.status = status;
-        logger.info(this);
+        logger.jobInfo(this);
     }
 
     public Duration getDuration() {
