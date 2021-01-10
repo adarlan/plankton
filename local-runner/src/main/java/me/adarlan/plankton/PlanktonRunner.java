@@ -4,13 +4,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import me.adarlan.plankton.docker.PipelineImplementation;
+import me.adarlan.plankton.api.Pipeline;
 
 @Component
 public class PlanktonRunner implements CommandLineRunner {
 
     @Autowired
-    private PipelineImplementation pipeline;
+    private Pipeline pipeline;
 
     @Override
     public void run(String... args) throws Exception {
