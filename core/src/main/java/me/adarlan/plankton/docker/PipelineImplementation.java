@@ -19,10 +19,9 @@ import me.adarlan.plankton.api.dependency.WaitDependencyPort;
 import me.adarlan.plankton.api.dependency.WaitDependencySuccess;
 import me.adarlan.plankton.util.RegexUtil;
 
-public class PipelineImplementation implements Pipeline {
+class PipelineImplementation implements Pipeline {
 
-    @Getter
-    private final DockerCompose dockerCompose;
+    final DockerCompose dockerCompose;
 
     @Getter
     private final String id;
@@ -34,7 +33,7 @@ public class PipelineImplementation implements Pipeline {
 
     private final Logger logger = Logger.getLogger();
 
-    public PipelineImplementation(DockerCompose dockerCompose) {
+    PipelineImplementation(DockerCompose dockerCompose) {
         this.dockerCompose = dockerCompose;
         this.id = dockerCompose.getProjectName();
         instantiateJobs();
@@ -130,6 +129,7 @@ public class PipelineImplementation implements Pipeline {
         });
     }
 
+    @Override
     public void run() throws InterruptedException {
         boolean done = false;
         while (!done) {
@@ -145,10 +145,12 @@ public class PipelineImplementation implements Pipeline {
         logger.info(() -> "Pipeline finished");
     }
 
+    @Override
     public Set<Job> getJobs() {
         return Collections.unmodifiableSet(jobs);
     }
 
+    @Override
     public JobImplementation getJobByName(@NonNull String jobName) {
         if (!jobsByName.containsKey(jobName))
             throw new PlanktonDockerException("Job not found: " + jobName);
