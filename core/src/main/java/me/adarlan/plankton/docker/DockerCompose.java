@@ -44,7 +44,6 @@ public class DockerCompose {
     private final Logger logger = Logger.getLogger();
 
     public DockerCompose(DockerPipelineConfig config) {
-        System.out.println("DockerCompose.DockerCompose()");
         this.projectName = config.getPipelineId();
         this.projectDirectory = config.getWorkspaceDirectoryPath();
         this.metadataDirectoryPath = config.getMetadataDirectoryPath() + "/" + config.getPipelineId();
