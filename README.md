@@ -40,15 +40,19 @@ View the pipeline in your browser: [http://localhost:1329](http://localhost:1329
 
 ## Label Reference
 
-* `plankton.timeout`
-* `plankton.enable.if`
-* `plankton.wait.success.of`
-* `plankton.wait.failure.of`
-* `plankton.wait.ports`
+| Label | Description | Example |
+| ----- | ----------- | ------- |
+| `plankton.timeout` | Timeout for the service execution. | [examples/timeout](examples/timeout) |
+| `plankton.enable.if` | Expression to enable the service. All services are enabled by default. | [examples/enable.if](examples/enable.if) |
+| `plankton.wait.success.of` | A list of services that this service must wait for success. | [examples/wait.success.of](examples/wait.success.of) |
+| `plankton.wait.failure.of` | A list of services that this service must wait for failure. | [examples/wait.failure.of](examples/wait.failure.of) |
+| `plankton.wait.ports` | A list of published ports the service must wait for. | [examples/wait.ports](examples/wait.ports) |
 
 ## Argument Reference
 
-* `--plankton.compose.file` - defaults to `plankton.compose.yaml`
-* `--plankton.workspace` - defaults to `.`
-* `--plankton.metadata` - defaults to `.plankton`
-* `--plankton.docker.host` - defaults to `unix:///var/run/docker.sock`
+| Argument | Description |
+| -------- | ----------- |
+| `--plankton.compose.file` | Defaults to `plankton.compose.yaml` |
+| `--plankton.workspace` | Defaults to `.` |
+| `--plankton.metadata` | Defaults to `.plankton` |
+| `--plankton.docker.host` | Defaults to `unix:///var/run/docker.sock` |
