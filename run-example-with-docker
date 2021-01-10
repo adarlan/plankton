@@ -2,5 +2,8 @@
 set -ex
 
 NAME=$1
+WORKSPACE=$PWD/examples/$NAME
 
-docker run -it --rm -v $PWD/examples/$NAME:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host plankton --plankton.name=$NAME
+cd $WORKSPACE
+
+docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host adarlan/plankton
