@@ -1,8 +1,8 @@
 #!/bin/bash
-set -ex
+set -e
 
-MAVEN_TAG="3.6-jdk-11"
-BASE_DIR="$(pwd)"
+MAVEN_TAG=3.6-jdk-11
+BASE_DIR=$PWD
 
 buildCore () {
     cd $BASE_DIR/core
@@ -27,8 +27,9 @@ buildLocalRunner () {
         -w /workspace \
         --entrypoint "" \
         maven:$MAVEN_TAG \
-        mvn package
+        mvn install
     docker build -t plankton .
+    docker image tag plankton adarlan/plankton
 }
 
 buildRemoteRunner () {
@@ -41,22 +42,42 @@ buildRemoteRunner () {
         -w /workspace \
         --entrypoint "" \
         maven:$MAVEN_TAG \
-        mvn package
+        mvn install
     docker build -t plankton:remote-runner .
     docker build -t plankton:remote-runner-sandbox -f sandbox.Dockerfile .
+    docker image tag plankton:remote-runner adarlan/plankton:remote-runner
+    docker image tag plankton:remote-runner-sandbox adarlan/plankton:remote-runner-sandbox
 }
 
 pushImages () {
     docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
-    docker image tag plankton adarlan/plankton
-    docker image tag plankton:remote-runner adarlan/plankton:remote-runner
-    docker image tag plankton:remote-runner-sandbox adarlan/plankton:remote-runner-sandbox
     docker push adarlan/plankton
     docker push adarlan/plankton:remote-runner
     docker push adarlan/plankton:remote-runner-sandbox
 }
 
-buildCore
-buildLocalRunner
-buildRemoteRunner
-pushImages
+if [ "$1" = "" ]; then
+    set -exu
+    buildCore && echo
+    buildLocalRunner && echo
+    buildRemoteRunner
+
+elif [ "$1" = "core" ]; then
+    set -exu
+    buildCore
+
+elif [ "$1" = "local-runner" ]; then
+    set -exu
+    buildLocalRunner
+
+elif [ "$1" = "remote-runner" ]; then
+    set -exu
+    buildRemoteRunner
+
+elif [ "$1" = "--push" ]; then
+    set -exu
+    buildCore && echo
+    buildLocalRunner && echo
+    buildRemoteRunner && echo
+    pushImages
+fi
