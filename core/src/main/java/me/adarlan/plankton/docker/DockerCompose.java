@@ -22,10 +22,7 @@ import me.adarlan.plankton.api.Logger;
 public class DockerCompose {
 
     @Getter
-    private final String originalFile;
-
-    @Getter
-    private final String file;
+    private final String filePath;
 
     @Getter
     private final String projectName;
@@ -47,35 +44,35 @@ public class DockerCompose {
     private final Logger logger = Logger.getLogger();
 
     public DockerCompose(DockerPipelineConfig config) {
+        System.out.println("DockerCompose.DockerCompose()");
         this.projectName = config.getPipelineId();
-        this.projectDirectory = config.getWorkspace();
-        this.originalFile = config.getComposeFile();
-        this.metadataDirectoryPath = config.getMetadata() + "/" + config.getPipelineId();
-        this.file = metadataDirectoryPath + "/docker-compose.yml";
+        this.projectDirectory = config.getWorkspaceDirectoryPath();
+        this.metadataDirectoryPath = config.getMetadataDirectoryPath() + "/" + config.getPipelineId();
+        this.filePath = metadataDirectoryPath + "/docker-compose.yml";
         if (config.getDockerHost() == null) {
             this.dockerHostVariable = "DOCKER_HOST=unix:///var/run/docker.sock";
         } else {
             this.dockerHostVariable = "DOCKER_HOST=" + config.getDockerHost();
         }
-        this.initializeMetadata();
-        this.initializeFile();
+        this.initializeMetadataDirectory();
+        this.initializeFileFromOriginalFile(config.getComposeFilePath());
         this.initializeOptions();
-        this.prune();
+        // this.prune();
         this.createNetwork();
         this.initializeDocument();
     }
 
-    private void initializeMetadata() {
+    private void initializeMetadataDirectory() {
         BashScript script = new BashScript("initializeMetadata");
-        script.command("rm -rf " + metadataDirectoryPath);
+        // script.command("rm -rf " + metadataDirectoryPath);
         script.command("mkdir -p " + metadataDirectoryPath);
         script.runSuccessfully();
     }
 
-    private void initializeFile() {
-        BashScript script = new BashScript("initializeFile");
-        script.command(BASE_COMMAND + " --file " + originalFile + " config > " + file);
-        script.command("cat " + file);
+    private void initializeFileFromOriginalFile(String originalFile) {
+        BashScript script = new BashScript("initializeFileFromOriginalFile");
+        script.command(BASE_COMMAND + " --file " + originalFile + " config > " + filePath);
+        script.command("cat " + filePath);
         script.runSuccessfully();
     }
 
@@ -83,17 +80,18 @@ public class DockerCompose {
         List<String> list = new ArrayList<>();
         list.add("--no-ansi");
         list.add("--project-name " + projectName);
-        list.add("--file " + file);
+        list.add("--file " + filePath);
         list.add("--project-directory " + projectDirectory);
         options = list.stream().collect(Collectors.joining(" "));
     }
 
-    private void prune() {
-        BashScript script = new BashScript("prune");
-        script.env(dockerHostVariable);
-        script.command(BASE_COMMAND + " " + options + " down --volumes --remove-orphans");
-        script.runSuccessfully();
-    }
+    // private void prune() {
+    // BashScript script = new BashScript("prune");
+    // script.env(dockerHostVariable);
+    // script.command(BASE_COMMAND + " " + options + " down --volumes
+    // --remove-orphans");
+    // script.runSuccessfully();
+    // }
 
     private void createNetwork() {
         BashScript script = new BashScript("createNetwork");
@@ -105,7 +103,7 @@ public class DockerCompose {
 
     @SuppressWarnings("unchecked")
     private void initializeDocument() {
-        try (FileInputStream fileInputStream = new FileInputStream(file);) {
+        try (FileInputStream fileInputStream = new FileInputStream(filePath);) {
             final Yaml yaml = new Yaml();
             document = yaml.load(fileInputStream);
         } catch (IOException e) {
