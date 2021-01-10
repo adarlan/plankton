@@ -10,7 +10,7 @@ import me.adarlan.plankton.docker.DockerPipelineConfig;
 import me.adarlan.plankton.docker.DockerPipelineFactory;
 import me.adarlan.plankton.docker.PlanktonDockerException;
 import me.adarlan.plankton.api.Logger;
-import me.adarlan.plankton.docker.PipelineImplementation;
+import me.adarlan.plankton.api.Pipeline;
 import me.adarlan.plankton.docker.BashScript;
 
 public class PlanktonApplication {
@@ -272,15 +272,39 @@ public class PlanktonApplication {
         //
     }
 
+    private static DockerPipelineConfig dockerPipelineConfig() {
+        return new DockerPipelineConfig() {
+
+            @Override
+            public String getPipelineId() {
+                return pipelineId;
+            }
+
+            @Override
+            public String getComposeFilePath() {
+                return workspaceDirectoryOnRunner + "/" + planktonFile;
+            }
+
+            @Override
+            public String getWorkspaceDirectoryPath() {
+                return workspaceDirectoryOnRunner;
+            }
+
+            @Override
+            public String getMetadataDirectoryPath() {
+                return metadataDirectoryOnRunner;
+            }
+
+            @Override
+            public String getDockerHost() {
+                return "tcp://" + sandboxContainerName + ":2375";
+            }
+        };
+    }
+
     private static void runPipeline() throws InterruptedException {
-        DockerPipelineConfig config = new DockerPipelineConfig();
-        config.setPipelineId(pipelineId);
-        config.setComposeFile(workspaceDirectoryOnRunner + "/" + planktonFile);
-        config.setWorkspace(workspaceDirectoryOnRunner);
-        config.setMetadata(metadataDirectoryOnRunner);
-        config.setDockerHost("tcp://" + sandboxContainerName + ":2375");
         DockerPipelineFactory pipelineFactory = new DockerPipelineFactory();
-        PipelineImplementation pipeline = pipelineFactory.createPipeline(config);
+        Pipeline pipeline = pipelineFactory.createPipeline(dockerPipelineConfig());
         pipeline.run();
     }
 
