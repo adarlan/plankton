@@ -1,27 +1,21 @@
 package me.adarlan.plankton.api;
 
-import lombok.Getter;
-import lombok.Setter;
+public interface PipelineConfig {
 
-public abstract class PipelineConfig {
-
-    public PipelineConfig() {
-
+    default String getPipelineId() {
+        return String.valueOf(this.hashCode());
     }
 
-    @Getter
-    @Setter
-    private String pipelineId;
+    default String getComposeFilePath() {
+        return "plankton.compose.yaml";
+    }
 
-    @Getter
-    @Setter
-    private String composeFile;
+    default String getWorkspaceDirectoryPath() {
+        return ".";
+    }
 
-    @Getter
-    @Setter
-    private String workspace;
-
-    @Getter
-    @Setter
-    private String metadata;
+    // TODO it is not pipeline config; it is plankton config
+    default String getMetadataDirectoryPath() {
+        return "~/.plankton";
+    }
 }
