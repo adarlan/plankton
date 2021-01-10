@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import lombok.RequiredArgsConstructor;
-import me.adarlan.plankton.api.Pipeline;
+import me.adarlan.plankton.core.Pipeline;
 
 public class PlanktonSerializer {
 

@@ -3,7 +3,7 @@ package me.adarlan.plankton;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import me.adarlan.plankton.api.Logger;
+import me.adarlan.plankton.core.Logger;
 
 @SpringBootApplication
 public class PlanktonApplication {

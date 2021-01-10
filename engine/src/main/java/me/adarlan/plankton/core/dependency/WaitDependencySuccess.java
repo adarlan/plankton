@@ -1,14 +1,14 @@
-package me.adarlan.plankton.api.dependency;
+package me.adarlan.plankton.core.dependency;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import me.adarlan.plankton.api.Job;
-import me.adarlan.plankton.api.JobDependency;
-import me.adarlan.plankton.api.JobDependencyStatus;
-import me.adarlan.plankton.api.JobStatus;
+import me.adarlan.plankton.core.Job;
+import me.adarlan.plankton.core.JobDependency;
+import me.adarlan.plankton.core.JobDependencyStatus;
+import me.adarlan.plankton.core.JobStatus;
 
 @EqualsAndHashCode(of = { "parentJob", "requiredJob" })
-public class WaitDependencyFailure implements JobDependency {
+public class WaitDependencySuccess implements JobDependency {
 
     @Getter
     Job parentJob;
@@ -19,7 +19,7 @@ public class WaitDependencyFailure implements JobDependency {
     @Getter
     JobDependencyStatus status = JobDependencyStatus.WAITING;
 
-    public WaitDependencyFailure(Job parentJob, Job requiredJob) {
+    public WaitDependencySuccess(Job parentJob, Job requiredJob) {
         this.parentJob = parentJob;
         this.requiredJob = requiredJob;
     }
@@ -27,7 +27,7 @@ public class WaitDependencyFailure implements JobDependency {
     @Override
     public Boolean updateStatus() {
         if (status.equals(JobDependencyStatus.WAITING) && requiredJob.hasEnded()) {
-            if (requiredJob.getStatus().equals(JobStatus.FAILURE)) {
+            if (requiredJob.getStatus().equals(JobStatus.SUCCESS)) {
                 status = JobDependencyStatus.PASSED;
                 return true;
             } else {

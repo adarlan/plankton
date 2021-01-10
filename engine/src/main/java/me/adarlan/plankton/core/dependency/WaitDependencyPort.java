@@ -1,14 +1,14 @@
-package me.adarlan.plankton.api.dependency;
+package me.adarlan.plankton.core.dependency;
 
 import java.io.IOException;
 import java.net.Socket;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import me.adarlan.plankton.api.Job;
-import me.adarlan.plankton.api.JobDependency;
-import me.adarlan.plankton.api.JobDependencyStatus;
-import me.adarlan.plankton.api.JobStatus;
+import me.adarlan.plankton.core.Job;
+import me.adarlan.plankton.core.JobDependency;
+import me.adarlan.plankton.core.JobDependencyStatus;
+import me.adarlan.plankton.core.JobStatus;
 
 @EqualsAndHashCode(of = { "parentJob", "requiredJob", "port" })
 public class WaitDependencyPort implements JobDependency {

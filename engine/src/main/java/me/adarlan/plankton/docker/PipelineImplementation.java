@@ -10,13 +10,13 @@ import java.util.Set;
 
 import lombok.Getter;
 import lombok.NonNull;
-import me.adarlan.plankton.api.Job;
-import me.adarlan.plankton.api.JobDependency;
-import me.adarlan.plankton.api.Logger;
-import me.adarlan.plankton.api.Pipeline;
-import me.adarlan.plankton.api.dependency.WaitDependencyFailure;
-import me.adarlan.plankton.api.dependency.WaitDependencyPort;
-import me.adarlan.plankton.api.dependency.WaitDependencySuccess;
+import me.adarlan.plankton.core.Job;
+import me.adarlan.plankton.core.JobDependency;
+import me.adarlan.plankton.core.Logger;
+import me.adarlan.plankton.core.Pipeline;
+import me.adarlan.plankton.core.dependency.WaitDependencyFailure;
+import me.adarlan.plankton.core.dependency.WaitDependencyPort;
+import me.adarlan.plankton.core.dependency.WaitDependencySuccess;
 import me.adarlan.plankton.util.RegexUtil;
 
 class PipelineImplementation implements Pipeline {

@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.yaml.snakeyaml.Yaml;
 
 import lombok.Getter;
-import me.adarlan.plankton.api.Logger;
+import me.adarlan.plankton.core.Logger;
 
 public class DockerCompose {
 

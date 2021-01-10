@@ -13,12 +13,12 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import me.adarlan.plankton.api.Job;
-import me.adarlan.plankton.api.JobDependency;
-import me.adarlan.plankton.api.JobDependencyStatus;
-import me.adarlan.plankton.api.JobInstance;
-import me.adarlan.plankton.api.JobStatus;
-import me.adarlan.plankton.api.Logger;
+import me.adarlan.plankton.core.Job;
+import me.adarlan.plankton.core.JobDependency;
+import me.adarlan.plankton.core.JobDependencyStatus;
+import me.adarlan.plankton.core.JobInstance;
+import me.adarlan.plankton.core.JobStatus;
+import me.adarlan.plankton.core.Logger;
 
 @EqualsAndHashCode(of = "name")
 @ToString(of = "name")

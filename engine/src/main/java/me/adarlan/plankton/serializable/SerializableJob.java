@@ -8,7 +8,7 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import me.adarlan.plankton.api.Job;
+import me.adarlan.plankton.core.Job;
 
 @Getter
 @Setter(AccessLevel.PACKAGE)

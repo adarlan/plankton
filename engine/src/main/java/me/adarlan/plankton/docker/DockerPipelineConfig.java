@@ -1,6 +1,6 @@
 package me.adarlan.plankton.docker;
 
-import me.adarlan.plankton.api.PipelineConfig;
+import me.adarlan.plankton.core.PipelineConfig;
 
 public interface DockerPipelineConfig extends PipelineConfig {
 

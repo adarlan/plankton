@@ -9,8 +9,8 @@ import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import me.adarlan.plankton.api.JobInstance;
-import me.adarlan.plankton.api.Logger;
+import me.adarlan.plankton.core.JobInstance;
+import me.adarlan.plankton.core.Logger;
 
 @ToString(of = "containerName")
 @EqualsAndHashCode(of = "containerName")

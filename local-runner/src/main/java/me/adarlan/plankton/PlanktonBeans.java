@@ -6,9 +6,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import me.adarlan.plankton.core.Pipeline;
 import me.adarlan.plankton.docker.DockerPipelineConfig;
 import me.adarlan.plankton.docker.DockerPipelineFactory;
-import me.adarlan.plankton.api.Pipeline;
 
 @Configuration
 public class PlanktonBeans {

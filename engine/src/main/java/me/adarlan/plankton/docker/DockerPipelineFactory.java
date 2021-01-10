@@ -1,6 +1,6 @@
 package me.adarlan.plankton.docker;
 
-import me.adarlan.plankton.api.PipelineFactory;
+import me.adarlan.plankton.core.PipelineFactory;
 
 public class DockerPipelineFactory extends PipelineFactory<PipelineImplementation, DockerPipelineConfig> {
 

@@ -1,4 +1,4 @@
-package me.adarlan.plankton.api;
+package me.adarlan.plankton.core;
 
 public abstract class PipelineFactory<P extends Pipeline, C extends PipelineConfig> {
 
