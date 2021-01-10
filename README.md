@@ -1,15 +1,33 @@
 # Plankton
 
-Plankton is a tool for running Container-Native CI/CD using [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
+Plankton is a Container-Native tool for running CI/CD pipelines using [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
 
-Compose labels can be used to define pipeline rules, such as the step order, expressions to enable or disable operations, among other rules.
+Compose labels can be used to define pipeline rules, such as the order of services, expressions to enable or disable services, among other rules.
 
-## Try it yourself
+## Try it with Docker
 
 Create the file `plankton.compose.yaml` with the following content:
 
 ```yml
-...
+version: "3.7"
+
+services:
+
+  test:
+    image: alpine
+    command: echo Testing...
+
+  build:
+    image: alpine
+    command: echo Building...
+    labels:
+      plankton.wait.success.of: test
+
+  deploy:
+    image: alpine
+    command: echo Deploying...
+    labels:
+      plankton.wait.success.of: build
 ```
 
 Run the pipeline using the `docker run` command:
@@ -20,19 +38,17 @@ docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.s
 
 View the pipeline in your browser: [http://localhost:1329](http://localhost:1329)
 
-## Label reference
+## Label Reference
 
 * `plankton.timeout`
 * `plankton.enable.if`
-* `plankton.disable.if`
 * `plankton.wait.success.of`
 * `plankton.wait.failure.of`
 * `plankton.wait.ports`
 
-## Argument reference
+## Argument Reference
 
-* `--plankton.pipeline.id` - Defaults to `YYYY-MM-DD...`
-* `--plankton.compose.file` - Defaults to `plankton.compose.yaml`
-* `--plankton.workspace` - Defaults to `/workspace`
-* `--plankton.docker.metadata` - Defaults to `${plankton.workspace}/.plankton/${plankton.pipeline.id}/docker.metadata`
-* `--plankton.docker.host` - Defaults to `unix:///var/run/docker.sock`
+* `--plankton.compose.file` - defaults to `plankton.compose.yaml`
+* `--plankton.workspace` - defaults to `.`
+* `--plankton.metadata` - defaults to `.plankton`
+* `--plankton.docker.host` - defaults to `unix:///var/run/docker.sock`
