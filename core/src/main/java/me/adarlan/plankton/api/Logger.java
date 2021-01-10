@@ -69,12 +69,12 @@ public class Logger {
         this.begin = Instant.now();
     }
 
-    public <T extends Job> void info(T job) {
+    public <T extends Job> void jobInfo(T job) {
         if (level.accept(Level.INFO))
             info(() -> prefix(job, null) + " " + status(job.getStatus()));
     }
 
-    public <T extends JobDependency> void info(T dependency) {
+    public <T extends JobDependency> void jobDependencyInfo(T dependency) {
         if (level.accept(Level.INFO))
             info(() -> prefix(dependency.getParentJob(), null) + " " + dependency.toString()
                     + status(dependency.getStatus()));
