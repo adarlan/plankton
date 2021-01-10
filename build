@@ -4,8 +4,8 @@ set -e
 MAVEN_TAG=3.6-jdk-11
 BASE_DIR=$PWD
 
-buildCore () {
-    cd $BASE_DIR/core
+buildEngine () {
+    cd $BASE_DIR/engine
     docker run -it --rm \
         -u $(id -u $USER):$(id -g $USER) \
         -v /etc/passwd:/etc/passwd:ro \
@@ -58,13 +58,13 @@ pushImages () {
 
 if [ "$1" = "" ]; then
     set -exu
-    buildCore && echo
+    buildEngine && echo
     buildLocalRunner && echo
     buildRemoteRunner
 
-elif [ "$1" = "core" ]; then
+elif [ "$1" = "engine" ]; then
     set -exu
-    buildCore
+    buildEngine
 
 elif [ "$1" = "local-runner" ]; then
     set -exu
@@ -76,7 +76,7 @@ elif [ "$1" = "remote-runner" ]; then
 
 elif [ "$1" = "--push" ]; then
     set -exu
-    buildCore && echo
+    buildEngine && echo
     buildLocalRunner && echo
     buildRemoteRunner && echo
     pushImages

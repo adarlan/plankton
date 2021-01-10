@@ -2,12 +2,12 @@ examples/*/.plankton/
 
 .vscode/
 
-core/target/
-core/.settings/
-core/.factorypath
-core/.classpath
-core/.project
-core/dependency-reduced-pom.xml
+engine/target/
+engine/.settings/
+engine/.factorypath
+engine/.classpath
+engine/.project
+engine/dependency-reduced-pom.xml
 
 local-runner/target/
 local-runner/.settings/

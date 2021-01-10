@@ -1,12 +1,12 @@
 stages:
-  - BuildCore
+  - BuildEngine
   - BuildRunners
 
-BuildCore:
-  stage: BuildCore
+BuildEngine:
+  stage: BuildEngine
   image: maven:3.6-jdk-11
   script:
-    - cd core
+    - cd engine
     - mvn -s maven-settings.xml --batch-mode -DskipTests deploy
 
 BuildLocalRunner:

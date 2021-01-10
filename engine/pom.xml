@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>me.adarlan</groupId>
-    <artifactId>plankton-core</artifactId>
+    <artifactId>plankton-engine</artifactId>
     <version>0.1.0</version>
     <packaging>jar</packaging>
 

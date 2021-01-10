@@ -10,7 +10,7 @@
 
         <dependency>
             <groupId>me.adarlan</groupId>
-            <artifactId>plankton-core</artifactId>
+            <artifactId>plankton-engine</artifactId>
             <version>0.1.0</version>
         </dependency>
 
