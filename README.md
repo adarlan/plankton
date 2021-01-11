@@ -2,7 +2,7 @@
 
 Plankton is a Container-Native tool for running CI/CD pipelines using [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
 
-Compose labels can be used to define pipeline rules, such as the order of services, expressions to enable or disable services, among other rules.
+Compose labels can be used to define pipeline rules, such as the order of services, expressions to enable or disable tasks, among other rules.
 
 ## Example
 
@@ -56,3 +56,8 @@ View the pipeline in your browser: [http://localhost:1329](http://localhost:1329
 | `--plankton.workspace` | Defaults to `.` |
 | `--plankton.metadata` | Defaults to `.plankton` |
 | `--plankton.docker.host` | Defaults to `unix:///var/run/docker.sock` |
+
+## Test
+
+* Item 1
+* Item 2
