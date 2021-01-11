@@ -19,6 +19,7 @@ import me.adarlan.plankton.core.JobDependencyStatus;
 import me.adarlan.plankton.core.JobInstance;
 import me.adarlan.plankton.core.JobStatus;
 import me.adarlan.plankton.core.Logger;
+import me.adarlan.plankton.util.BashScript;
 
 @EqualsAndHashCode(of = "name")
 @ToString(of = "name")
@@ -105,6 +106,7 @@ public class JobImplementation implements Job {
     }
 
     private void evaluateExpression() {
+        // TODO do it inside a sandbox container
         final String scriptName = "evaluateExpression_" + name;
         BashScript script = new BashScript(scriptName);
         script.command(expression);

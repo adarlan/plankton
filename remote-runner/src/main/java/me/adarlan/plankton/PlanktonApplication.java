@@ -11,7 +11,7 @@ import me.adarlan.plankton.docker.DockerPipelineFactory;
 import me.adarlan.plankton.docker.PlanktonDockerException;
 import me.adarlan.plankton.core.Logger;
 import me.adarlan.plankton.core.Pipeline;
-import me.adarlan.plankton.docker.BashScript;
+import me.adarlan.plankton.util.BashScript;
 
 public class PlanktonApplication {
 
