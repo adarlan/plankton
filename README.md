@@ -1,8 +1,8 @@
 # Plankton
 
-Plankton is a Container-Native tool for running CI/CD pipelines using [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
+Plankton is a Container-Native CI/CD tool based on [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
 
-Labels can be used to define pipeline rules, such as the order of services, expressions to enable or disable services, among other rules.
+Labels can be used to define pipeline rules, such as job order, expressions to enable or disable jobs, among other rules.
 
 ## Example
 
@@ -30,12 +30,20 @@ services:
       plankton.wait.success.of: build
 ```
 
+> The labels that start with `plankton.` rules the pipeline.
+See the [Label Reference](#label-reference) section of this document.
+
 Run the pipeline using the `docker run` command:
 
 ```shell
 docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host adarlan/plankton
 ```
 
+Then you can see the pipeline logs:
+
+![Pipeline logs](screenshots/pipeline-logs.png)
+
+You can also view a graphical representation of the pipeline in your browser:
 View the pipeline in your browser: [http://localhost:1329](http://localhost:1329)
 
 ## Label Reference
