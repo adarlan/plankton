@@ -56,14 +56,12 @@ public class DockerCompose {
         this.initializeMetadataDirectory();
         this.initializeFileFromOriginalFile(config.getComposeFilePath());
         this.initializeOptions();
-        // this.prune();
         this.createNetwork();
         this.initializeDocument();
     }
 
     private void initializeMetadataDirectory() {
         BashScript script = new BashScript("initializeMetadata");
-        // script.command("rm -rf " + metadataDirectoryPath);
         script.command("mkdir -p " + metadataDirectoryPath);
         script.runSuccessfully();
     }
@@ -83,14 +81,6 @@ public class DockerCompose {
         list.add("--project-directory " + projectDirectory);
         options = list.stream().collect(Collectors.joining(" "));
     }
-
-    // private void prune() {
-    // BashScript script = new BashScript("prune");
-    // script.env(dockerHostVariable);
-    // script.command(BASE_COMMAND + " " + options + " down --volumes
-    // --remove-orphans");
-    // script.runSuccessfully();
-    // }
 
     private void createNetwork() {
         BashScript script = new BashScript("createNetwork");
