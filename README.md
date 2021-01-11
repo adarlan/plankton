@@ -6,6 +6,9 @@ Labels can be used to define pipeline rules, such as job order, expressions to e
 
 ## Example
 
+Following this simple example, you can create a pipeline composed by 3 jobs/services:
+`test`, `build` and `deploy`
+
 Create a file called `plankton.compose.yaml` with the following content:
 
 ```yml
@@ -44,7 +47,11 @@ Then you can see the pipeline logs:
 ![Pipeline logs](screenshots/pipeline-logs.png)
 
 You can also view a graphical representation of the pipeline in your browser:
-View the pipeline in your browser: [http://localhost:1329](http://localhost:1329)
+[http://localhost:1329](http://localhost:1329)
+
+![Pipeline page](screenshots/pipeline-page.png)
+
+See more [examples](examples).
 
 ## Label Reference
 
