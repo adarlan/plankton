@@ -40,13 +40,13 @@ View the pipeline in your browser: [http://localhost:1329](http://localhost:1329
 
 ## Label Reference
 
-| Label | Description | Example |
-| ----- | ----------- | ------- |
-| `plankton.timeout` | Timeout for the service execution. | [examples/timeout](examples/timeout) |
-| `plankton.enable.if` | Expression to enable the service. All services are enabled by default. | [examples/enable.if](examples/enable.if) |
-| `plankton.wait.success.of` | A list of services that this service must wait for success. | [examples/wait.success.of](examples/wait.success.of) |
-| `plankton.wait.failure.of` | A list of services that this service must wait for failure. | [examples/wait.failure.of](examples/wait.failure.of) |
-| `plankton.wait.ports` | A list of published ports the service must wait for. | [examples/wait.ports](examples/wait.ports) |
+| Label | Description |
+| ----- | ----------- |
+| `plankton.timeout` | Timeout for the service execution. |
+| `plankton.enable.if` | Expression to enable the service. All services are enabled by default. |
+| `plankton.wait.success.of` | A list of services that this service must wait for success. |
+| `plankton.wait.failure.of` | A list of services that this service must wait for failure. |
+| `plankton.wait.ports` | A list of published ports the service must wait for. |
 
 ## Argument Reference
 
