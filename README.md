@@ -2,7 +2,7 @@
 
 Plankton is a Container-Native tool for running CI/CD pipelines using [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
 
-Compose labels can be used to define pipeline rules, such as the order of services, expressions to enable or disable services, among other rules.
+Labels can be used to define pipeline rules, such as the order of services, expressions to enable or disable services, among other rules.
 
 ## Example
 
