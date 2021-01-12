@@ -61,7 +61,7 @@ public class ServiceInstanceImplementation implements ServiceInstance {
         synchronized (logs) {
             logs.add(message);
         }
-        logger.follow(this, () -> message);
+        logger.log(this, () -> message);
     }
 
     public List<String> getLogs() {

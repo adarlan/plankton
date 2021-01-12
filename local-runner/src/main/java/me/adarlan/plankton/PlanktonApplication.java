@@ -9,7 +9,7 @@ import me.adarlan.plankton.core.Logger;
 public class PlanktonApplication {
 
 	public static void main(String[] args) {
-		Logger.setLevel(Logger.Level.FOLLOW);
+		Logger.setLevel(Logger.Level.LOG);
 		SpringApplication.run(PlanktonApplication.class, args);
 	}
 }

@@ -32,7 +32,7 @@ public class Logger {
 
     private static final List<String> JOB_COLOR_LIST = Arrays.asList(BLUE, GREEN, PURPLE, CYAN, YELLOW, RED);
 
-    private static Level level = Level.FOLLOW;
+    private static Level level = Level.LOG;
     private final Instant begin;
 
     private boolean printTimeStamp = false;
@@ -41,7 +41,7 @@ public class Logger {
     private Integer biggestServiceNameLength = null;
 
     public enum Level {
-        TRACE(0), DEBUG(1), FOLLOW(2), INFO(3), WARN(4), ERROR(5), FATAL(6);
+        TRACE(0), DEBUG(1), LOG(2), INFO(3), WARN(4), ERROR(5), FATAL(6);
 
         private final int value;
 
@@ -92,14 +92,14 @@ public class Logger {
             print(Level.INFO, supplier.get());
     }
 
-    public void follow(Service service, Supplier<String> supplier) {
-        if (level.accept(Level.FOLLOW))
-            print(Level.FOLLOW, prefix(service, null) + " " + supplier.get());
+    public void log(Service service, Supplier<String> supplier) {
+        if (level.accept(Level.LOG))
+            print(Level.LOG, prefix(service, null) + " " + supplier.get());
     }
 
-    public void follow(ServiceInstance serviceInstance, Supplier<String> supplier) {
-        if (level.accept(Level.FOLLOW))
-            print(Level.FOLLOW, prefix(serviceInstance.getParentService(), serviceInstance.getContainerName()) + " "
+    public void log(ServiceInstance serviceInstance, Supplier<String> supplier) {
+        if (level.accept(Level.LOG))
+            print(Level.LOG, prefix(serviceInstance.getParentService(), serviceInstance.getContainerName()) + " "
                     + supplier.get());
     }
 
@@ -140,8 +140,8 @@ public class Logger {
                 tagColor = BRIGHT_BLACK;
                 textColor = BRIGHT_BLACK;
                 break;
-            case FOLLOW:
-                tag = "FOLLOW";
+            case LOG:
+                tag = "LOG";
                 tagColor = WHITE;
                 textColor = WHITE;
                 break;
@@ -168,7 +168,7 @@ public class Logger {
             default:
         }
         tag = tag != null ? "[" + tag + "]" : "";
-        tag = alignLeft(tag, 9);
+        tag = alignLeft(tag, 8);
         if (tagColor != null) {
             tag = tagColor + tag + ANSI_RESET;
         }
@@ -237,46 +237,46 @@ public class Logger {
         }
     }
 
-    private String status(ServiceStatus status) {
-        String color = "";
-        switch (status) {
-            case DISABLED:
-                color = BRIGHT_PURPLE;
-                break;
-            case WAITING:
-                color = BRIGHT_CYAN;
-                break;
-            case BLOCKED:
-                color = BRIGHT_RED;
-                break;
-            case RUNNING:
-                color = BRIGHT_BLUE;
-                break;
-            case FAILURE:
-                color = BRIGHT_RED;
-                break;
-            case SUCCESS:
-                color = BRIGHT_GREEN;
-                break;
-            default:
-                break;
-        }
-        return color + status.toString() + ANSI_RESET;
-    }
+    // private String status(ServiceStatus status) {
+    //     String color = "";
+    //     switch (status) {
+    //         case DISABLED:
+    //             color = BRIGHT_PURPLE;
+    //             break;
+    //         case WAITING:
+    //             color = BRIGHT_CYAN;
+    //             break;
+    //         case BLOCKED:
+    //             color = BRIGHT_RED;
+    //             break;
+    //         case RUNNING:
+    //             color = BRIGHT_BLUE;
+    //             break;
+    //         case FAILURE:
+    //             color = BRIGHT_RED;
+    //             break;
+    //         case SUCCESS:
+    //             color = BRIGHT_GREEN;
+    //             break;
+    //         default:
+    //             break;
+    //     }
+    //     return color + status.toString() + ANSI_RESET;
+    // }
 
-    private String status(ServiceDependencyStatus status) {
-        String color = "";
-        switch (status) {
-            case WAITING:
-                color = BRIGHT_CYAN;
-                break;
-            case PASSED:
-                color = BRIGHT_GREEN;
-                break;
-            case BLOCKED:
-                color = BRIGHT_RED;
-                break;
-        }
-        return color + status.toString() + ANSI_RESET;
-    }
+    // private String status(ServiceDependencyStatus status) {
+    //     String color = "";
+    //     switch (status) {
+    //         case WAITING:
+    //             color = BRIGHT_CYAN;
+    //             break;
+    //         case PASSED:
+    //             color = BRIGHT_GREEN;
+    //             break;
+    //         case BLOCKED:
+    //             color = BRIGHT_RED;
+    //             break;
+    //     }
+    //     return color + status.toString() + ANSI_RESET;
+    // }
 }
