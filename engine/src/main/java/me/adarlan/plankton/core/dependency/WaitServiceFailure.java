@@ -40,6 +40,6 @@ public class WaitServiceFailure implements ServiceDependency {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + ": " + requiredService.getName();
+        return parentService.getName() + "." + getClass().getSimpleName() + ": " + requiredService.getName() + " | " + status;
     }
 }
