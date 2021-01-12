@@ -74,14 +74,20 @@ docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.s
 docker run [OPTIONS] adarlan/plankton --plankton.compose.file=cicd.compose.yaml --plankton.workspace=.
 ``` -->
 
-<!-- ### Plankton config
-### Docker config -->
+### Plankton config
 
 | Argument | Description |
 | -------- | ----------- |
 | `--plankton.compose.file` | The path of the Compose file which contains the pipeline configuration. Defaults to `plankton.compose.yaml`. |
-| `--plankton.workspace` | Defaults to `.` |
-| `--plankton.metadata` | Defaults to `.plankton` |
+| `--plankton.workspace` | Defaults to `.`. |
+| `--plankton.metadata` | Defaults to `~/.plankton`. |
+
+> **Note**: when running Plankton inside a container (using the `docker run` command), these paths are related to the container file system, not to the host file system.
+
+### Docker config
+
+| Argument | Description |
+| -------- | ----------- |
 | `--plankton.docker.host` | Defaults to `unix:///var/run/docker.sock` |
 
 ## Unsupported Compose Attributes
