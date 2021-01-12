@@ -66,15 +66,6 @@ docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.s
 | -------- | ----------- |
 | `GIT_REF` | ... |
 
-## Argument Reference
-
-| Argument | Description |
-| -------- | ----------- |
-| `--plankton.compose.file` | The path of the Compose file which contains the pipeline configuration. Defaults to `plankton.compose.yaml`. |
-| `--plankton.workspace` | Defaults to `.` |
-| `--plankton.metadata` | Defaults to `.plankton` |
-| `--plankton.docker.host` | Defaults to `unix:///var/run/docker.sock` |
-
 ## Supported Compose Attributes
 
 ```yaml
@@ -84,3 +75,18 @@ services:
     command:
     labels:
 ```
+
+## Argument Reference
+
+You can define arguments when running the pipeline through command line:
+
+```shell
+docker run [OPTIONS] adarlan/plankton --plankton.compose.file=cicd.compose.yaml --plankton.workspace=.
+```
+
+| Argument | Description |
+| -------- | ----------- |
+| `--plankton.compose.file` | The path of the Compose file which contains the pipeline configuration. Defaults to `plankton.compose.yaml`. |
+| `--plankton.workspace` | Defaults to `.` |
+| `--plankton.metadata` | Defaults to `.plankton` |
+| `--plankton.docker.host` | Defaults to `unix:///var/run/docker.sock` |
