@@ -12,25 +12,28 @@ public class Logger {
 
     private static final String ANSI_RESET = "\u001B[0m";
 
-    private static final String BLACK = "\u001B[30m";
-    private static final String RED = "\u001B[31m";
-    private static final String GREEN = "\u001B[32m";
-    private static final String YELLOW = "\u001B[33m";
-    private static final String BLUE = "\u001B[34m";
-    private static final String PURPLE = "\u001B[35m";
-    private static final String CYAN = "\u001B[36m";
+    // private static final String BLACK = "\u001B[30m";
     private static final String WHITE = "\u001B[37m";
 
     private static final String BRIGHT_BLACK = "\u001b[30;1m";
+    // private static final String BRIGHT_WHITE = "\u001b[37;1m";
+
+    private static final String RED = "\u001B[31m";
+    // private static final String GREEN = "\u001B[32m";
+    private static final String YELLOW = "\u001B[33m";
+    // private static final String BLUE = "\u001B[34m";
+    // private static final String PURPLE = "\u001B[35m";
+    // private static final String CYAN = "\u001B[36m";
+
     private static final String BRIGHT_RED = "\u001b[31;1m";
     private static final String BRIGHT_GREEN = "\u001b[32;1m";
     private static final String BRIGHT_YELLOW = "\u001b[33;1m";
     private static final String BRIGHT_BLUE = "\u001b[34;1m";
     private static final String BRIGHT_PURPLE = "\u001b[35;1m";
     private static final String BRIGHT_CYAN = "\u001b[36;1m";
-    private static final String BRIGHT_WHITE = "\u001b[37;1m";
 
-    private static final List<String> JOB_COLOR_LIST = Arrays.asList(BLUE, GREEN, PURPLE, CYAN, YELLOW, RED);
+    private static final List<String> JOB_COLOR_LIST = Arrays.asList(BRIGHT_BLUE, BRIGHT_GREEN, BRIGHT_PURPLE,
+            BRIGHT_CYAN, BRIGHT_YELLOW, BRIGHT_RED);
 
     private static Level level = Level.LOG;
     private final Instant begin;
@@ -141,13 +144,13 @@ public class Logger {
                 break;
             case ERROR:
                 tag = "ERROR";
-                tagColor = BRIGHT_RED;
-                textColor = BRIGHT_RED;
+                tagColor = RED;
+                textColor = RED;
                 break;
             case FATAL:
                 tag = "FATAL";
-                tagColor = BRIGHT_RED;
-                textColor = BRIGHT_RED;
+                tagColor = RED;
+                textColor = RED;
                 break;
             default:
         }
@@ -198,7 +201,7 @@ public class Logger {
         }
         String color = serviceColorMap.get(service);
         name = alignLeft(name, biggestServiceNameLength);
-        return "" + color + name + Logger.ANSI_RESET + BRIGHT_BLACK + " | " + Logger.ANSI_RESET;
+        return "" + color + name + ANSI_RESET + BRIGHT_BLACK + " | " + ANSI_RESET;
     }
 
     private void initializeBiggestServiceNameLength(Pipeline pipeline) {
