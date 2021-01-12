@@ -70,7 +70,7 @@ docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.s
 
 | Argument | Description |
 | -------- | ----------- |
-| `--plankton.compose.file` | Defaults to `plankton.compose.yaml` |
+| `--plankton.compose.file` | The path of the Compose file which contains the pipeline configuration. Defaults to `plankton.compose.yaml`. |
 | `--plankton.workspace` | Defaults to `.` |
 | `--plankton.metadata` | Defaults to `.plankton` |
 | `--plankton.docker.host` | Defaults to `unix:///var/run/docker.sock` |
