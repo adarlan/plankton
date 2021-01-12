@@ -68,11 +68,7 @@ docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.s
 
 ## Argument Reference
 
-<!-- You can define arguments when running the pipeline through command line:
-
-```shell
-docker run [OPTIONS] adarlan/plankton --plankton.compose.file=cicd.compose.yaml --plankton.workspace=.
-``` -->
+Define arguments to configura Plankton when running it through command line.
 
 ### Plankton config
 
@@ -82,7 +78,7 @@ docker run [OPTIONS] adarlan/plankton --plankton.compose.file=cicd.compose.yaml 
 | `--plankton.workspace` | Defaults to `.`. |
 | `--plankton.metadata` | Defaults to `~/.plankton`. |
 
-> **Note**: when running Plankton inside a container (using the `docker run` command), these paths are related to the container file system, not to the host file system.
+> **Note**: When running Plankton inside a container (using the `docker run` command, for example), these paths are related to the container file system, not to the host file system.
 
 ### Docker config
 
