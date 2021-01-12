@@ -78,11 +78,11 @@ services:
 
 ## Argument Reference
 
-You can define arguments when running the pipeline through command line:
+<!-- You can define arguments when running the pipeline through command line:
 
 ```shell
 docker run [OPTIONS] adarlan/plankton --plankton.compose.file=cicd.compose.yaml --plankton.workspace=.
-```
+``` -->
 
 | Argument | Description |
 | -------- | ----------- |
