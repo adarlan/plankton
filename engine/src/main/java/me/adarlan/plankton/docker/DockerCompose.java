@@ -62,13 +62,13 @@ public class DockerCompose {
     }
 
     private void initializeMetadataDirectory() {
-        BashScript script = new BashScript("initializeMetadata");
+        BashScript script = Utils.createScript("initializeMetadata", logger);
         script.command("mkdir -p " + metadataDirectoryPath);
         script.runSuccessfully();
     }
 
     private void initializeFileFromOriginalFile(String originalFile) {
-        BashScript script = new BashScript("initializeFileFromOriginalFile");
+        BashScript script = Utils.createScript("initializeFileFromOriginalFile", logger);
         script.command(BASE_COMMAND + " --file " + originalFile + " config > " + filePath);
         script.command("cat " + filePath);
         script.runSuccessfully();
@@ -84,7 +84,7 @@ public class DockerCompose {
     }
 
     private void createNetwork() {
-        BashScript script = new BashScript("createNetwork");
+        BashScript script = Utils.createScript("createNetwork", logger);
         String networkName = projectName + "_default";
         script.env(dockerHostVariable);
         script.command("docker network create --attachable " + networkName);
@@ -108,7 +108,7 @@ public class DockerCompose {
     }
 
     public boolean buildImage(ServiceImplementation service) {
-        final BashScript script = new BashScript("buildImage_" + service.getName());
+        final BashScript script = Utils.createScript("buildImage_" + service.getName(), logger);
         final String buildOptions = "";
         script.env(dockerHostVariable);
         script.command(BASE_COMMAND + " " + options + " build " + buildOptions + " " + service.getName());
@@ -118,7 +118,7 @@ public class DockerCompose {
     }
 
     public boolean pullImage(ServiceImplementation service) {
-        final BashScript script = new BashScript("pullImage_" + service.getName());
+        final BashScript script = Utils.createScript("pullImage_" + service.getName(), logger);
         script.env(dockerHostVariable);
         script.command(BASE_COMMAND + " " + options + " pull " + service.getName());
         script.forEachOutputAndError(service::log);
@@ -127,7 +127,7 @@ public class DockerCompose {
     }
 
     public boolean createContainers(ServiceImplementation service) {
-        final BashScript script = new BashScript("createContainers_" + service.getName());
+        final BashScript script = Utils.createScript("createContainers_" + service.getName(), logger);
         final String upOptions = "--no-start --scale " + service.getName() + "=" + service.getScale();
         script.env(dockerHostVariable);
         script.command(BASE_COMMAND + " " + options + " up " + upOptions + " " + service.getName());
@@ -137,7 +137,7 @@ public class DockerCompose {
     }
 
     void runContainer(ServiceInstanceImplementation serviceInstance) {
-        final BashScript script = new BashScript("runContainer_" + serviceInstance.getContainerName());
+        final BashScript script = Utils.createScript("runContainer_" + serviceInstance.getContainerName(), logger);
         script.env(dockerHostVariable);
         script.command("docker container start --attach " + serviceInstance.getContainerName());
         script.forEachOutputAndError(serviceInstance::log);
@@ -146,7 +146,7 @@ public class DockerCompose {
 
     ContainerState getContainerState(ServiceInstanceImplementation serviceInstance) {
         final List<String> scriptOutput = new ArrayList<>();
-        final BashScript script = new BashScript("getContainerState_" + serviceInstance.getContainerName());
+        final BashScript script = Utils.createScript("getContainerState_" + serviceInstance.getContainerName(), logger);
         script.env(dockerHostVariable);
         String d = metadataDirectoryPath + "/containers";
         String f = d + "/" + serviceInstance.getContainerName();
@@ -155,12 +155,10 @@ public class DockerCompose {
         script.command("cat " + f + " | jq --compact-output '.[] | .State'");
         script.command("STATUS=$(cat " + f + " | jq -r '.[] | .State.Status')");
         script.command("cat " + f + " > " + f + ".$STATUS");
-        script.forEachOutput(line -> {
-            scriptOutput.add(line);
-            logger.debug(() -> script.getName() + " >> " + line);
-        });
+        script.forEachOutput(scriptOutput::add);
         script.runSuccessfully();
         final String json = scriptOutput.stream().collect(Collectors.joining());
+        logger.debug(() -> serviceInstance.getContainerName() + " container state JSON: " + json);
         return parseContainerStateJson(json);
     }
 
@@ -173,14 +171,14 @@ public class DockerCompose {
     }
 
     void stopContainer(ServiceInstanceImplementation serviceInstance) {
-        BashScript script = new BashScript("stopContainer_" + serviceInstance.getContainerName());
+        BashScript script = Utils.createScript("stopContainer_" + serviceInstance.getContainerName(), logger);
         script.env(dockerHostVariable);
         script.command("docker container stop " + serviceInstance.getContainerName());
         script.run();
     }
 
     boolean killContainer(ServiceInstanceImplementation serviceInstance) {
-        BashScript script = new BashScript("killContainer_" + serviceInstance.getContainerName());
+        BashScript script = Utils.createScript("killContainer_" + serviceInstance.getContainerName(), logger);
         script.env(dockerHostVariable);
         script.command("docker container kill " + serviceInstance.getContainerName());
         script.run();

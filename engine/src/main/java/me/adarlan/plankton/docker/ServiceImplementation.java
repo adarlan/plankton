@@ -108,7 +108,7 @@ public class ServiceImplementation implements Service {
     private void evaluateExpression() {
         // TODO do it inside a sandbox container
         final String scriptName = "evaluateExpression_" + name;
-        BashScript script = new BashScript(scriptName);
+        BashScript script = Utils.createScript(scriptName, logger);
         script.command(expression);
         script.run();
         if (script.getExitCode() == 0) {
