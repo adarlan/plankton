@@ -19,8 +19,8 @@ services:
     ports:
       - 85:80
     labels:
-      plankton.start.when: dependents-waiting  # start when there is at least one direct dependent job waiting
-      plankton.stop.when: dependents-exited    # stop when all dependent jobs have exited
+      plankton.start.when: dependents-waiting  # start when there is at least one direct dependent service waiting
+      plankton.stop.when: dependents-exited    # stop when all dependent services have exited
 
   adminer:
     build: foo-service

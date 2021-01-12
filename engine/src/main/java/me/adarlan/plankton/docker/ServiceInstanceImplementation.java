@@ -9,15 +9,15 @@ import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import me.adarlan.plankton.core.JobInstance;
+import me.adarlan.plankton.core.ServiceInstance;
 import me.adarlan.plankton.core.Logger;
 
 @ToString(of = "containerName")
 @EqualsAndHashCode(of = "containerName")
-public class JobInstanceImplementation implements JobInstance {
+public class ServiceInstanceImplementation implements ServiceInstance {
 
     @Getter
-    private final JobImplementation parentJob;
+    private final ServiceImplementation parentService;
 
     @Getter
     private final Integer number;
@@ -50,11 +50,11 @@ public class JobInstanceImplementation implements JobInstance {
 
     private final Logger logger = Logger.getLogger();
 
-    JobInstanceImplementation(JobImplementation parentJob, int number) {
-        this.parentJob = parentJob;
+    ServiceInstanceImplementation(ServiceImplementation parentService, int number) {
+        this.parentService = parentService;
         this.number = number;
-        this.containerName = parentJob.getPipeline().getId() + "_" + parentJob.getName() + "_" + number;
-        this.dockerCompose = parentJob.getPipeline().dockerCompose;
+        this.containerName = parentService.getPipeline().getId() + "_" + parentService.getName() + "_" + number;
+        this.dockerCompose = parentService.getPipeline().dockerCompose;
     }
 
     void log(String message) {

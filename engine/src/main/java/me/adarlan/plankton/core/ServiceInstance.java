@@ -4,9 +4,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
-public interface JobInstance {
+public interface ServiceInstance {
 
-    Job getParentJob();
+    Service getParentService();
 
     Integer getNumber();
 

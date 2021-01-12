@@ -5,15 +5,15 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
-public interface Job {
+public interface Service {
 
     Pipeline getPipeline();
 
     String getName();
 
-    Set<JobDependency> getDependencies();
+    Set<ServiceDependency> getDependencies();
 
-    JobStatus getStatus();
+    ServiceStatus getStatus();
 
     String getExpression();
 
@@ -21,7 +21,7 @@ public interface Job {
 
     Integer getScale();
 
-    List<JobInstance> getInstances();
+    List<ServiceInstance> getInstances();
 
     List<String> getLogs();
 

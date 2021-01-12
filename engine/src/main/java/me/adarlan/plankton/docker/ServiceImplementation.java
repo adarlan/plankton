@@ -13,17 +13,17 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import me.adarlan.plankton.core.Job;
-import me.adarlan.plankton.core.JobDependency;
-import me.adarlan.plankton.core.JobDependencyStatus;
-import me.adarlan.plankton.core.JobInstance;
-import me.adarlan.plankton.core.JobStatus;
+import me.adarlan.plankton.core.Service;
+import me.adarlan.plankton.core.ServiceDependency;
+import me.adarlan.plankton.core.ServiceDependencyStatus;
+import me.adarlan.plankton.core.ServiceInstance;
+import me.adarlan.plankton.core.ServiceStatus;
 import me.adarlan.plankton.core.Logger;
 import me.adarlan.plankton.util.BashScript;
 
 @EqualsAndHashCode(of = "name")
 @ToString(of = "name")
-public class JobImplementation implements Job {
+public class ServiceImplementation implements Service {
 
     @Getter
     private final PipelineImplementation pipeline;
@@ -44,12 +44,12 @@ public class JobImplementation implements Job {
     private Boolean expressionResult;
 
     @Setter(AccessLevel.PACKAGE)
-    private Set<JobDependency> dependencies;
+    private Set<ServiceDependency> dependencies;
 
     @Getter
     private Integer scale;
 
-    private final List<JobInstanceImplementation> instances = new ArrayList<>();
+    private final List<ServiceInstanceImplementation> instances = new ArrayList<>();
 
     @Getter
     private Instant initialInstant = null;
@@ -65,7 +65,7 @@ public class JobImplementation implements Job {
     private final List<String> logs = new ArrayList<>();
 
     @Getter
-    private JobStatus status;
+    private ServiceStatus status;
 
     private Thread buildOrPullImage = null;
     private boolean imageBuiltOrPulled = false;
@@ -74,7 +74,7 @@ public class JobImplementation implements Job {
 
     private final Logger logger = Logger.getLogger();
 
-    JobImplementation(PipelineImplementation pipeline, String name) {
+    ServiceImplementation(PipelineImplementation pipeline, String name) {
         this.pipeline = pipeline;
         this.dockerCompose = pipeline.dockerCompose;
         this.name = name;
@@ -91,16 +91,16 @@ public class JobImplementation implements Job {
             enable = expressionResult;
         }
         if (enable) {
-            setStatus(JobStatus.WAITING);
+            setStatus(ServiceStatus.WAITING);
         } else {
-            setStatus(JobStatus.DISABLED);
+            setStatus(ServiceStatus.DISABLED);
         }
     }
 
     void setScale(int scale) {
         this.scale = scale;
         for (int instanceNumber = 1; instanceNumber <= scale; instanceNumber++) {
-            JobInstanceImplementation instance = new JobInstanceImplementation(this, instanceNumber);
+            ServiceInstanceImplementation instance = new ServiceInstanceImplementation(this, instanceNumber);
             instances.add(instance);
         }
     }
@@ -129,12 +129,12 @@ public class JobImplementation implements Job {
         return Collections.unmodifiableList(logs);
     }
 
-    public List<JobInstance> getInstances() {
+    public List<ServiceInstance> getInstances() {
         return Collections.unmodifiableList(instances);
     }
 
     @Override
-    public Set<JobDependency> getDependencies() {
+    public Set<ServiceDependency> getDependencies() {
         return Collections.unmodifiableSet(dependencies);
     }
 
@@ -146,10 +146,10 @@ public class JobImplementation implements Job {
     void refresh() {
         synchronized (this) {
             if (!ended) {
-                if (status == JobStatus.WAITING) {
+                if (status == ServiceStatus.WAITING) {
                     checkDependenciesAndSetRunningOrBlocked();
                 }
-                if (status == JobStatus.RUNNING) {
+                if (status == ServiceStatus.RUNNING) {
                     if (startedInstances) {
                         checkInstancesAndSetSuccessOrFailure();
                     } else {
@@ -160,8 +160,8 @@ public class JobImplementation implements Job {
                             createContainers();
                             startInstances();
                         } else if (buildOrPullImage.isInterrupted()) {
-                            log("Job interrupted when building/pulling image");
-                            setStatus(JobStatus.FAILURE);
+                            log("Service interrupted when building/pulling image");
+                            setStatus(ServiceStatus.FAILURE);
                         }
                     }
                 }
@@ -172,19 +172,19 @@ public class JobImplementation implements Job {
     private void checkDependenciesAndSetRunningOrBlocked() {
         boolean passed = true;
         boolean blocked = false;
-        for (final JobDependency dependency : dependencies) {
+        for (final ServiceDependency dependency : dependencies) {
             if (dependency.updateStatus()) {
-                logger.jobDependencyInfo(dependency);
+                logger.serviceDependencyInfo(dependency);
             }
-            if (!dependency.getStatus().equals(JobDependencyStatus.PASSED))
+            if (!dependency.getStatus().equals(ServiceDependencyStatus.PASSED))
                 passed = false;
-            if (dependency.getStatus().equals(JobDependencyStatus.BLOCKED))
+            if (dependency.getStatus().equals(ServiceDependencyStatus.BLOCKED))
                 blocked = true;
         }
         if (passed) {
-            setStatus(JobStatus.RUNNING);
+            setStatus(ServiceStatus.RUNNING);
         } else if (blocked) {
-            setStatus(JobStatus.BLOCKED);
+            setStatus(ServiceStatus.BLOCKED);
         }
     }
 
@@ -197,12 +197,12 @@ public class JobImplementation implements Job {
         @Override
         public void run() {
             if (needToBuild) {
-                if (!dockerCompose.buildImage(JobImplementation.this)) {
-                    setStatus(JobStatus.FAILURE);
+                if (!dockerCompose.buildImage(ServiceImplementation.this)) {
+                    setStatus(ServiceStatus.FAILURE);
                 }
             } else {
-                if (!dockerCompose.pullImage(JobImplementation.this)) {
-                    setStatus(JobStatus.FAILURE);
+                if (!dockerCompose.pullImage(ServiceImplementation.this)) {
+                    setStatus(ServiceStatus.FAILURE);
                 }
             }
             imageBuiltOrPulled = true;
@@ -211,19 +211,19 @@ public class JobImplementation implements Job {
 
     private void createContainers() {
         if (!dockerCompose.createContainers(this)) {
-            setStatus(JobStatus.FAILURE);
+            setStatus(ServiceStatus.FAILURE);
         }
     }
 
     private void startInstances() {
-        instances.forEach(JobInstanceImplementation::start);
+        instances.forEach(ServiceInstanceImplementation::start);
         startedInstances = true;
     }
 
     private void checkInstancesAndSetSuccessOrFailure() {
         boolean success = true;
         boolean failure = false;
-        for (JobInstanceImplementation instance : instances) {
+        for (ServiceInstanceImplementation instance : instances) {
             instance.refresh();
             if (instance.hasEnded()) {
                 Integer exitCode = instance.getExitCode();
@@ -236,9 +236,9 @@ public class JobImplementation implements Job {
             }
         }
         if (success) {
-            setStatus(JobStatus.SUCCESS);
+            setStatus(ServiceStatus.SUCCESS);
         } else if (failure) {
-            setStatus(JobStatus.FAILURE);
+            setStatus(ServiceStatus.FAILURE);
         } else {
             checkTimeout();
         }
@@ -248,11 +248,11 @@ public class JobImplementation implements Job {
         Duration d = getDuration();
         if (d.compareTo(timeoutLimit) > 0) {
             log("Time limit has been reached");
-            instances.forEach(JobInstanceImplementation::stop);
+            instances.forEach(ServiceInstanceImplementation::stop);
         }
     }
 
-    private void setStatus(JobStatus status) {
+    private void setStatus(ServiceStatus status) {
         switch (status) {
             case DISABLED:
                 ended = true;
@@ -273,7 +273,7 @@ public class JobImplementation implements Job {
                 break;
         }
         this.status = status;
-        logger.jobInfo(this);
+        logger.serviceInfo(this);
     }
 
     public Duration getDuration() {

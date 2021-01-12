@@ -38,8 +38,8 @@ public class DockerCompose {
     private static final String BASE_COMMAND = "docker-compose";
     private String options;
 
-    private Map<String, Object> document;
-    private Map<String, Object> services;
+    private Map<String, Object> documentConfigMap;
+    private Map<String, Object> servicesConfigMap;
     private final Set<String> serviceNames = new HashSet<>();
 
     private final Logger logger = Logger.getLogger();
@@ -95,63 +95,63 @@ public class DockerCompose {
     private void initializeDocument() {
         try (FileInputStream fileInputStream = new FileInputStream(filePath);) {
             final Yaml yaml = new Yaml();
-            document = yaml.load(fileInputStream);
+            documentConfigMap = yaml.load(fileInputStream);
         } catch (IOException e) {
             throw new PlanktonDockerException("Unable to initialize the Docker Compose document", e);
         }
-        services = (Map<String, Object>) document.get("services");
-        services.keySet().forEach(serviceNames::add);
+        servicesConfigMap = (Map<String, Object>) documentConfigMap.get("services");
+        servicesConfigMap.keySet().forEach(serviceNames::add);
     }
 
     public Set<String> getServiceNames() {
         return Collections.unmodifiableSet(serviceNames);
     }
 
-    public boolean buildImage(JobImplementation job) {
-        final BashScript script = new BashScript("buildImage_" + job.getName());
+    public boolean buildImage(ServiceImplementation service) {
+        final BashScript script = new BashScript("buildImage_" + service.getName());
         final String buildOptions = "";
         script.env(dockerHostVariable);
-        script.command(BASE_COMMAND + " " + options + " build " + buildOptions + " " + job.getName());
-        script.forEachOutputAndError(job::log);
+        script.command(BASE_COMMAND + " " + options + " build " + buildOptions + " " + service.getName());
+        script.forEachOutputAndError(service::log);
         script.run();
         return script.getExitCode() == 0;
     }
 
-    public boolean pullImage(JobImplementation job) {
-        final BashScript script = new BashScript("pullImage_" + job.getName());
+    public boolean pullImage(ServiceImplementation service) {
+        final BashScript script = new BashScript("pullImage_" + service.getName());
         script.env(dockerHostVariable);
-        script.command(BASE_COMMAND + " " + options + " pull " + job.getName());
-        script.forEachOutputAndError(job::log);
+        script.command(BASE_COMMAND + " " + options + " pull " + service.getName());
+        script.forEachOutputAndError(service::log);
         script.run();
         return script.getExitCode() == 0;
     }
 
-    public boolean createContainers(JobImplementation job) {
-        final BashScript script = new BashScript("createContainers_" + job.getName());
-        final String upOptions = "--no-start --scale " + job.getName() + "=" + job.getScale();
+    public boolean createContainers(ServiceImplementation service) {
+        final BashScript script = new BashScript("createContainers_" + service.getName());
+        final String upOptions = "--no-start --scale " + service.getName() + "=" + service.getScale();
         script.env(dockerHostVariable);
-        script.command(BASE_COMMAND + " " + options + " up " + upOptions + " " + job.getName());
-        script.forEachOutputAndError(job::log);
+        script.command(BASE_COMMAND + " " + options + " up " + upOptions + " " + service.getName());
+        script.forEachOutputAndError(service::log);
         script.run();
         return script.getExitCode() == 0;
     }
 
-    void runContainer(JobInstanceImplementation jobInstance) {
-        final BashScript script = new BashScript("runContainer_" + jobInstance.getContainerName());
+    void runContainer(ServiceInstanceImplementation serviceInstance) {
+        final BashScript script = new BashScript("runContainer_" + serviceInstance.getContainerName());
         script.env(dockerHostVariable);
-        script.command("docker container start --attach " + jobInstance.getContainerName());
-        script.forEachOutputAndError(jobInstance::log);
+        script.command("docker container start --attach " + serviceInstance.getContainerName());
+        script.forEachOutputAndError(serviceInstance::log);
         script.run();
     }
 
-    ContainerState getContainerState(JobInstanceImplementation jobInstance) {
+    ContainerState getContainerState(ServiceInstanceImplementation serviceInstance) {
         final List<String> scriptOutput = new ArrayList<>();
-        final BashScript script = new BashScript("getContainerState_" + jobInstance.getContainerName());
+        final BashScript script = new BashScript("getContainerState_" + serviceInstance.getContainerName());
         script.env(dockerHostVariable);
         String d = metadataDirectoryPath + "/containers";
-        String f = d + "/" + jobInstance.getContainerName();
+        String f = d + "/" + serviceInstance.getContainerName();
         script.command("mkdir -p " + d);
-        script.command("docker container inspect " + jobInstance.getContainerName() + " > " + f);
+        script.command("docker container inspect " + serviceInstance.getContainerName() + " > " + f);
         script.command("cat " + f + " | jq --compact-output '.[] | .State'");
         script.command("STATUS=$(cat " + f + " | jq -r '.[] | .State.Status')");
         script.command("cat " + f + " > " + f + ".$STATUS");
@@ -172,29 +172,29 @@ public class DockerCompose {
         }
     }
 
-    void stopContainer(JobInstanceImplementation jobInstance) {
-        BashScript script = new BashScript("stopContainer_" + jobInstance.getContainerName());
+    void stopContainer(ServiceInstanceImplementation serviceInstance) {
+        BashScript script = new BashScript("stopContainer_" + serviceInstance.getContainerName());
         script.env(dockerHostVariable);
-        script.command("docker container stop " + jobInstance.getContainerName());
+        script.command("docker container stop " + serviceInstance.getContainerName());
         script.run();
     }
 
-    boolean killContainer(JobInstanceImplementation jobInstance) {
-        BashScript script = new BashScript("killContainer_" + jobInstance.getContainerName());
+    boolean killContainer(ServiceInstanceImplementation serviceInstance) {
+        BashScript script = new BashScript("killContainer_" + serviceInstance.getContainerName());
         script.env(dockerHostVariable);
-        script.command("docker container kill " + jobInstance.getContainerName());
+        script.command("docker container kill " + serviceInstance.getContainerName());
         script.run();
         return script.getExitCode() == 0;
     }
 
     @SuppressWarnings("unchecked")
-    public Map<String, Object> getService(String serviceName) {
-        return (Map<String, Object>) services.get(serviceName);
+    public Map<String, Object> getServiceConfigMap(String serviceName) {
+        return (Map<String, Object>) servicesConfigMap.get(serviceName);
     }
 
     @SuppressWarnings("unchecked")
     public Map<String, String> getServiceLabels(String serviceName) {
-        Map<String, Object> service = getService(serviceName);
+        Map<String, Object> service = getServiceConfigMap(serviceName);
         String key = "labels";
         if (service.containsKey(key)) {
             return (Map<String, String>) service.get(key);
@@ -205,7 +205,7 @@ public class DockerCompose {
 
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getServicePorts(String serviceName) {
-        Map<String, Object> service = getService(serviceName);
+        Map<String, Object> service = getServiceConfigMap(serviceName);
         String key = "ports";
         if (service.containsKey(key)) {
             return (List<Map<String, Object>>) service.get(key);

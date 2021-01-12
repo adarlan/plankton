@@ -1,5 +1,5 @@
 package me.adarlan.plankton.core;
 
-public enum JobStatus {
+public enum ServiceStatus {
     DISABLED, WAITING, BLOCKED, RUNNING, FAILURE, SUCCESS;
 }

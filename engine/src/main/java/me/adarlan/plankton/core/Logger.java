@@ -35,8 +35,8 @@ public class Logger {
     private static Level level = Level.FOLLOW;
     private final Instant begin;
 
-    private final Map<Job, String> jobColorMap = new HashMap<>();
-    private Integer biggestJobNameLength = null;
+    private final Map<Service, String> serviceColorMap = new HashMap<>();
+    private Integer biggestServiceNameLength = null;
 
     public enum Level {
         TRACE(0), DEBUG(1), FOLLOW(2), INFO(3), WARN(4), ERROR(5), FATAL(6);
@@ -69,14 +69,14 @@ public class Logger {
         this.begin = Instant.now();
     }
 
-    public <T extends Job> void jobInfo(T job) {
+    public <T extends Service> void serviceInfo(T service) {
         if (level.accept(Level.INFO))
-            info(() -> prefix(job, null) + " " + status(job.getStatus()));
+            info(() -> prefix(service, null) + " " + status(service.getStatus()));
     }
 
-    public <T extends JobDependency> void jobDependencyInfo(T dependency) {
+    public <T extends ServiceDependency> void serviceDependencyInfo(T dependency) {
         if (level.accept(Level.INFO))
-            info(() -> prefix(dependency.getParentJob(), null) + " " + dependency.toString()
+            info(() -> prefix(dependency.getParentService(), null) + " " + dependency.toString()
                     + status(dependency.getStatus()));
     }
 
@@ -85,15 +85,15 @@ public class Logger {
             print(Level.INFO, supplier.get());
     }
 
-    public void follow(Job job, Supplier<String> supplier) {
+    public void follow(Service service, Supplier<String> supplier) {
         if (level.accept(Level.FOLLOW))
-            print(Level.FOLLOW, prefix(job, null) + " " + supplier.get());
+            print(Level.FOLLOW, prefix(service, null) + " " + supplier.get());
     }
 
-    public void follow(JobInstance jobInstance, Supplier<String> supplier) {
+    public void follow(ServiceInstance serviceInstance, Supplier<String> supplier) {
         if (level.accept(Level.FOLLOW))
             print(Level.FOLLOW,
-                    prefix(jobInstance.getParentJob(), jobInstance.getContainerName()) + " " + supplier.get());
+                    prefix(serviceInstance.getParentService(), serviceInstance.getContainerName()) + " " + supplier.get());
     }
 
     public void debug(Supplier<String> supplier) {
@@ -187,46 +187,46 @@ public class Logger {
         return sb.toString();
     }
 
-    private String prefix(Job job, String containerName) {
-        Pipeline pipeline = job.getPipeline();
+    private String prefix(Service service, String containerName) {
+        Pipeline pipeline = service.getPipeline();
         String name;
         if (containerName == null) {
-            name = job.getName();
+            name = service.getName();
         } else {
             name = containerName.substring(pipeline.getId().length() + 1);
-            if (job.getScale() == 1) {
+            if (service.getScale() == 1) {
                 name = name.substring(0, name.lastIndexOf("_"));
             }
         }
-        if (biggestJobNameLength == null) {
-            initializeBiggestJobNameLength(pipeline);
+        if (biggestServiceNameLength == null) {
+            initializeBiggestServiceNameLength(pipeline);
         }
-        String color = jobColorMap.get(job);
-        name = alignLeft(name, biggestJobNameLength);
+        String color = serviceColorMap.get(service);
+        name = alignLeft(name, biggestServiceNameLength);
         return "" + color + name + Logger.ANSI_RESET + BRIGHT_BLACK + " | " + Logger.ANSI_RESET;
     }
 
-    private void initializeBiggestJobNameLength(Pipeline pipeline) {
-        biggestJobNameLength = 0;
-        int jobIndex = 0;
-        for (Job job : pipeline.getJobs()) {
-            int colorIndex = jobIndex % JOB_COLOR_LIST.size();
-            jobIndex++;
+    private void initializeBiggestServiceNameLength(Pipeline pipeline) {
+        biggestServiceNameLength = 0;
+        int serviceIndex = 0;
+        for (Service service : pipeline.getServices()) {
+            int colorIndex = serviceIndex % JOB_COLOR_LIST.size();
+            serviceIndex++;
             String color = JOB_COLOR_LIST.get(colorIndex);
-            logger.debug(() -> "job: " + job.getName() + "; color index: " + colorIndex + "; color: " + color + "###"
+            logger.debug(() -> "service: " + service.getName() + "; color index: " + colorIndex + "; color: " + color + "###"
                     + ANSI_RESET);
-            jobColorMap.put(job, color);
-            for (int i = 1; i <= job.getScale(); i++) {
-                String name = job.getName() + "_" + i;
+            serviceColorMap.put(service, color);
+            for (int i = 1; i <= service.getScale(); i++) {
+                String name = service.getName() + "_" + i;
                 int len = name.length();
-                if (len > biggestJobNameLength) {
-                    biggestJobNameLength = len;
+                if (len > biggestServiceNameLength) {
+                    biggestServiceNameLength = len;
                 }
             }
         }
     }
 
-    private String status(JobStatus status) {
+    private String status(ServiceStatus status) {
         String color = "";
         switch (status) {
             case DISABLED:
@@ -253,7 +253,7 @@ public class Logger {
         return color + status.toString() + ANSI_RESET;
     }
 
-    private String status(JobDependencyStatus status) {
+    private String status(ServiceDependencyStatus status) {
         String color = "";
         switch (status) {
             case WAITING:

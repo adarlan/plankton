@@ -10,13 +10,13 @@ import java.util.Set;
 
 import lombok.Getter;
 import lombok.NonNull;
-import me.adarlan.plankton.core.Job;
-import me.adarlan.plankton.core.JobDependency;
+import me.adarlan.plankton.core.Service;
+import me.adarlan.plankton.core.ServiceDependency;
 import me.adarlan.plankton.core.Logger;
 import me.adarlan.plankton.core.Pipeline;
-import me.adarlan.plankton.core.dependency.WaitDependencyFailure;
-import me.adarlan.plankton.core.dependency.WaitDependencyPort;
-import me.adarlan.plankton.core.dependency.WaitDependencySuccess;
+import me.adarlan.plankton.core.dependency.WaitServiceFailure;
+import me.adarlan.plankton.core.dependency.WaitServicePort;
+import me.adarlan.plankton.core.dependency.WaitServiceSuccess;
 import me.adarlan.plankton.util.RegexUtil;
 
 class PipelineImplementation implements Pipeline {
@@ -26,104 +26,104 @@ class PipelineImplementation implements Pipeline {
     @Getter
     private final String id;
 
-    private final Set<JobImplementation> jobs = new HashSet<>();
-    private final Map<String, JobImplementation> jobsByName = new HashMap<>();
-    private final Map<JobImplementation, Map<String, String>> labelsByJobAndName = new HashMap<>();
-    private final Map<Integer, JobImplementation> externalPorts = new HashMap<>();
+    private final Set<ServiceImplementation> services = new HashSet<>();
+    private final Map<String, ServiceImplementation> servicesByName = new HashMap<>();
+    private final Map<ServiceImplementation, Map<String, String>> labelsByServiceAndName = new HashMap<>();
+    private final Map<Integer, ServiceImplementation> externalPorts = new HashMap<>();
 
     private final Logger logger = Logger.getLogger();
 
     PipelineImplementation(DockerCompose dockerCompose) {
         this.dockerCompose = dockerCompose;
         this.id = dockerCompose.getProjectName();
-        instantiateJobs();
-        jobs.forEach(this::initializeJobLabels);
-        jobs.forEach(this::initializeJobExpression);
-        jobs.forEach(this::initializeNeedToBuild);
-        jobs.forEach(this::initializeJobScale);
-        jobs.forEach(this::initializeJobTimeout);
-        jobs.forEach(this::initializeExternalPorts);
-        jobs.forEach(this::initializeJobDependencies);
-        jobs.forEach(JobImplementation::initializeStatus);
+        instantiateServices();
+        services.forEach(this::initializeServiceLabels);
+        services.forEach(this::initializeServiceExpression);
+        services.forEach(this::initializeNeedToBuild);
+        services.forEach(this::initializeServiceScale);
+        services.forEach(this::initializeServiceTimeout);
+        services.forEach(this::initializeExternalPorts);
+        services.forEach(this::initializeServiceDependencies);
+        services.forEach(ServiceImplementation::initializeStatus);
     }
 
-    private void instantiateJobs() {
+    private void instantiateServices() {
         dockerCompose.getServiceNames().forEach(serviceName -> {
-            JobImplementation job = new JobImplementation(this, serviceName);
-            this.jobs.add(job);
-            this.jobsByName.put(serviceName, job);
+            ServiceImplementation service = new ServiceImplementation(this, serviceName);
+            this.services.add(service);
+            this.servicesByName.put(serviceName, service);
         });
     }
 
-    private void initializeJobLabels(JobImplementation job) {
-        Map<String, String> labelsByName = dockerCompose.getServiceLabels(job.getName());
-        labelsByJobAndName.put(job, labelsByName);
+    private void initializeServiceLabels(ServiceImplementation service) {
+        Map<String, String> labelsByName = dockerCompose.getServiceLabels(service.getName());
+        labelsByServiceAndName.put(service, labelsByName);
     }
 
-    private void initializeJobExpression(JobImplementation job) {
-        Map<String, String> labelsByName = labelsByJobAndName.get(job);
+    private void initializeServiceExpression(ServiceImplementation service) {
+        Map<String, String> labelsByName = labelsByServiceAndName.get(service);
         String labelName = "plankton.enable.if";
         if (labelsByName.containsKey(labelName)) {
-            job.setExpression(labelsByName.get(labelName));
+            service.setExpression(labelsByName.get(labelName));
         }
     }
 
-    private void initializeNeedToBuild(JobImplementation job) {
-        Map<String, Object> service = dockerCompose.getService(job.getName());
-        if (service.containsKey("build")) {
-            job.setNeedToBuild(true);
+    private void initializeNeedToBuild(ServiceImplementation service) {
+        Map<String, Object> serviceConfigMap = dockerCompose.getServiceConfigMap(service.getName());
+        if (serviceConfigMap.containsKey("build")) {
+            service.setNeedToBuild(true);
         } else {
-            job.setNeedToBuild(false);
+            service.setNeedToBuild(false);
         }
     }
 
-    private void initializeJobScale(JobImplementation job) {
-        job.setScale(1);
+    private void initializeServiceScale(ServiceImplementation service) {
+        service.setScale(1);
     }
 
-    private void initializeJobTimeout(JobImplementation job) {
-        Map<String, String> labelsByName = labelsByJobAndName.get(job);
+    private void initializeServiceTimeout(ServiceImplementation service) {
+        Map<String, String> labelsByName = labelsByServiceAndName.get(service);
         String labelName = "plankton.timeout";
         if (labelsByName.containsKey(labelName)) {
             String labelValue = labelsByName.get(labelName);
-            job.initializeTimeout(Long.parseLong(labelValue), ChronoUnit.MINUTES);
+            service.initializeTimeout(Long.parseLong(labelValue), ChronoUnit.MINUTES);
         } else {
-            job.initializeTimeout(1L, ChronoUnit.MINUTES);
+            service.initializeTimeout(1L, ChronoUnit.MINUTES);
         }
     }
 
-    private void initializeExternalPorts(JobImplementation job) {
-        List<Map<String, Object>> ports = dockerCompose.getServicePorts(job.getName());
+    private void initializeExternalPorts(ServiceImplementation service) {
+        List<Map<String, Object>> ports = dockerCompose.getServicePorts(service.getName());
         ports.forEach(p -> {
             Integer externalPort = (Integer) p.get("published"); // TODO what if published is null?
-            externalPorts.put(externalPort, job);
+            externalPorts.put(externalPort, service);
         });
     }
 
-    private void initializeJobDependencies(JobImplementation job) {
-        Set<JobDependency> dependencies = new HashSet<>();
-        job.setDependencies(dependencies);
-        Map<String, String> labelsByName = labelsByJobAndName.get(job);
+    private void initializeServiceDependencies(ServiceImplementation service) {
+        Set<ServiceDependency> dependencies = new HashSet<>();
+        service.setDependencies(dependencies);
+        Map<String, String> labelsByName = labelsByServiceAndName.get(service);
         labelsByName.forEach((labelName, labelValue) -> {
 
             if (RegexUtil.stringMatchesRegex(labelName, "^plankton\\.wait\\.success\\.of$")) {
-                String requiredJobName = labelValue;
-                JobImplementation requiredJob = this.getJobByName(requiredJobName);
-                WaitDependencySuccess dependency = new WaitDependencySuccess(job, requiredJob);
+                String requiredServiceName = labelValue;
+                ServiceImplementation requiredService = this.getServiceByName(requiredServiceName);
+                WaitServiceSuccess dependency = new WaitServiceSuccess(service, requiredService);
                 dependencies.add(dependency);
             }
 
             if (RegexUtil.stringMatchesRegex(labelName, "^plankton\\.wait\\.failure\\.of$")) {
-                String requiredJobName = labelValue;
-                JobImplementation requiredJob = this.getJobByName(requiredJobName);
-                WaitDependencyFailure dependency = new WaitDependencyFailure(job, requiredJob);
+                String requiredServiceName = labelValue;
+                ServiceImplementation requiredService = this.getServiceByName(requiredServiceName);
+                WaitServiceFailure dependency = new WaitServiceFailure(service, requiredService);
                 dependencies.add(dependency);
             }
 
             else if (RegexUtil.stringMatchesRegex(labelName, "^plankton\\.wait\\.ports$")) {
                 Integer port = Integer.parseInt(labelValue);
-                JobImplementation requiredJob = externalPorts.get(port);
-                WaitDependencyPort dependency = new WaitDependencyPort(job, requiredJob, port);
+                ServiceImplementation requiredService = externalPorts.get(port);
+                WaitServicePort dependency = new WaitServicePort(service, requiredService, port);
                 dependencies.add(dependency);
             }
         });
@@ -134,9 +134,9 @@ class PipelineImplementation implements Pipeline {
         boolean done = false;
         while (!done) {
             done = true;
-            for (JobImplementation job : jobs) {
-                job.refresh();
-                if (!job.hasEnded()) {
+            for (ServiceImplementation service : services) {
+                service.refresh();
+                if (!service.hasEnded()) {
                     done = false;
                 }
             }
@@ -146,14 +146,14 @@ class PipelineImplementation implements Pipeline {
     }
 
     @Override
-    public Set<Job> getJobs() {
-        return Collections.unmodifiableSet(jobs);
+    public Set<Service> getServices() {
+        return Collections.unmodifiableSet(services);
     }
 
     @Override
-    public JobImplementation getJobByName(@NonNull String jobName) {
-        if (!jobsByName.containsKey(jobName))
-            throw new PlanktonDockerException("Job not found: " + jobName);
-        return jobsByName.get(jobName);
+    public ServiceImplementation getServiceByName(@NonNull String serviceName) {
+        if (!servicesByName.containsKey(serviceName))
+            throw new PlanktonDockerException("Service not found: " + serviceName);
+        return servicesByName.get(serviceName);
     }
 }

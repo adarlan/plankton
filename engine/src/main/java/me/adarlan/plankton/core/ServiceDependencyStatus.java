@@ -1,5 +1,5 @@
 package me.adarlan.plankton.core;
 
-public enum JobDependencyStatus {
+public enum ServiceDependencyStatus {
     WAITING, PASSED, BLOCKED;
 }

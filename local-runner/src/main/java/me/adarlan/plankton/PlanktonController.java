@@ -21,31 +21,25 @@ public class PlanktonController {
         return pipeline.getId();
     }
 
-    // @Autowired
-    // PlanktonSerializer planktonSerializer;
-
-    // @GetMapping("/jobs")
-    // public List<SerializableJob> getJobs() {
-    // return planktonSerializer.getSerializableJobs();
+    // @GetMapping("/services")
+    // public List<Service> getServices() {
     // }
 
-    // @GetMapping("/jobs")
-    // public Set<Job.Data> getJobs() {
-    // return pipeline.getData().jobs;
+    // @GetMapping("/services")
+    // public List<Service> getServices() {
     // }
 
-    // @GetMapping("/jobs/{name}")
-    // public Job.Data getJobByName(@PathVariable String name) {
-    // return pipeline.getJobByName(name).getData();
+    // @GetMapping("/services/{name}")
+    // public Service getServiceByName(@PathVariable String name) {
     // }
 
-    // @GetMapping("/jobs/{name}/cancel")
-    // public Job.Data cancelJob(@PathVariable String name) {
-    // Job job = pipeline.getJobByName(name);
-    // jobScheduler.cancel(job);
+    // @GetMapping("/services/{name}/cancel")
+    // public Service cancelService(@PathVariable String name) {
+    // Service service = pipeline.getServiceByName(name);
+    // serviceScheduler.cancel(service);
     // while (true) {
-    // if (job.finalStatus != null) {
-    // return job.getData();
+    // if (service.finalStatus != null) {
+    // return service.getData();
     // }
     // }
     // }

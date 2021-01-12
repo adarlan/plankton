@@ -6,9 +6,9 @@ public interface Pipeline {
 
     String getId();
 
-    Job getJobByName(String name);
+    Service getServiceByName(String name);
 
-    Set<Job> getJobs();
+    Set<Service> getServices();
 
     void run() throws InterruptedException;
 }

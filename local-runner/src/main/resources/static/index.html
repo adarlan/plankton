@@ -23,7 +23,7 @@
             display: table-cell;
         }
 
-        .job {
+        .service {
             margin: 1em 5em 1em 0;
             padding: 1em;
             border-radius: 1em;
@@ -31,69 +31,69 @@
             border-width: 1pt;
         }
 
-        .job.disabled {
+        .service.disabled {
             background-color: white;
             border-color: silver;
         }
 
-        .job.disabled * {
+        .service.disabled * {
             color: silver;
         }
 
-        .job.waiting {
+        .service.waiting {
             background-color: lightblue;
         }
 
-        .job.blocked {
+        .service.blocked {
             background-color: lightgrey;
         }
 
-        .job.scheduled {
+        .service.scheduled {
             background-color: skyblue;
         }
 
-        .job.running {
+        .service.running {
             background-color: cornflowerblue;
         }
 
-        .job.interrupted {
+        .service.interrupted {
             background-color: coral;
         }
 
-        .job.canceled {
+        .service.canceled {
             background-color: coral;
         }
 
-        .job.failed {
+        .service.failed {
             background-color: coral;
         }
 
-        .job.timeout {
+        .service.timeout {
             background-color: coral;
         }
 
-        .job.finished {
+        .service.finished {
             background-color: mediumaquamarine;
         }
 
-        .job-header {
+        .service-header {
             display: table-row;
         }
 
-        .job-name {
+        .service-name {
             display: table-cell;
             padding: 0 4pt 0 0;
             font-size: 1.2em;
         }
 
-        .job-status {
+        .service-status {
             display: table-cell;
             padding: 0 4pt;
             background-color: white;
             border-radius: 8pt;
         }
 
-        .job-rules {}
+        .service-rules {}
 
         .rule {
             display: table-row;
@@ -121,7 +121,7 @@
     <script>
         const apiUrl = "http://localhost:1329/api"
 
-        let jobs;
+        let services;
         let stages;
         let firstTime = true;
 
@@ -129,9 +129,9 @@
         setInterval(refresh, 1000);
 
         async function refresh() {
-            const response = await fetch(apiUrl + "/jobs");
-            jobs = await response.json();
-            console.log(jobs);
+            const response = await fetch(apiUrl + "/services");
+            services = await response.json();
+            console.log(services);
             loadStages();
             if (firstTime) {
                 console.log("firstTime");
@@ -145,13 +145,13 @@
 
         function loadStages() {
             stages = [];
-            for (let jobIndex in jobs) {
-                let job = jobs[jobIndex];
-                for (i = stages.length; i <= job.dependencyLevel; i++) {
-                    stages.push({ jobs: [] });
+            for (let serviceIndex in services) {
+                let service = services[serviceIndex];
+                for (i = stages.length; i <= service.dependencyLevel; i++) {
+                    stages.push({ services: [] });
                 }
-                let stage = stages[job.dependencyLevel];
-                stage.jobs.push(job);
+                let stage = stages[service.dependencyLevel];
+                stage.services.push(service);
             }
         }
 
@@ -164,21 +164,21 @@
 
                 let stage_div = $("<div></div>").addClass("stage").appendTo(stages_div);
 
-                for (let jobIndex in stage.jobs) {
-                    let job = stage.jobs[jobIndex];
+                for (let serviceIndex in stage.services) {
+                    let service = stage.services[serviceIndex];
 
-                    let job_div = $("<div></div>").attr("id", "job_" + job.name).addClass("job").addClass(job.status).appendTo(stage_div);
+                    let service_div = $("<div></div>").attr("id", "service_" + service.name).addClass("service").addClass(service.status).appendTo(stage_div);
 
-                    let job_header = $("<div></div>").addClass("job-header").appendTo(job_div);
-                    let job_name = $("<div></div>").addClass("job-name").text(job.name).appendTo(job_header);
-                    let job_status = $("<div></div>").addClass("job-status").text(job.status).appendTo(job_header);
+                    let service_header = $("<div></div>").addClass("service-header").appendTo(service_div);
+                    let service_name = $("<div></div>").addClass("service-name").text(service.name).appendTo(service_header);
+                    let service_status = $("<div></div>").addClass("service-status").text(service.status).appendTo(service_header);
 
-                    let job_rules = $("<div></div>").addClass("job-rules").appendTo(job_div);
+                    let service_rules = $("<div></div>").addClass("service-rules").appendTo(service_div);
 
-                    for (let ruleIndex in job.rules) {
-                        let rule = job.rules[ruleIndex];
+                    for (let ruleIndex in service.rules) {
+                        let rule = service.rules[ruleIndex];
 
-                        let rule_div = $("<div></div>").addClass("rule").appendTo(job_rules);
+                        let rule_div = $("<div></div>").addClass("rule").appendTo(service_rules);
                         let rule_description = $("<div></div>").addClass("rule-description").text(rule.name + "=" + rule.value).appendTo(rule_div);
                         let rule_status = $("<div></div>").addClass("rule-status").text(rule.status).appendTo(rule_div);
                     }
@@ -187,11 +187,11 @@
         }
 
         function drawUpdate() {
-            for (let jobIndex in jobs) {
-                let job = jobs[jobIndex];
+            for (let serviceIndex in services) {
+                let service = services[serviceIndex];
 
-                let job_div = $("#job_" + job.name).removeClass().addClass("job").addClass(job.status);
-                let job_status = job_div.children(".job-status").text(job.status);
+                let service_div = $("#service_" + service.name).removeClass().addClass("service").addClass(service.status);
+                let service_status = service_div.children(".service-status").text(service.status);
                 // TODO update rule-status
             }
         }
