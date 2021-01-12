@@ -260,7 +260,7 @@ public class ServiceImplementation implements Service {
                 logger.info(() -> name + " -> Disabled");
                 break;
             case WAITING:
-                logger.info(() -> name + " -> Enabled");
+                dependencies.forEach(dependency -> logger.info(dependency::toString));
                 break;
             case BLOCKED:
                 ended = true;
