@@ -107,6 +107,20 @@ public class BashScript {
         return this;
     }
 
+    public int getExitCode() {
+        if (exitCode == null) {
+            throw new BashScriptException(this, "Unable to get exit code; The script was not run");
+        }
+        return exitCode;
+    }
+
+    public void runSuccessfully() {
+        run();
+        if (exitCode != 0) {
+            throw new BashScriptFailedException(this, "Returned a non-zero code: " + exitCode);
+        }
+    }
+
     private int waitForProcess() {
         try {
             return process.waitFor();
@@ -135,25 +149,6 @@ public class BashScript {
             Thread.currentThread().interrupt();
             throw exception;
         }
-    }
-
-    public int getExitCode() {
-        if (exitCode == null) {
-            throw new BashScriptException(this, "Unable to get exit code; The script was not run");
-        }
-        return exitCode;
-    }
-
-    public void runSuccessfullyOrThrow(Supplier<RuntimeException> exceptionSupplier) {
-        run();
-        if (exitCode != 0) {
-            throw exceptionSupplier.get();
-        }
-    }
-
-    public void runSuccessfully() {
-        runSuccessfullyOrThrow(() -> new BashScriptException(this, "Unable to run successfully"));
-        // TODO BashScriptFailedException extends BashScriptException
     }
 
     private ProcessBuilder createProcessBuilder() {
