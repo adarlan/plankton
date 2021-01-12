@@ -14,9 +14,9 @@ import me.adarlan.plankton.core.Service;
 import me.adarlan.plankton.core.ServiceDependency;
 import me.adarlan.plankton.core.Logger;
 import me.adarlan.plankton.core.Pipeline;
-import me.adarlan.plankton.core.dependency.WaitServiceFailure;
-import me.adarlan.plankton.core.dependency.WaitServicePort;
-import me.adarlan.plankton.core.dependency.WaitServiceSuccess;
+import me.adarlan.plankton.core.dependency.WaitFailureOf;
+import me.adarlan.plankton.core.dependency.WaitPort;
+import me.adarlan.plankton.core.dependency.WaitSuccessOf;
 
 class PipelineImplementation implements Pipeline {
 
@@ -108,21 +108,21 @@ class PipelineImplementation implements Pipeline {
             if (Utils.stringMatchesRegex(labelName, "^plankton\\.wait\\.success\\.of$")) {
                 String requiredServiceName = labelValue;
                 ServiceImplementation requiredService = this.getServiceByName(requiredServiceName);
-                WaitServiceSuccess dependency = new WaitServiceSuccess(service, requiredService);
+                WaitSuccessOf dependency = new WaitSuccessOf(service, requiredService);
                 dependencies.add(dependency);
             }
 
             if (Utils.stringMatchesRegex(labelName, "^plankton\\.wait\\.failure\\.of$")) {
                 String requiredServiceName = labelValue;
                 ServiceImplementation requiredService = this.getServiceByName(requiredServiceName);
-                WaitServiceFailure dependency = new WaitServiceFailure(service, requiredService);
+                WaitFailureOf dependency = new WaitFailureOf(service, requiredService);
                 dependencies.add(dependency);
             }
 
             else if (Utils.stringMatchesRegex(labelName, "^plankton\\.wait\\.ports$")) {
                 Integer port = Integer.parseInt(labelValue);
                 ServiceImplementation requiredService = externalPorts.get(port);
-                WaitServicePort dependency = new WaitServicePort(service, requiredService, port);
+                WaitPort dependency = new WaitPort(service, requiredService, port);
                 dependencies.add(dependency);
             }
         });

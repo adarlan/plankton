@@ -11,7 +11,7 @@ import me.adarlan.plankton.core.ServiceDependencyStatus;
 import me.adarlan.plankton.core.ServiceStatus;
 
 @EqualsAndHashCode(of = { "parentService", "requiredService", "port" })
-public class WaitServicePort implements ServiceDependency {
+public class WaitPort implements ServiceDependency {
 
     @Getter
     Service parentService;
@@ -25,7 +25,7 @@ public class WaitServicePort implements ServiceDependency {
     @Getter
     ServiceDependencyStatus status = ServiceDependencyStatus.WAITING;
 
-    public WaitServicePort(Service parentService, Service requiredService, Integer port) {
+    public WaitPort(Service parentService, Service requiredService, Integer port) {
         this.parentService = parentService;
         this.requiredService = requiredService;
         this.port = port;
@@ -51,6 +51,6 @@ public class WaitServicePort implements ServiceDependency {
 
     @Override
     public String toString() {
-        return parentService.getName() + "." + getClass().getSimpleName() + ": " + port + " | " + status;
+        return parentService.getName() + "." + getClass().getSimpleName() + "(" + port + ") -> " + status;
     }
 }

@@ -8,7 +8,7 @@ import me.adarlan.plankton.core.ServiceDependencyStatus;
 import me.adarlan.plankton.core.ServiceStatus;
 
 @EqualsAndHashCode(of = { "parentService", "requiredService" })
-public class WaitServiceSuccess implements ServiceDependency {
+public class WaitSuccessOf implements ServiceDependency {
 
     @Getter
     Service parentService;
@@ -19,7 +19,7 @@ public class WaitServiceSuccess implements ServiceDependency {
     @Getter
     ServiceDependencyStatus status = ServiceDependencyStatus.WAITING;
 
-    public WaitServiceSuccess(Service parentService, Service requiredService) {
+    public WaitSuccessOf(Service parentService, Service requiredService) {
         this.parentService = parentService;
         this.requiredService = requiredService;
     }
@@ -40,6 +40,6 @@ public class WaitServiceSuccess implements ServiceDependency {
 
     @Override
     public String toString() {
-        return parentService.getName() + "." + getClass().getSimpleName() + ": " + requiredService.getName() + " | " + status;
+        return parentService.getName() + "." + getClass().getSimpleName() + "(" + requiredService.getName() + ") -> " + status;
     }
 }
