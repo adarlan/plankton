@@ -5,7 +5,7 @@ Plankton is a Container-Native CI/CD tool based on [The Compose Specification](h
 Labels can be used to define pipeline rules, such as the order in which pipeline services are run, expressions to enable or disable services, among other rules.
 See the [Label Reference](#label-reference) section of this document.
 
-## Example
+## Getting Started
 
 Follow this example to create a simple pipeline composed by 3 services:
 `test`, `build` and `deploy`.
