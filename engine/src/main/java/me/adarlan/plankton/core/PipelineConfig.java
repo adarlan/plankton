@@ -2,20 +2,12 @@ package me.adarlan.plankton.core;
 
 public interface PipelineConfig {
 
-    default String getPipelineId() {
-        return String.valueOf(this.hashCode());
-    }
+    String getPipelineId();
 
-    default String getComposeFilePath() {
-        return "plankton.compose.yaml";
-    }
+    String getComposeFilePath();
 
-    default String getWorkspaceDirectoryPath() {
-        return ".";
-    }
+    String getWorkspaceDirectoryPath();
 
     // TODO it is not pipeline config; it is plankton config
-    default String getMetadataDirectoryPath() {
-        return "~/.plankton";
-    }
+    String getMetadataDirectoryPath();
 }
