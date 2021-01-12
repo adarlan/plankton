@@ -68,7 +68,7 @@ docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.s
 
 ## Argument Reference
 
-Define arguments to configura Plankton when running it through command line.
+Define arguments to configure Plankton when running it through command line.
 
 ### Plankton config
 
