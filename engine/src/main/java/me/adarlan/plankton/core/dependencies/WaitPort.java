@@ -1,4 +1,4 @@
-package me.adarlan.plankton.core.dependency;
+package me.adarlan.plankton.core.dependencies;
 
 import java.io.IOException;
 import java.net.Socket;

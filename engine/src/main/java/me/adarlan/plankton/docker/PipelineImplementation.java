@@ -12,11 +12,11 @@ import lombok.Getter;
 import lombok.NonNull;
 import me.adarlan.plankton.core.Service;
 import me.adarlan.plankton.core.ServiceDependency;
+import me.adarlan.plankton.core.dependencies.WaitFailureOf;
+import me.adarlan.plankton.core.dependencies.WaitPort;
+import me.adarlan.plankton.core.dependencies.WaitSuccessOf;
 import me.adarlan.plankton.core.Logger;
 import me.adarlan.plankton.core.Pipeline;
-import me.adarlan.plankton.core.dependency.WaitFailureOf;
-import me.adarlan.plankton.core.dependency.WaitPort;
-import me.adarlan.plankton.core.dependency.WaitSuccessOf;
 
 class PipelineImplementation implements Pipeline {
 
