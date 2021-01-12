@@ -1,4 +1,4 @@
-package me.adarlan.plankton.util;
+package me.adarlan.plankton.bash;
 
 import java.io.BufferedReader;
 import java.io.File;

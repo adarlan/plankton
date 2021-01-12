@@ -19,7 +19,7 @@ import me.adarlan.plankton.core.ServiceDependencyStatus;
 import me.adarlan.plankton.core.ServiceInstance;
 import me.adarlan.plankton.core.ServiceStatus;
 import me.adarlan.plankton.core.Logger;
-import me.adarlan.plankton.util.BashScript;
+import me.adarlan.plankton.bash.BashScript;
 
 @EqualsAndHashCode(of = "name")
 @ToString(of = "name")

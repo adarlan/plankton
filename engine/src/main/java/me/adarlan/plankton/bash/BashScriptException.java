@@ -1,4 +1,4 @@
-package me.adarlan.plankton.util;
+package me.adarlan.plankton.bash;
 
 public class BashScriptException extends RuntimeException {
 

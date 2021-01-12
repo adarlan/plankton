@@ -1,7 +1,7 @@
 package me.adarlan.plankton.docker;
 
 import me.adarlan.plankton.core.Logger;
-import me.adarlan.plankton.util.BashScript;
+import me.adarlan.plankton.bash.BashScript;
 
 class Utils {
 

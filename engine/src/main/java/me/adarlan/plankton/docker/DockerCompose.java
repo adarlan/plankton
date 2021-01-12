@@ -18,7 +18,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import lombok.Getter;
 import me.adarlan.plankton.core.Logger;
-import me.adarlan.plankton.util.BashScript;
+import me.adarlan.plankton.bash.BashScript;
 
 public class DockerCompose {
 
