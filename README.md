@@ -3,15 +3,16 @@
 Plankton is a Container-Native CI/CD tool based on [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
 
 Labels can be used to define pipeline rules, such as the order in which pipeline services are run, expressions to enable or disable services, among other rules.
+See the [Label Reference](#label-reference) section of this document.
 
 ## Example
 
 Follow this example to create a simple pipeline composed by 3 services:
 `test`, `build` and `deploy`.
 
-Create a file called `plankton.compose.yaml` with the following content:
+### Create a file called `plankton.compose.yaml` with the following content
 
-```yml
+```yaml
 services:
 
   test:
@@ -31,24 +32,23 @@ services:
       plankton.wait.success.of: build
 ```
 
-> The labels that start with `plankton.` rules the pipeline.
-See the [Label Reference](#label-reference) section of this document.
-
-Run the pipeline using the `docker run` command:
+### Run the pipeline using the `docker run` command
 
 ```shell
 docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host adarlan/plankton
 ```
 
-Then you can see the pipeline logs:
+### See the pipeline logs
 
 ![Pipeline logs](screenshots/pipeline-logs.png)
 
-You can also view a graphical representation of the pipeline in your browser: [http://localhost:1329](http://localhost:1329)
+### View a graphical representation of the pipeline in your browser: [http://localhost:1329](http://localhost:1329)
 
-<!-- ![Pipeline page](screenshots/pipeline-page.png) -->
+![Pipeline page](screenshots/pipeline-page.png)
 
-See more [examples](examples)
+### See more [examples](examples)
+
+TODO more screenshots...
 
 ## Label Reference
 
@@ -75,4 +75,12 @@ See more [examples](examples)
 | `--plankton.metadata` | Defaults to `.plankton` |
 | `--plankton.docker.host` | Defaults to `unix:///var/run/docker.sock` |
 
-<!-- ## Supported/Unsupported Compose Attributes -->
+## Supported Compose Attributes
+
+```yaml
+services:
+  <SERVICE>:
+    image:
+    command:
+    labels:
+```
