@@ -36,22 +36,29 @@ public class PlanktonBeans {
 
             @Override
             public String getComposeFilePath() {
-                return composeFile;
+                return expandUserHomeTilde(composeFile);
             }
 
             @Override
             public String getWorkspaceDirectoryPath() {
-                return workspace;
+                return expandUserHomeTilde(workspace);
             }
 
             @Override
             public String getMetadataDirectoryPath() {
-                return metadata;
+                return expandUserHomeTilde(metadata);
             }
 
             @Override
             public String getDockerHost() {
                 return dockerHost;
+            }
+
+            private String expandUserHomeTilde(String path) {
+                if (path.startsWith("~"))
+                    return path.replaceFirst("^~", System.getProperty("user.home"));
+                else
+                    return path;
             }
         };
     }
@@ -61,9 +68,4 @@ public class PlanktonBeans {
         DockerPipelineFactory pipelineFactory = new DockerPipelineFactory();
         return pipelineFactory.createPipeline(dockerPipelineConfig());
     }
-
-    // @Bean
-    // PlanktonSerializer planktonSerializer() {
-    // return new PlanktonSerializer(pipeline());
-    // }
 }
