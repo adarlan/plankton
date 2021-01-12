@@ -37,4 +37,9 @@ public class WaitServiceFailure implements ServiceDependency {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + ": " + requiredService.getName();
+    }
 }

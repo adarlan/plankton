@@ -48,4 +48,9 @@ public class WaitServicePort implements ServiceDependency {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + ": " + port;
+    }
 }
