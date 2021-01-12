@@ -35,6 +35,8 @@ public class Logger {
     private static Level level = Level.FOLLOW;
     private final Instant begin;
 
+    private boolean printTimeStamp = false;
+
     private final Map<Service, String> serviceColorMap = new HashMap<>();
     private Integer biggestServiceNameLength = null;
 
@@ -170,7 +172,11 @@ public class Logger {
         if (tagColor != null) {
             tag = tagColor + tag + ANSI_RESET;
         }
-        timestamp = BRIGHT_BLACK + alignRight(timestamp, 10) + " - " + ANSI_RESET;
+        if (printTimeStamp) {
+            timestamp = BRIGHT_BLACK + alignRight(timestamp, 10) + " - " + ANSI_RESET;
+        } else {
+            timestamp = "";
+        }
         if (textColor != null) {
             text = textColor + text + ANSI_RESET;
         }
