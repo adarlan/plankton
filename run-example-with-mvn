@@ -1,10 +1,14 @@
 #!/bin/bash
 set -ex
 
+PLANKTON_DIR=$PWD
+
+cd $PLANKTON_DIR/engine
+mvn install
+
 NAME=$1
-WORKSPACE=$PWD/examples/$NAME
+WORKSPACE=$PLANKTON_DIR/examples/$NAME
 COMPOSE_FILE=${WORKSPACE}/plankton.compose.yaml
 
-cd local-runner
-
+cd $PLANKTON_DIR/local-runner
 mvn spring-boot:run -Dspring-boot.run.arguments="--plankton.compose.file=$COMPOSE_FILE --plankton.workspace=$WORKSPACE"
