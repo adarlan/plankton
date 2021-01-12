@@ -2,18 +2,16 @@
 
 Plankton is a Container-Native CI/CD tool based on [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
 
-Labels can be used to define pipeline rules, such as job order, expressions to enable or disable jobs, among other rules.
+Labels can be used to define pipeline rules, such as the order in which pipeline services are run, expressions to enable or disable services, among other rules.
 
 ## Example
 
-Following this simple example, you can create a pipeline composed by 3 jobs/services:
-`test`, `build` and `deploy`
+Follow this example to create a simple pipeline composed by 3 services:
+`test`, `build` and `deploy`.
 
 Create a file called `plankton.compose.yaml` with the following content:
 
 ```yml
-version: "3.7"
-
 services:
 
   test:
@@ -46,22 +44,27 @@ Then you can see the pipeline logs:
 
 ![Pipeline logs](screenshots/pipeline-logs.png)
 
-You can also view a graphical representation of the pipeline in your browser:
-[http://localhost:1329](http://localhost:1329)
+You can also view a graphical representation of the pipeline in your browser: [http://localhost:1329](http://localhost:1329)
 
-![Pipeline page](screenshots/pipeline-page.png)
+<!-- ![Pipeline page](screenshots/pipeline-page.png) -->
 
-See more [examples](examples).
+See more [examples](examples)
 
 ## Label Reference
 
 | Label | Description |
 | ----- | ----------- |
 | `plankton.timeout` | Timeout for the service execution. |
-| `plankton.enable.if` | Expression to enable the service. All services are enabled by default. |
+| `plankton.enable.if` | Bash conditional expression to determine when a service should be enabled. All services are enabled by default. |
 | `plankton.wait.success.of` | A list of services that this service must wait for success. |
 | `plankton.wait.failure.of` | A list of services that this service must wait for failure. |
 | `plankton.wait.ports` | A list of published ports the service must wait for. |
+
+## Variable Reference
+
+| Variable | Description |
+| -------- | ----------- |
+| `GIT_REF` | ... |
 
 ## Argument Reference
 
@@ -71,3 +74,5 @@ See more [examples](examples).
 | `--plankton.workspace` | Defaults to `.` |
 | `--plankton.metadata` | Defaults to `.plankton` |
 | `--plankton.docker.host` | Defaults to `unix:///var/run/docker.sock` |
+
+<!-- ## Supported/Unsupported Compose Attributes -->
