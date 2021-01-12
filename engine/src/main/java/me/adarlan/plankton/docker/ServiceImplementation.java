@@ -160,7 +160,7 @@ public class ServiceImplementation implements Service {
                             createContainers();
                             startInstances();
                         } else if (buildOrPullImage.isInterrupted()) {
-                            log("Service interrupted when building/pulling image");
+                            logger.info(() -> name + " -> Interrupted when building/pulling image");
                             setStatus(ServiceStatus.FAILURE);
                         }
                     }
@@ -174,7 +174,7 @@ public class ServiceImplementation implements Service {
         boolean blocked = false;
         for (final ServiceDependency dependency : dependencies) {
             if (dependency.updateStatus()) {
-                logger.serviceDependencyInfo(dependency);
+                logger.info(dependency::toString);
             }
             if (!dependency.getStatus().equals(ServiceDependencyStatus.PASSED))
                 passed = false;
@@ -247,33 +247,39 @@ public class ServiceImplementation implements Service {
     private void checkTimeout() {
         Duration d = getDuration();
         if (d.compareTo(timeoutLimit) > 0) {
-            log("Time limit has been reached");
+            logger.info(() -> name + " -> Time limit has been reached");
             instances.forEach(ServiceInstanceImplementation::stop);
         }
     }
 
     private void setStatus(ServiceStatus status) {
+        this.status = status;
         switch (status) {
             case DISABLED:
                 ended = true;
+                logger.info(() -> name + " -> Disabled");
                 break;
             case WAITING:
+                logger.info(() -> name + " -> Enabled");
                 break;
             case BLOCKED:
                 ended = true;
+                logger.info(() -> name + " -> Blocked");
                 break;
             case RUNNING:
                 initialInstant = Instant.now();
+                logger.info(() -> name + " -> Running");
                 break;
             case FAILURE:
+                logger.info(() -> name + " -> Failed");
+                break;
             case SUCCESS:
                 ended = true;
                 finalInstant = Instant.now();
                 duration = Duration.between(initialInstant, finalInstant);
+                logger.info(() -> name + " -> Succeeded");
                 break;
         }
-        this.status = status;
-        logger.serviceInfo(this);
     }
 
     public Duration getDuration() {

@@ -71,22 +71,6 @@ public class Logger {
         this.begin = Instant.now();
     }
 
-    public <T extends Service> void serviceInfo(T service) {
-        if (level.accept(Level.INFO)) {
-            // info(() -> prefix(service, null) + " " + status(service.getStatus()));
-            info(() -> service.getName() + " -> " + service.getStatus());
-        }
-    }
-
-    public <T extends ServiceDependency> void serviceDependencyInfo(T dependency) {
-        if (level.accept(Level.INFO)) {
-            // info(() -> prefix(dependency.getParentService(), null) + " " +
-            // dependency.toString()
-            // + status(dependency.getStatus()));
-            info(dependency::toString);
-        }
-    }
-
     public void info(Supplier<String> supplier) {
         if (level.accept(Level.INFO))
             print(Level.INFO, supplier.get());
@@ -238,45 +222,45 @@ public class Logger {
     }
 
     // private String status(ServiceStatus status) {
-    //     String color = "";
-    //     switch (status) {
-    //         case DISABLED:
-    //             color = BRIGHT_PURPLE;
-    //             break;
-    //         case WAITING:
-    //             color = BRIGHT_CYAN;
-    //             break;
-    //         case BLOCKED:
-    //             color = BRIGHT_RED;
-    //             break;
-    //         case RUNNING:
-    //             color = BRIGHT_BLUE;
-    //             break;
-    //         case FAILURE:
-    //             color = BRIGHT_RED;
-    //             break;
-    //         case SUCCESS:
-    //             color = BRIGHT_GREEN;
-    //             break;
-    //         default:
-    //             break;
-    //     }
-    //     return color + status.toString() + ANSI_RESET;
+    // String color = "";
+    // switch (status) {
+    // case DISABLED:
+    // color = BRIGHT_PURPLE;
+    // break;
+    // case WAITING:
+    // color = BRIGHT_CYAN;
+    // break;
+    // case BLOCKED:
+    // color = BRIGHT_RED;
+    // break;
+    // case RUNNING:
+    // color = BRIGHT_BLUE;
+    // break;
+    // case FAILURE:
+    // color = BRIGHT_RED;
+    // break;
+    // case SUCCESS:
+    // color = BRIGHT_GREEN;
+    // break;
+    // default:
+    // break;
+    // }
+    // return color + status.toString() + ANSI_RESET;
     // }
 
     // private String status(ServiceDependencyStatus status) {
-    //     String color = "";
-    //     switch (status) {
-    //         case WAITING:
-    //             color = BRIGHT_CYAN;
-    //             break;
-    //         case PASSED:
-    //             color = BRIGHT_GREEN;
-    //             break;
-    //         case BLOCKED:
-    //             color = BRIGHT_RED;
-    //             break;
-    //     }
-    //     return color + status.toString() + ANSI_RESET;
+    // String color = "";
+    // switch (status) {
+    // case WAITING:
+    // color = BRIGHT_CYAN;
+    // break;
+    // case PASSED:
+    // color = BRIGHT_GREEN;
+    // break;
+    // case BLOCKED:
+    // color = BRIGHT_RED;
+    // break;
+    // }
+    // return color + status.toString() + ANSI_RESET;
     // }
 }
