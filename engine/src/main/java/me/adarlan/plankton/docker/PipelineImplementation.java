@@ -17,7 +17,6 @@ import me.adarlan.plankton.core.Pipeline;
 import me.adarlan.plankton.core.dependency.WaitServiceFailure;
 import me.adarlan.plankton.core.dependency.WaitServicePort;
 import me.adarlan.plankton.core.dependency.WaitServiceSuccess;
-import me.adarlan.plankton.util.RegexUtil;
 
 class PipelineImplementation implements Pipeline {
 
@@ -106,21 +105,21 @@ class PipelineImplementation implements Pipeline {
         Map<String, String> labelsByName = labelsByServiceAndName.get(service);
         labelsByName.forEach((labelName, labelValue) -> {
 
-            if (RegexUtil.stringMatchesRegex(labelName, "^plankton\\.wait\\.success\\.of$")) {
+            if (Utils.stringMatchesRegex(labelName, "^plankton\\.wait\\.success\\.of$")) {
                 String requiredServiceName = labelValue;
                 ServiceImplementation requiredService = this.getServiceByName(requiredServiceName);
                 WaitServiceSuccess dependency = new WaitServiceSuccess(service, requiredService);
                 dependencies.add(dependency);
             }
 
-            if (RegexUtil.stringMatchesRegex(labelName, "^plankton\\.wait\\.failure\\.of$")) {
+            if (Utils.stringMatchesRegex(labelName, "^plankton\\.wait\\.failure\\.of$")) {
                 String requiredServiceName = labelValue;
                 ServiceImplementation requiredService = this.getServiceByName(requiredServiceName);
                 WaitServiceFailure dependency = new WaitServiceFailure(service, requiredService);
                 dependencies.add(dependency);
             }
 
-            else if (RegexUtil.stringMatchesRegex(labelName, "^plankton\\.wait\\.ports$")) {
+            else if (Utils.stringMatchesRegex(labelName, "^plankton\\.wait\\.ports$")) {
                 Integer port = Integer.parseInt(labelValue);
                 ServiceImplementation requiredService = externalPorts.get(port);
                 WaitServicePort dependency = new WaitServicePort(service, requiredService, port);
