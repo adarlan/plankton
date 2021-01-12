@@ -10,7 +10,7 @@ See the [Label Reference](#label-reference) section of this document.
 Follow this example to create a simple pipeline composed by 3 services:
 `test`, `build` and `deploy`.
 
-### Create a file called `plankton.compose.yaml` with the following content
+### Create a `plankton.compose.yaml` file with the following content
 
 ```yaml
 services:
@@ -42,13 +42,13 @@ docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.s
 
 ![Pipeline logs](screenshots/pipeline-logs.png)
 
-### View a graphical representation of the pipeline in your browser: [http://localhost:1329](http://localhost:1329)
+### View the pipeline in your browser: [http://localhost:1329](http://localhost:1329)
 
 ![Pipeline page](screenshots/pipeline-page.png)
 
 ### See more [examples](examples)
 
-TODO more screenshots...
+> TODO add more screenshots
 
 ## Label Reference
 
