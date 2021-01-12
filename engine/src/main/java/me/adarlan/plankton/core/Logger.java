@@ -70,14 +70,19 @@ public class Logger {
     }
 
     public <T extends Service> void serviceInfo(T service) {
-        if (level.accept(Level.INFO))
-            info(() -> prefix(service, null) + " " + status(service.getStatus()));
+        if (level.accept(Level.INFO)) {
+            // info(() -> prefix(service, null) + " " + status(service.getStatus()));
+            info(() -> service.getName() + " -> " + service.getStatus());
+        }
     }
 
     public <T extends ServiceDependency> void serviceDependencyInfo(T dependency) {
-        if (level.accept(Level.INFO))
-            info(() -> prefix(dependency.getParentService(), null) + " " + dependency.toString()
-                    + status(dependency.getStatus()));
+        if (level.accept(Level.INFO)) {
+            // info(() -> prefix(dependency.getParentService(), null) + " " +
+            // dependency.toString()
+            // + status(dependency.getStatus()));
+            info(dependency::toString);
+        }
     }
 
     public void info(Supplier<String> supplier) {
@@ -92,8 +97,8 @@ public class Logger {
 
     public void follow(ServiceInstance serviceInstance, Supplier<String> supplier) {
         if (level.accept(Level.FOLLOW))
-            print(Level.FOLLOW,
-                    prefix(serviceInstance.getParentService(), serviceInstance.getContainerName()) + " " + supplier.get());
+            print(Level.FOLLOW, prefix(serviceInstance.getParentService(), serviceInstance.getContainerName()) + " "
+                    + supplier.get());
     }
 
     public void debug(Supplier<String> supplier) {
@@ -213,7 +218,7 @@ public class Logger {
             int colorIndex = serviceIndex % JOB_COLOR_LIST.size();
             serviceIndex++;
             String color = JOB_COLOR_LIST.get(colorIndex);
-            logger.debug(() -> "service: " + service.getName() + "; color index: " + colorIndex + "; color: " + color + "###"
+            debug(() -> "service: " + service.getName() + "; color index: " + colorIndex + "; color: " + color + "###"
                     + ANSI_RESET);
             serviceColorMap.put(service, color);
             for (int i = 1; i <= service.getScale(); i++) {
