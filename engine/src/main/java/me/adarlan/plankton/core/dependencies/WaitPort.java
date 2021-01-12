@@ -51,6 +51,18 @@ public class WaitPort implements ServiceDependency {
 
     @Override
     public String toString() {
-        return parentService.getName() + "." + getClass().getSimpleName() + "(" + port + ") -> " + status;
+        String providedBy = "provided by " + requiredService.getName();
+        switch (status) {
+            case WAITING:
+                return parentService.getName() + " -> Waiting for port " + port + ", which is " + providedBy;
+            case PASSED:
+                return parentService.getName() + " -> Satisfied because port " + port + ", " + providedBy
+                        + ", is responding";
+            case BLOCKED:
+                return parentService.getName() + " -> Blocked because " + requiredService.getName()
+                        + ", which provides port " + port + ", has failed";
+            default:
+                return super.toString();
+        }
     }
 }

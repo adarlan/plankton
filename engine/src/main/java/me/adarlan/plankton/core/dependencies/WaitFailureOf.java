@@ -40,6 +40,17 @@ public class WaitFailureOf implements ServiceDependency {
 
     @Override
     public String toString() {
-        return parentService.getName() + "." + getClass().getSimpleName() + "(" + requiredService.getName() + ") -> " + status;
+        String failure = " failure";
+        String hasFailed = " has failed";
+        switch (status) {
+            case WAITING:
+                return parentService.getName() + " -> Waiting for " + requiredService.getName() + failure;
+            case PASSED:
+                return parentService.getName() + " -> Satisfied because " + requiredService.getName() + hasFailed;
+            case BLOCKED:
+                return parentService.getName() + " -> Blocked because " + requiredService.getName() + hasFailed;
+            default:
+                return super.toString();
+        }
     }
 }
