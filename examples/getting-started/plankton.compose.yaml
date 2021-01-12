@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+
+  test:
+    image: alpine
+    command: echo Testing...
+
+  build:
+    image: alpine
+    command: echo Building...
+    labels:
+      plankton.wait.success.of: test
+
+  deploy:
+    image: alpine
+    command: echo Deploying...
+    labels:
+      plankton.wait.success.of: build
