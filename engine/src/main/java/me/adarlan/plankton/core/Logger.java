@@ -16,7 +16,7 @@ public class Logger {
     private static final String WHITE = "\u001B[37m";
 
     private static final String BRIGHT_BLACK = "\u001b[30;1m";
-    // private static final String BRIGHT_WHITE = "\u001b[37;1m";
+    private static final String BRIGHT_WHITE = "\u001b[37;1m";
 
     private static final String RED = "\u001B[31m";
     // private static final String GREEN = "\u001B[32m";
@@ -74,107 +74,96 @@ public class Logger {
         this.begin = Instant.now();
     }
 
-    public void info(Supplier<String> supplier) {
-        if (level.accept(Level.INFO))
-            print(Level.INFO, supplier.get());
-    }
-
-    public void log(Service service, Supplier<String> supplier) {
-        if (level.accept(Level.LOG))
-            print(Level.LOG, prefix(service, null) + " " + supplier.get());
-    }
-
-    public void log(ServiceInstance serviceInstance, Supplier<String> supplier) {
-        if (level.accept(Level.LOG))
-            print(Level.LOG, prefix(serviceInstance.getParentService(), serviceInstance.getContainerName()) + " "
-                    + supplier.get());
+    public void trace(Supplier<String> supplier) {
+        if (level.accept(Level.TRACE))
+            print(Level.TRACE, colorizedText(BRIGHT_BLACK, supplier.get()));
     }
 
     public void debug(Supplier<String> supplier) {
         if (level.accept(Level.DEBUG))
-            print(Level.DEBUG, supplier.get());
+            print(Level.DEBUG, colorizedText(BRIGHT_BLACK, supplier.get()));
+    }
+
+    public void log(Service service, Supplier<String> supplier) {
+        if (level.accept(Level.LOG))
+            print(Level.LOG, logPrefixOf(service) + supplier.get());
+    }
+
+    public void log(ServiceInstance instance, Supplier<String> supplier) {
+        if (level.accept(Level.LOG))
+            print(Level.LOG, logPrefixOf(instance) + supplier.get());
+    }
+
+    public void info(Supplier<String> supplier) {
+        if (level.accept(Level.INFO))
+            print(Level.INFO, colorizedText(BRIGHT_WHITE, supplier.get()));
+    }
+
+    public void info(Service service, Supplier<String> supplier) {
+        if (level.accept(Level.INFO))
+            print(Level.INFO, infoPrefixOf(service) + colorizedText(BRIGHT_WHITE, supplier.get()));
+    }
+
+    public void warn(Supplier<String> supplier) {
+        if (level.accept(Level.WARN))
+            print(Level.WARN, colorizedText(YELLOW, supplier.get()));
     }
 
     public void error(Supplier<String> supplier) {
         if (level.accept(Level.ERROR))
-            print(Level.ERROR, supplier.get());
-    }
-
-    public void trace(Supplier<String> supplier) {
-        if (level.accept(Level.TRACE))
-            print(Level.TRACE, supplier.get());
+            print(Level.ERROR, colorizedText(RED, supplier.get()));
     }
 
     public void fatal(Supplier<String> supplier) {
         if (level.accept(Level.FATAL))
-            print(Level.FATAL, supplier.get());
+            print(Level.FATAL, colorizedText(RED, supplier.get()));
     }
 
     private void print(Level level, String text) {
         Long time = Duration.between(begin, Instant.now()).toMillis();
-        String tag = null;
         String tagColor = null;
-        String timestamp = time.toString();
-        String textColor = null;
         switch (level) {
             case TRACE:
-                tag = "TRACE";
                 tagColor = BRIGHT_BLACK;
-                textColor = BRIGHT_BLACK;
                 break;
             case DEBUG:
-                tag = "DEBUG";
                 tagColor = BRIGHT_BLACK;
-                textColor = BRIGHT_BLACK;
                 break;
             case LOG:
-                tag = "LOG";
                 tagColor = WHITE;
-                textColor = WHITE;
                 break;
             case INFO:
-                tag = "INFO";
                 tagColor = WHITE;
-                textColor = WHITE;
                 break;
             case WARN:
-                tag = "WARN";
                 tagColor = YELLOW;
-                textColor = YELLOW;
                 break;
             case ERROR:
-                tag = "ERROR";
                 tagColor = RED;
-                textColor = RED;
                 break;
             case FATAL:
-                tag = "FATAL";
                 tagColor = RED;
-                textColor = RED;
                 break;
-            default:
         }
-        tag = tag != null ? "[" + tag + "]" : "";
+        String tag;
+        tag = level.toString();
+        tag = "[" + tag + "]";
         tag = alignLeft(tag, 8);
-        if (tagColor != null) {
-            tag = tagColor + tag + ANSI_RESET;
-        }
+        tag = colorizedText(tagColor, tag);
         if (printTimeStamp) {
-            timestamp = BRIGHT_BLACK + alignRight(timestamp, 10) + " - " + ANSI_RESET;
+            String timestamp = colorizedText(BRIGHT_BLACK, alignRight(time.toString(), 10) + " - ");
+            System.out.println(tag + timestamp + text);
         } else {
-            timestamp = "";
+            System.out.println(tag + text);
         }
-        if (textColor != null) {
-            text = textColor + text + ANSI_RESET;
-        }
-        System.out.println(tag + timestamp + text);
     }
 
     private String alignLeft(String string, int spaces) {
-        String str = string;
+        StringBuilder sb = new StringBuilder();
+        sb.append(string);
         for (int i = string.length(); i < spaces; i++)
-            str += " ";
-        return str;
+            sb.append(" ");
+        return sb.toString();
     }
 
     private String alignRight(String string, int spaces) {
@@ -185,7 +174,21 @@ public class Logger {
         return sb.toString();
     }
 
-    private String prefix(Service service, String containerName) {
+    private String infoPrefixOf(Service service) {
+        return prefix(service, null, " -> ");
+    }
+
+    private String logPrefixOf(Service service) {
+        return prefix(service, null, "    | ");
+    }
+
+    private String logPrefixOf(ServiceInstance instance) {
+        Service service = instance.getParentService();
+        String containerName = instance.getContainerName();
+        return prefix(service, containerName, "    | ");
+    }
+
+    private String prefix(Service service, String containerName, String separator) {
         Pipeline pipeline = service.getPipeline();
         String name;
         if (containerName == null) {
@@ -196,29 +199,52 @@ public class Logger {
                 name = name.substring(0, name.lastIndexOf("_"));
             }
         }
-        if (biggestServiceNameLength == null) {
-            initializeBiggestServiceNameLength(pipeline);
-        }
-        String color = serviceColorMap.get(service);
-        name = alignLeft(name, biggestServiceNameLength);
-        return "" + color + name + ANSI_RESET + BRIGHT_BLACK + " | " + ANSI_RESET;
+        String color = getServiceColor(service);
+        int length = getBiggestNameLength(pipeline);
+        name = alignLeft(name, length);
+        return colorizedText(color, name) + colorizedText(BRIGHT_BLACK, separator);
     }
 
-    private void initializeBiggestServiceNameLength(Pipeline pipeline) {
-        biggestServiceNameLength = 0;
+    private String colorizedText(String color, String text) {
+        return color + text + ANSI_RESET;
+    }
+
+    private String colorizedNameOf(Service service) {
+        String name = service.getName();
+        String color = getServiceColor(service);
+        return "" + color + name + ANSI_RESET;
+    }
+
+    private String getServiceColor(Service service) {
+        if (serviceColorMap.isEmpty()) {
+            Pipeline pipeline = service.getPipeline();
+            initializeServiceColors(pipeline);
+        }
+        return serviceColorMap.get(service);
+    }
+
+    private void initializeServiceColors(Pipeline pipeline) {
         int serviceIndex = 0;
         for (Service service : pipeline.getServices()) {
             int colorIndex = serviceIndex % JOB_COLOR_LIST.size();
             String color;
-            if (service.getStatus().equals(ServiceStatus.DISABLED)) {
-                color = BRIGHT_BLACK;
-            } else {
-                color = JOB_COLOR_LIST.get(colorIndex);
-                serviceIndex++;
-            }
-            debug(() -> "service: " + service.getName() + "; color index: " + colorIndex + "; color: " + color + "###"
-                    + ANSI_RESET);
+            color = JOB_COLOR_LIST.get(colorIndex);
+            serviceIndex++;
+            debug(() -> service.getName() + " is " + color + "###" + ANSI_RESET);
             serviceColorMap.put(service, color);
+        }
+    }
+
+    private int getBiggestNameLength(Pipeline pipeline) {
+        if (biggestServiceNameLength == null) {
+            initializeBiggestServiceNameLength(pipeline);
+        }
+        return biggestServiceNameLength;
+    }
+
+    private void initializeBiggestServiceNameLength(Pipeline pipeline) {
+        biggestServiceNameLength = 0;
+        for (Service service : pipeline.getServices()) {
             for (int i = 1; i <= service.getScale(); i++) {
                 String name = service.getName() + "_" + i;
                 int len = name.length();
@@ -228,47 +254,4 @@ public class Logger {
             }
         }
     }
-
-    // private String status(ServiceStatus status) {
-    // String color = "";
-    // switch (status) {
-    // case DISABLED:
-    // color = BRIGHT_PURPLE;
-    // break;
-    // case WAITING:
-    // color = BRIGHT_CYAN;
-    // break;
-    // case BLOCKED:
-    // color = BRIGHT_RED;
-    // break;
-    // case RUNNING:
-    // color = BRIGHT_BLUE;
-    // break;
-    // case FAILURE:
-    // color = BRIGHT_RED;
-    // break;
-    // case SUCCESS:
-    // color = BRIGHT_GREEN;
-    // break;
-    // default:
-    // break;
-    // }
-    // return color + status.toString() + ANSI_RESET;
-    // }
-
-    // private String status(ServiceDependencyStatus status) {
-    // String color = "";
-    // switch (status) {
-    // case WAITING:
-    // color = BRIGHT_CYAN;
-    // break;
-    // case PASSED:
-    // color = BRIGHT_GREEN;
-    // break;
-    // case BLOCKED:
-    // color = BRIGHT_RED;
-    // break;
-    // }
-    // return color + status.toString() + ANSI_RESET;
-    // }
 }
