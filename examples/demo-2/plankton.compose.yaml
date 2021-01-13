@@ -15,7 +15,7 @@ services:
       BAR: "0 1 2 3 4 5 6 7 8 9"
 
   mysql:
-    build: foo-service
+    build: foo
     ports:
       - 85:80
     labels:
@@ -23,7 +23,7 @@ services:
       plankton.stop.when: dependents-exited    # stop when all dependent services have exited
 
   adminer:
-    build: foo-service
+    build: foo
     ports:
       - 86:80
     labels:
@@ -32,16 +32,16 @@ services:
       plankton.wait.ports: 85
       plankton.timeout: 1
 
-  download:
-    build: foo-task
-    command: --time 60 --file /flags/downloaded
-    volumes:
-      - ./flags:/flags
-    labels:
-      plankton.start.when: scheduled  # default
-      plankton.stop.when: finished    # defaul; enable 'cancel' action if status = waiting|scheduled|running
-      plankton.timeout: 1
-      plankton.enable.if: '[ oi = oi ]'
+  # download:
+  #   build: foo-task
+  #   command: --time 60 --file /flags/downloaded
+  #   volumes:
+  #     - ./flags:/flags
+  #   labels:
+  #     plankton.start.when: scheduled  # default
+  #     plankton.stop.when: finished    # defaul; enable 'cancel' action if status = waiting|scheduled|running
+  #     plankton.timeout: 1
+  #     plankton.enable.if: '[ oi = oi ]'
 
   save-the-whales:
     image: ubuntu
@@ -56,17 +56,17 @@ services:
       plankton.timeout: 1
       plankton.enable.if: '[ 0 = 1 ]'
 
-  import:
-    build: foo-task
-    command: --time 45
-    volumes:
-      - ./flags:/flags
-    labels:
-      plankton.timeout: 2
-      plankton.enable.if: '[ 0 = 1 ] && [ "$$GIT_REF" = master ] || [ ! "$${BAR:0:4}" = "bar-" ]'
-      plankton.wait.success.of: download
-      plankton.wait.ports: 85
-      plankton.wait.files: flags/downloaded
+  # import:
+  #   build: foo-task
+  #   command: --time 45
+  #   volumes:
+  #     - ./flags:/flags
+  #   labels:
+  #     plankton.timeout: 2
+  #     plankton.enable.if: '[ 0 = 1 ] && [ "$$GIT_REF" = master ] || [ ! "$${BAR:0:4}" = "bar-" ]'
+  #     plankton.wait.success.of: download
+  #     plankton.wait.ports: 85
+  #     plankton.wait.files: flags/downloaded
 
   docker-ls:
     image: docker
