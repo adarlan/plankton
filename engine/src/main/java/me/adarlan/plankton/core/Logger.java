@@ -158,6 +158,20 @@ public class Logger {
         }
     }
 
+    private String alignLeft(String color, String string, int spaces, String startWith, String fillWith, String endWith) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(color);
+        sb.append(string);
+        sb.append(ANSI_RESET);
+        sb.append(BRIGHT_BLACK);
+        sb.append(startWith);
+        for (int i = string.length(); i < spaces; i++)
+            sb.append(fillWith);
+        sb.append(endWith);
+        sb.append(ANSI_RESET);
+        return sb.toString();
+    }
+
     private String alignLeft(String string, int spaces) {
         StringBuilder sb = new StringBuilder();
         sb.append(string);
@@ -175,20 +189,20 @@ public class Logger {
     }
 
     private String infoPrefixOf(Service service) {
-        return prefix(service, null, " -> ");
+        return prefix(service, null, "-", "-> ");
     }
 
     private String logPrefixOf(Service service) {
-        return prefix(service, null, "    | ");
+        return prefix(service, null, " ", "    |");
     }
 
     private String logPrefixOf(ServiceInstance instance) {
         Service service = instance.getParentService();
         String containerName = instance.getContainerName();
-        return prefix(service, containerName, "    | ");
+        return prefix(service, containerName, " ", "    |");
     }
 
-    private String prefix(Service service, String containerName, String separator) {
+    private String prefix(Service service, String containerName, String fillWith, String endWith) {
         Pipeline pipeline = service.getPipeline();
         String name;
         if (containerName == null) {
@@ -201,8 +215,7 @@ public class Logger {
         }
         String color = getServiceColor(service);
         int length = getBiggestNameLength(pipeline);
-        name = alignLeft(name, length);
-        return colorizedText(color, name) + colorizedText(BRIGHT_BLACK, separator);
+        return alignLeft(color, name, length, " ", fillWith, endWith);
     }
 
     private String colorizedText(String color, String text) {
