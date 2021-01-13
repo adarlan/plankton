@@ -89,6 +89,7 @@ Define arguments to configure Plankton when running it through command line.
 ## Unsupported Compose Attributes
 
 ```txt
+networks
 services.<SERVICE>.container_name
 services.<SERVICE>.deploy
 ```
