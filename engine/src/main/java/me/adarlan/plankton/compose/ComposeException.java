@@ -1,6 +1,6 @@
 package me.adarlan.plankton.compose;
 
-import me.adarlan.plankton.core.Logger;
+import me.adarlan.plankton.logging.Logger;
 
 public class ComposeException extends RuntimeException {
 

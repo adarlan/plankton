@@ -5,7 +5,7 @@ import java.net.Socket;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import me.adarlan.plankton.core.Logger;
+import me.adarlan.plankton.logging.Logger;
 import me.adarlan.plankton.core.Service;
 import me.adarlan.plankton.core.ServiceDependency;
 import me.adarlan.plankton.core.ServiceDependencyStatus;

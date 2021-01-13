@@ -13,7 +13,7 @@ import java.util.Set;
 import org.yaml.snakeyaml.Yaml;
 
 import lombok.Getter;
-import me.adarlan.plankton.core.Logger;
+import me.adarlan.plankton.logging.Logger;
 import me.adarlan.plankton.bash.BashScript;
 
 public class Compose {

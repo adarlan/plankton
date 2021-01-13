@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import me.adarlan.plankton.docker.DockerPipelineConfig;
 import me.adarlan.plankton.docker.DockerPipelineFactory;
 import me.adarlan.plankton.docker.PlanktonDockerException;
-import me.adarlan.plankton.core.Logger;
+import me.adarlan.plankton.logging.Logger;
 import me.adarlan.plankton.core.Pipeline;
 import me.adarlan.plankton.bash.BashScript;
 

@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import me.adarlan.plankton.core.ServiceInstance;
-import me.adarlan.plankton.core.Logger;
+import me.adarlan.plankton.logging.Logger;
 
 @ToString(of = "containerName")
 @EqualsAndHashCode(of = "containerName")

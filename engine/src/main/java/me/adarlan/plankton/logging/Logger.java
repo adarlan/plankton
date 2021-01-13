@@ -1,4 +1,4 @@
-package me.adarlan.plankton.core;
+package me.adarlan.plankton.logging;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -7,6 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+
+import me.adarlan.plankton.core.Pipeline;
+import me.adarlan.plankton.core.Service;
+import me.adarlan.plankton.core.ServiceInstance;
 
 public class Logger {
 
@@ -158,7 +162,8 @@ public class Logger {
         }
     }
 
-    private String alignLeft(String color, String string, int spaces, String startWith, String fillWith, String endWith) {
+    private String alignLeft(String color, String string, int spaces, String startWith, String fillWith,
+            String endWith) {
         StringBuilder sb = new StringBuilder();
         sb.append(color);
         sb.append(string);

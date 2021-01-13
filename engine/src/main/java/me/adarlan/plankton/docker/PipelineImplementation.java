@@ -15,7 +15,7 @@ import me.adarlan.plankton.core.ServiceDependency;
 import me.adarlan.plankton.core.dependencies.WaitFailureOf;
 import me.adarlan.plankton.core.dependencies.WaitPort;
 import me.adarlan.plankton.core.dependencies.WaitSuccessOf;
-import me.adarlan.plankton.core.Logger;
+import me.adarlan.plankton.logging.Logger;
 import me.adarlan.plankton.core.Pipeline;
 
 class PipelineImplementation implements Pipeline {

@@ -1,6 +1,6 @@
 package me.adarlan.plankton.docker;
 
-import me.adarlan.plankton.core.Logger;
+import me.adarlan.plankton.logging.Logger;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

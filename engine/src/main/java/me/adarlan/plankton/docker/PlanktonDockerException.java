@@ -1,6 +1,6 @@
 package me.adarlan.plankton.docker;
 
-import me.adarlan.plankton.core.Logger;
+import me.adarlan.plankton.logging.Logger;
 
 public class PlanktonDockerException extends RuntimeException {
 
