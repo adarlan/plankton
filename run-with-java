@@ -1,0 +1,12 @@
+#!/bin/bash
+set -ex
+
+PLANKTON_DIR=$PWD
+
+cd $1
+WORKSPACE=$PWD
+cd -
+
+cd $WORKSPACE
+JAR=$PLANKTON_DIR/local-runner/target/plankton-local-runner.jar
+java -jar $JAR

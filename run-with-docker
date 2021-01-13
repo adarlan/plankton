@@ -1,9 +1,11 @@
 #!/bin/bash
 set -ex
 
-NAME=$1
-WORKSPACE=$PWD/examples/$NAME
+PLANKTON_DIR=$PWD
+
+cd $1
+WORKSPACE=$PWD
+cd -
 
 cd $WORKSPACE
-
 docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host adarlan/plankton

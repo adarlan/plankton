@@ -5,9 +5,12 @@ PLANKTON_DIR=$PWD
 
 cd $PLANKTON_DIR/engine
 mvn install
+cd -
 
-NAME=$1
-WORKSPACE=$PLANKTON_DIR/examples/$NAME
+cd $1
+WORKSPACE=$PWD
+cd -
+
 COMPOSE_FILE=${WORKSPACE}/plankton.compose.yaml
 
 cd $PLANKTON_DIR/local-runner
