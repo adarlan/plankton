@@ -32,8 +32,8 @@ public class Logger {
     private static final String BRIGHT_PURPLE = "\u001b[35;1m";
     private static final String BRIGHT_CYAN = "\u001b[36;1m";
 
-    private static final List<String> JOB_COLOR_LIST = Arrays.asList(BRIGHT_BLUE, BRIGHT_GREEN, BRIGHT_PURPLE,
-            BRIGHT_CYAN, BRIGHT_YELLOW, BRIGHT_RED);
+    private static final List<String> JOB_COLOR_LIST = Arrays.asList(BRIGHT_RED, BRIGHT_GREEN, BRIGHT_YELLOW,
+            BRIGHT_BLUE, BRIGHT_PURPLE, BRIGHT_CYAN);
 
     private static Level level = Level.LOG;
     private final Instant begin;
@@ -209,8 +209,13 @@ public class Logger {
         int serviceIndex = 0;
         for (Service service : pipeline.getServices()) {
             int colorIndex = serviceIndex % JOB_COLOR_LIST.size();
-            serviceIndex++;
-            String color = JOB_COLOR_LIST.get(colorIndex);
+            String color;
+            if (service.getStatus().equals(ServiceStatus.DISABLED)) {
+                color = BRIGHT_BLACK;
+            } else {
+                color = JOB_COLOR_LIST.get(colorIndex);
+                serviceIndex++;
+            }
             debug(() -> "service: " + service.getName() + "; color index: " + colorIndex + "; color: " + color + "###"
                     + ANSI_RESET);
             serviceColorMap.put(service, color);
