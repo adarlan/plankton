@@ -5,6 +5,7 @@ import java.net.Socket;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import me.adarlan.plankton.core.Logger;
 import me.adarlan.plankton.core.Service;
 import me.adarlan.plankton.core.ServiceDependency;
 import me.adarlan.plankton.core.ServiceDependencyStatus;
@@ -25,6 +26,8 @@ public class WaitPort implements ServiceDependency {
     @Getter
     ServiceDependencyStatus status = ServiceDependencyStatus.WAITING;
 
+    private final Logger logger = Logger.getLogger();
+
     public WaitPort(Service parentService, Service requiredService, Integer port) {
         this.parentService = parentService;
         this.requiredService = requiredService;
@@ -39,6 +42,8 @@ public class WaitPort implements ServiceDependency {
                 return true;
             } else if (requiredService.getStatus().equals(ServiceStatus.RUNNING)) {
                 try (Socket s = new Socket("localhost", port)) {
+                    logger.info(
+                            () -> "PORT " + port + "; isConnected: " + s.isConnected() + "; isBound: " + s.isBound());
                     status = ServiceDependencyStatus.PASSED;
                     return true;
                 } catch (IOException ex) {
@@ -54,13 +59,12 @@ public class WaitPort implements ServiceDependency {
         String providedBy = "provided by " + requiredService.getName();
         switch (status) {
             case WAITING:
-                return parentService.getName() + " -> Waiting for port " + port + ", which is " + providedBy;
+                return "Waiting for port " + port + ", which is " + providedBy;
             case PASSED:
-                return parentService.getName() + " -> Satisfied because port " + port + ", " + providedBy
-                        + ", is responding";
+                return "Satisfied because port " + port + ", " + providedBy + ", is responding";
             case BLOCKED:
-                return parentService.getName() + " -> Blocked because " + requiredService.getName()
-                        + ", which provides port " + port + ", is not running anymore";
+                return "Blocked because " + requiredService.getName() + ", which provides port " + port
+                        + ", is not running anymore";
             default:
                 return super.toString();
         }
