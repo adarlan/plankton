@@ -14,30 +14,8 @@ import me.adarlan.plankton.core.ServiceInstance;
 
 public class Logger {
 
-    private static final String ANSI_RESET = "\u001B[0m";
-
-    // private static final String BLACK = "\u001B[30m";
-    private static final String WHITE = "\u001B[37m";
-
-    private static final String BRIGHT_BLACK = "\u001b[30;1m";
-    private static final String BRIGHT_WHITE = "\u001b[37;1m";
-
-    private static final String RED = "\u001B[31m";
-    // private static final String GREEN = "\u001B[32m";
-    private static final String YELLOW = "\u001B[33m";
-    // private static final String BLUE = "\u001B[34m";
-    // private static final String PURPLE = "\u001B[35m";
-    // private static final String CYAN = "\u001B[36m";
-
-    private static final String BRIGHT_RED = "\u001b[31;1m";
-    private static final String BRIGHT_GREEN = "\u001b[32;1m";
-    private static final String BRIGHT_YELLOW = "\u001b[33;1m";
-    private static final String BRIGHT_BLUE = "\u001b[34;1m";
-    private static final String BRIGHT_PURPLE = "\u001b[35;1m";
-    private static final String BRIGHT_CYAN = "\u001b[36;1m";
-
-    private static final List<String> JOB_COLOR_LIST = Arrays.asList(BRIGHT_RED, BRIGHT_GREEN, BRIGHT_YELLOW,
-            BRIGHT_BLUE, BRIGHT_PURPLE, BRIGHT_CYAN);
+    private static final List<String> JOB_COLOR_LIST = Arrays.asList(Colors.BRIGHT_RED, Colors.BRIGHT_GREEN,
+            Colors.BRIGHT_YELLOW, Colors.BRIGHT_BLUE, Colors.BRIGHT_PURPLE, Colors.BRIGHT_CYAN);
 
     private static Level level = Level.LOG;
     private final Instant begin;
@@ -80,12 +58,12 @@ public class Logger {
 
     public void trace(Supplier<String> supplier) {
         if (level.accept(Level.TRACE))
-            print(Level.TRACE, colorizedText(BRIGHT_BLACK, supplier.get()));
+            print(Level.TRACE, colorizedText(Colors.BRIGHT_BLACK, supplier.get()));
     }
 
     public void debug(Supplier<String> supplier) {
         if (level.accept(Level.DEBUG))
-            print(Level.DEBUG, colorizedText(BRIGHT_BLACK, supplier.get()));
+            print(Level.DEBUG, colorizedText(Colors.BRIGHT_BLACK, supplier.get()));
     }
 
     public void log(Service service, Supplier<String> supplier) {
@@ -100,27 +78,27 @@ public class Logger {
 
     public void info(Supplier<String> supplier) {
         if (level.accept(Level.INFO))
-            print(Level.INFO, colorizedText(BRIGHT_WHITE, supplier.get()));
+            print(Level.INFO, colorizedText(Colors.BRIGHT_WHITE, supplier.get()));
     }
 
     public void info(Service service, Supplier<String> supplier) {
         if (level.accept(Level.INFO))
-            print(Level.INFO, infoPrefixOf(service) + colorizedText(BRIGHT_WHITE, supplier.get()));
+            print(Level.INFO, infoPrefixOf(service) + colorizedText(Colors.BRIGHT_WHITE, supplier.get()));
     }
 
     public void warn(Supplier<String> supplier) {
         if (level.accept(Level.WARN))
-            print(Level.WARN, colorizedText(YELLOW, supplier.get()));
+            print(Level.WARN, colorizedText(Colors.YELLOW, supplier.get()));
     }
 
     public void error(Supplier<String> supplier) {
         if (level.accept(Level.ERROR))
-            print(Level.ERROR, colorizedText(RED, supplier.get()));
+            print(Level.ERROR, colorizedText(Colors.RED, supplier.get()));
     }
 
     public void fatal(Supplier<String> supplier) {
         if (level.accept(Level.FATAL))
-            print(Level.FATAL, colorizedText(RED, supplier.get()));
+            print(Level.FATAL, colorizedText(Colors.RED, supplier.get()));
     }
 
     private void print(Level level, String text) {
@@ -128,25 +106,25 @@ public class Logger {
         String tagColor = null;
         switch (level) {
             case TRACE:
-                tagColor = BRIGHT_BLACK;
+                tagColor = Colors.BRIGHT_BLACK;
                 break;
             case DEBUG:
-                tagColor = BRIGHT_BLACK;
+                tagColor = Colors.BRIGHT_BLACK;
                 break;
             case LOG:
-                tagColor = WHITE;
+                tagColor = Colors.WHITE;
                 break;
             case INFO:
-                tagColor = WHITE;
+                tagColor = Colors.WHITE;
                 break;
             case WARN:
-                tagColor = YELLOW;
+                tagColor = Colors.YELLOW;
                 break;
             case ERROR:
-                tagColor = RED;
+                tagColor = Colors.RED;
                 break;
             case FATAL:
-                tagColor = RED;
+                tagColor = Colors.RED;
                 break;
         }
         String tag;
@@ -155,7 +133,7 @@ public class Logger {
         tag = alignLeft(tag, 8);
         tag = colorizedText(tagColor, tag);
         if (printTimeStamp) {
-            String timestamp = colorizedText(BRIGHT_BLACK, alignRight(time.toString(), 10) + " - ");
+            String timestamp = colorizedText(Colors.BRIGHT_BLACK, alignRight(time.toString(), 10) + " - ");
             System.out.println(tag + timestamp + text);
         } else {
             System.out.println(tag + text);
@@ -167,13 +145,13 @@ public class Logger {
         StringBuilder sb = new StringBuilder();
         sb.append(color);
         sb.append(string);
-        sb.append(ANSI_RESET);
-        sb.append(BRIGHT_BLACK);
+        sb.append(Colors.ANSI_RESET);
+        sb.append(Colors.BRIGHT_BLACK);
         sb.append(startWith);
         for (int i = string.length(); i < spaces; i++)
             sb.append(fillWith);
         sb.append(endWith);
-        sb.append(ANSI_RESET);
+        sb.append(Colors.ANSI_RESET);
         return sb.toString();
     }
 
@@ -224,13 +202,13 @@ public class Logger {
     }
 
     private String colorizedText(String color, String text) {
-        return color + text + ANSI_RESET;
+        return color + text + Colors.ANSI_RESET;
     }
 
     private String colorizedNameOf(Service service) {
         String name = service.getName();
         String color = getServiceColor(service);
-        return "" + color + name + ANSI_RESET;
+        return "" + color + name + Colors.ANSI_RESET;
     }
 
     private String getServiceColor(Service service) {
@@ -248,7 +226,7 @@ public class Logger {
             String color;
             color = JOB_COLOR_LIST.get(colorIndex);
             serviceIndex++;
-            debug(() -> service.getName() + " is " + color + "###" + ANSI_RESET);
+            debug(() -> service.getName() + " is " + color + "###" + Colors.ANSI_RESET);
             serviceColorMap.put(service, color);
         }
     }
