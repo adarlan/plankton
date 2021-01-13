@@ -55,7 +55,7 @@ class PipelineImplementation implements Pipeline {
     }
 
     private void initializeServiceLabels(ServiceImplementation service) {
-        Map<String, String> labelsByName = dockerCompose.getServiceLabels(service.getName());
+        Map<String, String> labelsByName = dockerCompose.getServiceLabelsMap(service.getName());
         labelsByServiceAndName.put(service, labelsByName);
     }
 
@@ -68,7 +68,7 @@ class PipelineImplementation implements Pipeline {
     }
 
     private void initializeNeedToBuild(ServiceImplementation service) {
-        Map<String, Object> serviceConfigMap = dockerCompose.getServiceConfigMap(service.getName());
+        Map<String, Object> serviceConfigMap = dockerCompose.getServiceMap(service.getName());
         if (serviceConfigMap.containsKey("build")) {
             service.setNeedToBuild(true);
         } else {
