@@ -160,7 +160,7 @@ public class ServiceImplementation implements Service {
                             createContainers();
                             startInstances();
                         } else if (buildOrPullImage.isInterrupted()) {
-                            logger.info(() -> name + " -> Interrupted when building/pulling image");
+                            logger.info(this, () -> "Interrupted when building/pulling image");
                             setStatus(ServiceStatus.FAILURE);
                         }
                     }
@@ -174,7 +174,7 @@ public class ServiceImplementation implements Service {
         boolean blocked = false;
         for (final ServiceDependency dependency : dependencies) {
             if (dependency.updateStatus()) {
-                logger.info(dependency::toString);
+                logDependencyInfo(dependency);
             }
             if (!dependency.getStatus().equals(ServiceDependencyStatus.PASSED))
                 passed = false;
@@ -247,7 +247,7 @@ public class ServiceImplementation implements Service {
     private void checkTimeout() {
         Duration d = getDuration();
         if (d.compareTo(timeoutLimit) > 0) {
-            logger.info(() -> name + " -> Time limit has been reached");
+            logger.info(this, () -> "Time limit has been reached");
             instances.forEach(ServiceInstanceImplementation::stop);
         }
     }
@@ -257,29 +257,33 @@ public class ServiceImplementation implements Service {
         switch (status) {
             case DISABLED:
                 ended = true;
-                logger.info(() -> name + " -> Disabled");
+                logger.info(this, () -> "Disabled");
                 break;
             case WAITING:
-                dependencies.forEach(dependency -> logger.info(dependency::toString));
+                dependencies.forEach(this::logDependencyInfo);
                 break;
             case BLOCKED:
                 ended = true;
-                logger.info(() -> name + " -> Blocked");
+                logger.info(this, () -> "Blocked");
                 break;
             case RUNNING:
                 initialInstant = Instant.now();
-                logger.info(() -> name + " -> Running");
+                logger.info(this, () -> "Running");
                 break;
             case FAILURE:
-                logger.info(() -> name + " -> Failed");
+                logger.info(this, () -> "Failed");
                 break;
             case SUCCESS:
                 ended = true;
                 finalInstant = Instant.now();
                 duration = Duration.between(initialInstant, finalInstant);
-                logger.info(() -> name + " -> Succeeded");
+                logger.info(this, () -> "Succeeded");
                 break;
         }
+    }
+
+    private void logDependencyInfo(ServiceDependency dependency) {
+        logger.info(this, dependency::toString);
     }
 
     public Duration getDuration() {
