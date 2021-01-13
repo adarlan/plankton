@@ -40,15 +40,13 @@ public class WaitSuccessOf implements ServiceDependency {
 
     @Override
     public String toString() {
-        String success = " success";
-        String succeeded = " succeeded";
         switch (status) {
             case WAITING:
-                return parentService.getName() + " -> Waiting for " + requiredService.getName() + success;
+                return parentService.getName() + " -> Waiting for " + requiredService.getName() + " success";
             case PASSED:
-                return parentService.getName() + " -> Satisfied because " + requiredService.getName() + succeeded;
+                return parentService.getName() + " -> Satisfied because " + requiredService.getName() + " succeeded";
             case BLOCKED:
-                return parentService.getName() + " -> Blocked because " + requiredService.getName() + succeeded;
+                return parentService.getName() + " -> Blocked because " + requiredService.getName() + " failed";
             default:
                 return super.toString();
         }

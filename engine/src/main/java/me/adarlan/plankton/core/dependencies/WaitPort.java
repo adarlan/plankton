@@ -60,7 +60,7 @@ public class WaitPort implements ServiceDependency {
                         + ", is responding";
             case BLOCKED:
                 return parentService.getName() + " -> Blocked because " + requiredService.getName()
-                        + ", which provides port " + port + ", has failed";
+                        + ", which provides port " + port + ", is not running anymore";
             default:
                 return super.toString();
         }
