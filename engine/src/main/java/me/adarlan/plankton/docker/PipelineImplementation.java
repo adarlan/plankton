@@ -39,7 +39,7 @@ class PipelineImplementation implements Pipeline {
     private final Map<Integer, ServiceImplementation> externalPorts = new HashMap<>();
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private Integer biggestServiceNameLength;
+    Integer biggestServiceNameLength;
 
     PipelineImplementation(DockerCompose dockerCompose) {
         logger.trace("PipelineImplementation");
@@ -54,8 +54,8 @@ class PipelineImplementation implements Pipeline {
         services.forEach(this::initializeExternalPorts);
         services.forEach(this::initializeServiceDependencies);
         services.forEach(this::initializeServiceStatus);
-        this.initializeBiggestServiceNameLength();
-        this.initializeServiceColors();
+        this.initializeInstanceNamesAndBiggestName();
+        this.initializeColors();
     }
 
     private void instantiateServices() {
@@ -188,13 +188,17 @@ class PipelineImplementation implements Pipeline {
         }
     }
 
-    private void initializeBiggestServiceNameLength() {
-        logger.trace("initializeBiggestServiceNameLength");
+    private void initializeInstanceNamesAndBiggestName() {
+        logger.trace("initializeInstanceNamesAndBiggestName");
         biggestServiceNameLength = 0;
         for (ServiceImplementation service : getEnabledServices()) {
-            for (int i = 1; i <= service.getScale(); i++) {
-                String name = service.name + "_" + i;
-                int len = name.length();
+            for (ServiceInstanceImplementation instance : service.instances) {
+                if (service.getScale() == 1) {
+                    instance.name = service.name;
+                } else {
+                    instance.name = service.name + "_" + instance.number;
+                }
+                int len = instance.name.length();
                 if (len > biggestServiceNameLength) {
                     biggestServiceNameLength = len;
                 }
@@ -202,8 +206,8 @@ class PipelineImplementation implements Pipeline {
         }
     }
 
-    private void initializeServiceColors() {
-        logger.trace("initializeServiceColors");
+    private void initializeColors() {
+        logger.trace("initializeColors");
         List<String> list = new ArrayList<>();
         list.add(Colors.BRIGHT_RED);
         list.add(Colors.BRIGHT_GREEN);
@@ -214,18 +218,12 @@ class PipelineImplementation implements Pipeline {
         int serviceIndex = 0;
         for (ServiceImplementation service : getEnabledServices()) {
             int colorIndex = serviceIndex % list.size();
-            String color;
-            color = list.get(colorIndex);
+            service.color = list.get(colorIndex);
             serviceIndex++;
-            service.color = color;
-            service.colorizedName = color + service.name + Colors.ANSI_RESET;
+            service.infoPrefix = Utils.infoPrefixOf(service);
+            service.logPrefix = Utils.logPrefixOf(service);
             for (ServiceInstanceImplementation instance : service.instances) {
-                if (service.getScale() == 1) {
-                    instance.name = service.name;
-                } else {
-                    instance.name = service.name + "_" + instance.number;
-                }
-                instance.colorizedName = service.color + instance.name + Colors.ANSI_RESET;
+                instance.logPrefix = Utils.logPrefixOf(instance);
             }
         }
     }

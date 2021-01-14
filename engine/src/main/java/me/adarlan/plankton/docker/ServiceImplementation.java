@@ -22,6 +22,7 @@ import me.adarlan.plankton.core.ServiceDependency;
 import me.adarlan.plankton.core.ServiceDependencyStatus;
 import me.adarlan.plankton.core.ServiceInstance;
 import me.adarlan.plankton.core.ServiceStatus;
+import me.adarlan.plankton.logging.Colors;
 
 @ToString(of = "name")
 @EqualsAndHashCode(of = "name")
@@ -54,10 +55,13 @@ public class ServiceImplementation implements Service {
 
     private final List<String> logs = new ArrayList<>();
     String color;
-    String colorizedName;
+    // String colorizedName;
+    String infoPrefix;
+    String logPrefix;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
-    private static final String LOG_PLACEHOLDER = "{} -> {}";
+    private static final String LOG_PLACEHOLDER = "{}{}";
+    private static final String INFO_PLACEHOLDER = "{}" + Colors.BRIGHT_WHITE + "{}" + Colors.ANSI_RESET;
 
     ServiceImplementation(PipelineImplementation pipeline, String name) {
         this.pipeline = pipeline;
@@ -69,7 +73,7 @@ public class ServiceImplementation implements Service {
         synchronized (logs) {
             logs.add(message);
         }
-        logger.info(LOG_MARKER, LOG_PLACEHOLDER, colorizedName, message);
+        logger.info(LOG_MARKER, LOG_PLACEHOLDER, logPrefix, message);
     }
 
     void refresh() {
@@ -89,7 +93,7 @@ public class ServiceImplementation implements Service {
                             createContainers();
                             startInstances();
                         } else if (buildOrPullImage.isInterrupted()) {
-                            logger.error(LOG_PLACEHOLDER, colorizedName, "Interrupted when building/pulling image");
+                            logger.error(INFO_PLACEHOLDER, infoPrefix, "Interrupted when building/pulling image");
                             setStatus(ServiceStatus.FAILURE);
                         }
                     }
@@ -176,7 +180,7 @@ public class ServiceImplementation implements Service {
     private void checkTimeout() {
         Duration d = getDuration();
         if (d.compareTo(timeoutLimit) > 0) {
-            logger.error(LOG_PLACEHOLDER, colorizedName, "Time limit has been reached");
+            logger.error(INFO_PLACEHOLDER, infoPrefix, "Time limit has been reached");
             instances.forEach(ServiceInstanceImplementation::stop);
         }
     }
@@ -186,33 +190,33 @@ public class ServiceImplementation implements Service {
         switch (status) {
             case DISABLED:
                 ended = true;
-                logger.info(LOG_PLACEHOLDER, colorizedName, "Disabled");
+                logger.info(INFO_PLACEHOLDER, infoPrefix, "Disabled");
                 break;
             case WAITING:
                 dependencies.forEach(this::logDependencyInfo);
                 break;
             case BLOCKED:
                 ended = true;
-                logger.info(LOG_PLACEHOLDER, colorizedName, "Blocked");
+                logger.info(INFO_PLACEHOLDER, infoPrefix, "Blocked");
                 break;
             case RUNNING:
                 initialInstant = Instant.now();
-                logger.info(LOG_PLACEHOLDER, colorizedName, "Running");
+                logger.info(INFO_PLACEHOLDER, infoPrefix, "Running");
                 break;
             case FAILURE:
-                logger.info(LOG_PLACEHOLDER, colorizedName, "Failed");
+                logger.info(INFO_PLACEHOLDER, infoPrefix, "Failed");
                 break;
             case SUCCESS:
                 ended = true;
                 finalInstant = Instant.now();
                 duration = Duration.between(initialInstant, finalInstant);
-                logger.info(LOG_PLACEHOLDER, colorizedName, "Succeeded");
+                logger.info(INFO_PLACEHOLDER, infoPrefix, "Succeeded");
                 break;
         }
     }
 
     private void logDependencyInfo(ServiceDependency dependency) {
-        logger.info(LOG_PLACEHOLDER, colorizedName, dependency);
+        logger.info(INFO_PLACEHOLDER, infoPrefix, dependency);
     }
 
     public Duration getDuration() {

@@ -21,7 +21,7 @@ import me.adarlan.plankton.core.ServiceInstance;
 @EqualsAndHashCode(of = "containerName")
 public class ServiceInstanceImplementation implements ServiceInstance {
 
-    private final ServiceImplementation parentService;
+    final ServiceImplementation parentService;
     final Integer number;
     private final String containerName;
 
@@ -44,10 +44,12 @@ public class ServiceInstanceImplementation implements ServiceInstance {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
-    private static final String LOG_PLACEHOLDER = "{} -> {}";
+    private static final String LOG_PLACEHOLDER = "{}{}";
 
     String name;
-    String colorizedName;
+    // String colorizedName;
+    // String infoPrefix;
+    String logPrefix;
 
     ServiceInstanceImplementation(ServiceImplementation parentService, int number) {
         this.parentService = parentService;
@@ -60,7 +62,7 @@ public class ServiceInstanceImplementation implements ServiceInstance {
         synchronized (logs) {
             logs.add(message);
         }
-        logger.info(LOG_MARKER, LOG_PLACEHOLDER, colorizedName, message);
+        logger.info(LOG_MARKER, LOG_PLACEHOLDER, logPrefix, message);
     }
 
     public List<String> getLogs() {
