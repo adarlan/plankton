@@ -12,21 +12,17 @@ import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.ToString;
+
+import me.adarlan.plankton.core.Service;
 import me.adarlan.plankton.core.ServiceInstance;
 
 @ToString(of = "containerName")
 @EqualsAndHashCode(of = "containerName")
 public class ServiceInstanceImplementation implements ServiceInstance {
 
-    @Getter
     private final ServiceImplementation parentService;
-
-    @Getter
-    private final Integer number;
-
-    @Getter
+    final Integer number;
     private final String containerName;
 
     private final List<String> logs = new ArrayList<>();
@@ -36,16 +32,10 @@ public class ServiceInstanceImplementation implements ServiceInstance {
     private boolean ended = false;
     private boolean stop = false;
 
-    @Getter
     private Instant initialInstant = null;
-
-    @Getter
     private Instant finalInstant = null;
-
-    @Getter
     private Duration duration = Duration.ZERO;
 
-    @Getter
     private Integer exitCode = null;
 
     private Thread runContainerThread = null;
@@ -56,37 +46,25 @@ public class ServiceInstanceImplementation implements ServiceInstance {
     private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
     private static final String LOG_PLACEHOLDER = "{} -> {}";
 
+    String name;
+    String colorizedName;
+
     ServiceInstanceImplementation(ServiceImplementation parentService, int number) {
         this.parentService = parentService;
         this.number = number;
-        this.containerName = parentService.getPipeline().getId() + "_" + parentService.getName() + "_" + number;
-        this.dockerCompose = parentService.getPipeline().dockerCompose;
+        this.containerName = parentService.pipeline.getId() + "_" + parentService.getName() + "_" + number;
+        this.dockerCompose = parentService.pipeline.dockerCompose;
     }
 
     void log(String message) {
         synchronized (logs) {
             logs.add(message);
         }
-        logger.info(LOG_MARKER, LOG_PLACEHOLDER, containerName, message);
+        logger.info(LOG_MARKER, LOG_PLACEHOLDER, colorizedName, message);
     }
 
     public List<String> getLogs() {
         return Collections.unmodifiableList(logs);
-    }
-
-    @Override
-    public Boolean hasStarted() {
-        return started;
-    }
-
-    @Override
-    public Boolean isRunning() {
-        return running;
-    }
-
-    @Override
-    public Boolean hasEnded() {
-        return ended;
     }
 
     void start() {
@@ -158,5 +136,55 @@ public class ServiceInstanceImplementation implements ServiceInstance {
     void stop() {
         stop = true;
         dockerCompose.stopContainer(this);
+    }
+
+    @Override
+    public Boolean hasStarted() {
+        return started;
+    }
+
+    @Override
+    public Boolean isRunning() {
+        return running;
+    }
+
+    @Override
+    public Boolean hasEnded() {
+        return ended;
+    }
+
+    @Override
+    public Service getParentService() {
+        return parentService;
+    }
+
+    @Override
+    public Integer getNumber() {
+        return number;
+    }
+
+    @Override
+    public String getContainerName() {
+        return containerName;
+    }
+
+    @Override
+    public Instant getInitialInstant() {
+        return initialInstant;
+    }
+
+    @Override
+    public Instant getFinalInstant() {
+        return finalInstant;
+    }
+
+    @Override
+    public Duration getDuration() {
+        return duration;
+    }
+
+    @Override
+    public Integer getExitCode() {
+        return exitCode;
     }
 }

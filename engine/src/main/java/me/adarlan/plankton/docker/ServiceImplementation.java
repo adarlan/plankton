@@ -2,9 +2,9 @@ package me.adarlan.plankton.docker;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -13,69 +13,48 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
-import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
+
+import me.adarlan.plankton.core.Pipeline;
 import me.adarlan.plankton.core.Service;
 import me.adarlan.plankton.core.ServiceDependency;
 import me.adarlan.plankton.core.ServiceDependencyStatus;
 import me.adarlan.plankton.core.ServiceInstance;
 import me.adarlan.plankton.core.ServiceStatus;
-import me.adarlan.plankton.bash.BashScript;
 
-@EqualsAndHashCode(of = "name")
 @ToString(of = "name")
+@EqualsAndHashCode(of = "name")
 public class ServiceImplementation implements Service {
 
-    @Getter
-    private final PipelineImplementation pipeline;
+    final PipelineImplementation pipeline;
+    final String name;
+    final DockerCompose dockerCompose;
 
-    private final DockerCompose dockerCompose;
+    String expression;
+    Boolean expressionResult;
 
-    @Getter
-    private final String name;
+    final Set<ServiceDependency> dependencies = new HashSet<>();
 
-    @Setter(AccessLevel.PACKAGE)
-    private boolean needToBuild;
+    Integer scale;
+    final List<ServiceInstanceImplementation> instances = new ArrayList<>();
 
-    @Getter
-    @Setter(AccessLevel.PACKAGE)
-    private String expression;
-
-    @Getter
-    private Boolean expressionResult;
-
-    @Setter(AccessLevel.PACKAGE)
-    private Set<ServiceDependency> dependencies;
-
-    @Getter
-    private Integer scale;
-
-    private final List<ServiceInstanceImplementation> instances = new ArrayList<>();
-
-    @Getter
     private Instant initialInstant = null;
-
-    @Getter
     private Instant finalInstant = null;
-
     private Duration duration = null;
+    Duration timeoutLimit;
 
-    @Getter
-    private Duration timeoutLimit;
+    ServiceStatus status;
 
-    private final List<String> logs = new ArrayList<>();
-
-    @Getter
-    private ServiceStatus status;
-
+    boolean needToBuild;
     private Thread buildOrPullImage = null;
     private boolean imageBuiltOrPulled = false;
     private boolean startedInstances = false;
     private boolean ended = false;
 
+    private final List<String> logs = new ArrayList<>();
+    String color;
+    String colorizedName;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
     private static final String LOG_PLACEHOLDER = "{} -> {}";
@@ -86,67 +65,11 @@ public class ServiceImplementation implements Service {
         this.name = name;
     }
 
-    void initializeTimeout(Long amount, ChronoUnit unit) {
-        this.timeoutLimit = Duration.of(amount, unit);
-    }
-
-    void initializeStatus() {
-        boolean enable = true;
-        if (expression != null) {
-            evaluateExpression();
-            enable = expressionResult;
-        }
-        if (enable) {
-            setStatus(ServiceStatus.WAITING);
-        } else {
-            setStatus(ServiceStatus.DISABLED);
-        }
-    }
-
-    void setScale(int scale) {
-        this.scale = scale;
-        for (int instanceNumber = 1; instanceNumber <= scale; instanceNumber++) {
-            ServiceInstanceImplementation instance = new ServiceInstanceImplementation(this, instanceNumber);
-            instances.add(instance);
-        }
-    }
-
-    private void evaluateExpression() {
-        // TODO do it inside a sandbox container
-        final String scriptName = "evaluateExpression_" + name;
-        BashScript script = new BashScript(scriptName);
-        script.command(expression);
-        script.run();
-        if (script.getExitCode() == 0) {
-            expressionResult = true;
-        } else {
-            expressionResult = false;
-        }
-    }
-
     void log(String message) {
         synchronized (logs) {
             logs.add(message);
         }
-        logger.info(LOG_MARKER, LOG_PLACEHOLDER, name, message);
-    }
-
-    public List<String> getLogs() {
-        return Collections.unmodifiableList(logs);
-    }
-
-    public List<ServiceInstance> getInstances() {
-        return Collections.unmodifiableList(instances);
-    }
-
-    @Override
-    public Set<ServiceDependency> getDependencies() {
-        return Collections.unmodifiableSet(dependencies);
-    }
-
-    @Override
-    public Boolean hasEnded() {
-        return ended;
+        logger.info(LOG_MARKER, LOG_PLACEHOLDER, colorizedName, message);
     }
 
     void refresh() {
@@ -166,7 +89,7 @@ public class ServiceImplementation implements Service {
                             createContainers();
                             startInstances();
                         } else if (buildOrPullImage.isInterrupted()) {
-                            logger.error(LOG_PLACEHOLDER, name, "Interrupted when building/pulling image");
+                            logger.error(LOG_PLACEHOLDER, colorizedName, "Interrupted when building/pulling image");
                             setStatus(ServiceStatus.FAILURE);
                         }
                     }
@@ -253,7 +176,7 @@ public class ServiceImplementation implements Service {
     private void checkTimeout() {
         Duration d = getDuration();
         if (d.compareTo(timeoutLimit) > 0) {
-            logger.error(LOG_PLACEHOLDER, name, "Time limit has been reached");
+            logger.error(LOG_PLACEHOLDER, colorizedName, "Time limit has been reached");
             instances.forEach(ServiceInstanceImplementation::stop);
         }
     }
@@ -263,33 +186,33 @@ public class ServiceImplementation implements Service {
         switch (status) {
             case DISABLED:
                 ended = true;
-                logger.info(LOG_PLACEHOLDER, name, "Disabled");
+                logger.info(LOG_PLACEHOLDER, colorizedName, "Disabled");
                 break;
             case WAITING:
                 dependencies.forEach(this::logDependencyInfo);
                 break;
             case BLOCKED:
                 ended = true;
-                logger.info(LOG_PLACEHOLDER, name, "Blocked");
+                logger.info(LOG_PLACEHOLDER, colorizedName, "Blocked");
                 break;
             case RUNNING:
                 initialInstant = Instant.now();
-                logger.info(LOG_PLACEHOLDER, name, "Running");
+                logger.info(LOG_PLACEHOLDER, colorizedName, "Running");
                 break;
             case FAILURE:
-                logger.info(LOG_PLACEHOLDER, name, "Failed");
+                logger.info(LOG_PLACEHOLDER, colorizedName, "Failed");
                 break;
             case SUCCESS:
                 ended = true;
                 finalInstant = Instant.now();
                 duration = Duration.between(initialInstant, finalInstant);
-                logger.info(LOG_PLACEHOLDER, name, "Succeeded");
+                logger.info(LOG_PLACEHOLDER, colorizedName, "Succeeded");
                 break;
         }
     }
 
     private void logDependencyInfo(ServiceDependency dependency) {
-        logger.info(LOG_PLACEHOLDER, name, dependency);
+        logger.info(LOG_PLACEHOLDER, colorizedName, dependency);
     }
 
     public Duration getDuration() {
@@ -302,5 +225,68 @@ public class ServiceImplementation implements Service {
         } else {
             return duration;
         }
+    }
+
+    public List<String> getLogs() {
+        return Collections.unmodifiableList(logs);
+    }
+
+    public List<ServiceInstance> getInstances() {
+        return Collections.unmodifiableList(instances);
+    }
+
+    @Override
+    public Set<ServiceDependency> getDependencies() {
+        return Collections.unmodifiableSet(dependencies);
+    }
+
+    @Override
+    public Boolean hasEnded() {
+        return ended;
+    }
+
+    @Override
+    public Pipeline getPipeline() {
+        return pipeline;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public ServiceStatus getStatus() {
+        return status;
+    }
+
+    @Override
+    public String getExpression() {
+        return expression;
+    }
+
+    @Override
+    public Boolean getExpressionResult() {
+        return expressionResult;
+    }
+
+    @Override
+    public Integer getScale() {
+        return scale;
+    }
+
+    @Override
+    public Instant getInitialInstant() {
+        return initialInstant;
+    }
+
+    @Override
+    public Duration getTimeoutLimit() {
+        return timeoutLimit;
+    }
+
+    @Override
+    public Instant getFinalInstant() {
+        return finalInstant;
     }
 }
