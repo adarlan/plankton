@@ -176,7 +176,9 @@ public class BashScript {
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
                     logger.debug("{} >> {}", name, line);
-                    forEachOutput.accept(line);
+                    if (forEachOutput != null) {
+                        forEachOutput.accept(line);
+                    }
                 }
             } catch (IOException e) {
                 throw new BashScriptException(this, "Unable to follow output stream", e);
@@ -190,8 +192,14 @@ public class BashScript {
             try {
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
-                    logger.error("{} >> {}", name, line);
-                    forEachError.accept(line);
+
+                    logger.debug("{} >> {}", name, line);
+                    // TODO it should be logger.error
+                    // but docker-compose outputs some info as error
+
+                    if (forEachError != null) {
+                        forEachError.accept(line);
+                    }
                 }
             } catch (IOException e) {
                 throw new BashScriptException(this, "Unable to follow error stream", e);
