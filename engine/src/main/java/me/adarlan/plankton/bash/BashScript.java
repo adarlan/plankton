@@ -12,7 +12,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import lombok.Getter;
 
@@ -27,11 +29,10 @@ public class BashScript {
     private Process process;
     private Integer exitCode;
 
-    private Consumer<String> forEachVariable;
-    private Consumer<String> forEachCommand;
-
     private Consumer<String> forEachOutput;
     private Consumer<String> forEachError;
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public BashScript(String name) {
         this.name = name;
@@ -57,22 +58,6 @@ public class BashScript {
         return this;
     }
 
-    public BashScript forEachVariable(Consumer<String> forEachVariable) {
-        this.forEachVariable = forEachVariable;
-        return this;
-    }
-
-    public BashScript forEachCommand(Consumer<String> forEachCommand) {
-        this.forEachCommand = forEachCommand;
-        return this;
-    }
-
-    public BashScript forEachVariableAndCommand(Consumer<String> forEachVariableAndCommand) {
-        this.forEachVariable = forEachVariableAndCommand;
-        this.forEachCommand = forEachVariableAndCommand;
-        return this;
-    }
-
     public BashScript forEachOutput(Consumer<String> forEachOutput) {
         this.forEachOutput = forEachOutput;
         return this;
@@ -90,10 +75,8 @@ public class BashScript {
     }
 
     public BashScript run() {
-        if (forEachVariable != null)
-            variables.forEach(forEachVariable::accept);
-        if (forEachCommand != null)
-            commands.forEach(forEachCommand::accept);
+        variables.forEach(variable -> logger.debug("{}: {}", name, variable));
+        commands.forEach(command -> logger.debug("{}: {}", name, command));
         commands.addAll(0, Arrays.asList("#!/bin/bash", "set -e"));
         ProcessBuilder processBuilder = createProcessBuilder();
         process = startProcessBuilder(processBuilder);
@@ -192,6 +175,7 @@ public class BashScript {
             try {
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
+                    logger.debug("{} >> {}", name, line);
                     forEachOutput.accept(line);
                 }
             } catch (IOException e) {
@@ -206,6 +190,7 @@ public class BashScript {
             try {
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
+                    logger.error("{} >> {}", name, line);
                     forEachError.accept(line);
                 }
             } catch (IOException e) {

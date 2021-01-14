@@ -10,10 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import lombok.Getter;
-import me.adarlan.plankton.logging.Logger;
 import me.adarlan.plankton.bash.BashScript;
 
 public class Compose {
@@ -34,7 +35,7 @@ public class Compose {
     private Map<String, Object> servicesMap;
     private final Set<String> serviceNames = new HashSet<>();
 
-    private final Logger logger = Logger.getLogger();
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public Compose(ComposeConfiguration configuration) {
         this.projectName = configuration.projectName();
@@ -47,17 +48,16 @@ public class Compose {
     }
 
     private void createMetadataDirectory() {
-        BashScript script = createScript("createMetadataDirectory");
+        BashScript script = new BashScript("createMetadataDirectory");
         script.command("mkdir -p " + metadataDirectory);
         script.runSuccessfully();
     }
 
     private void initializeFileFromOriginalFile(String originalFile) {
-        BashScript script = createScript("initializeFileFromOriginalFile");
+        BashScript script = new BashScript("initializeFileFromOriginalFile");
         script.command("docker-compose --file " + originalFile + " config > " + filePath);
         script.command("cat " + filePath);
         script.runSuccessfully();
-        // TODO does it require docker?
     }
 
     @SuppressWarnings("unchecked")
@@ -112,14 +112,5 @@ public class Compose {
         }
         // TODO the 'published' key is optional
         // add this key where it is null
-    }
-
-    private BashScript createScript(String name) {
-        BashScript script = new BashScript(name);
-        script.forEachVariable(variable -> logger.debug(() -> script.getName() + " | " + variable));
-        script.forEachCommand(command -> logger.debug(() -> script.getName() + " | " + command));
-        script.forEachOutput(output -> logger.debug(() -> script.getName() + " >> " + output));
-        script.forEachError(error -> logger.error(() -> script.getName() + " >> " + error));
-        return script;
     }
 }

@@ -8,6 +8,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
+
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -18,7 +23,6 @@ import me.adarlan.plankton.core.ServiceDependency;
 import me.adarlan.plankton.core.ServiceDependencyStatus;
 import me.adarlan.plankton.core.ServiceInstance;
 import me.adarlan.plankton.core.ServiceStatus;
-import me.adarlan.plankton.logging.Logger;
 import me.adarlan.plankton.bash.BashScript;
 
 @EqualsAndHashCode(of = "name")
@@ -72,7 +76,9 @@ public class ServiceImplementation implements Service {
     private boolean startedInstances = false;
     private boolean ended = false;
 
-    private final Logger logger = Logger.getLogger();
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
+    private static final String LOG_PLACEHOLDER = "{} -> {}";
 
     ServiceImplementation(PipelineImplementation pipeline, String name) {
         this.pipeline = pipeline;
@@ -108,7 +114,7 @@ public class ServiceImplementation implements Service {
     private void evaluateExpression() {
         // TODO do it inside a sandbox container
         final String scriptName = "evaluateExpression_" + name;
-        BashScript script = Utils.createScript(scriptName, logger);
+        BashScript script = new BashScript(scriptName);
         script.command(expression);
         script.run();
         if (script.getExitCode() == 0) {
@@ -122,7 +128,7 @@ public class ServiceImplementation implements Service {
         synchronized (logs) {
             logs.add(message);
         }
-        logger.log(this, () -> message);
+        logger.info(LOG_MARKER, LOG_PLACEHOLDER, name, message);
     }
 
     public List<String> getLogs() {
@@ -160,7 +166,7 @@ public class ServiceImplementation implements Service {
                             createContainers();
                             startInstances();
                         } else if (buildOrPullImage.isInterrupted()) {
-                            logger.info(this, () -> "Interrupted when building/pulling image");
+                            logger.error(LOG_PLACEHOLDER, name, "Interrupted when building/pulling image");
                             setStatus(ServiceStatus.FAILURE);
                         }
                     }
@@ -247,7 +253,7 @@ public class ServiceImplementation implements Service {
     private void checkTimeout() {
         Duration d = getDuration();
         if (d.compareTo(timeoutLimit) > 0) {
-            logger.info(this, () -> "Time limit has been reached");
+            logger.error(LOG_PLACEHOLDER, name, "Time limit has been reached");
             instances.forEach(ServiceInstanceImplementation::stop);
         }
     }
@@ -257,33 +263,33 @@ public class ServiceImplementation implements Service {
         switch (status) {
             case DISABLED:
                 ended = true;
-                logger.info(this, () -> "Disabled");
+                logger.info(LOG_PLACEHOLDER, name, "Disabled");
                 break;
             case WAITING:
                 dependencies.forEach(this::logDependencyInfo);
                 break;
             case BLOCKED:
                 ended = true;
-                logger.info(this, () -> "Blocked");
+                logger.info(LOG_PLACEHOLDER, name, "Blocked");
                 break;
             case RUNNING:
                 initialInstant = Instant.now();
-                logger.info(this, () -> "Running");
+                logger.info(LOG_PLACEHOLDER, name, "Running");
                 break;
             case FAILURE:
-                logger.info(this, () -> "Failed");
+                logger.info(LOG_PLACEHOLDER, name, "Failed");
                 break;
             case SUCCESS:
                 ended = true;
                 finalInstant = Instant.now();
                 duration = Duration.between(initialInstant, finalInstant);
-                logger.info(this, () -> "Succeeded");
+                logger.info(LOG_PLACEHOLDER, name, "Succeeded");
                 break;
         }
     }
 
     private void logDependencyInfo(ServiceDependency dependency) {
-        logger.info(this, dependency::toString);
+        logger.info(LOG_PLACEHOLDER, name, dependency);
     }
 
     public Duration getDuration() {

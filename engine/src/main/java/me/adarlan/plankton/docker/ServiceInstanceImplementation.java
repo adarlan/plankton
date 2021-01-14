@@ -6,11 +6,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import me.adarlan.plankton.core.ServiceInstance;
-import me.adarlan.plankton.logging.Logger;
 
 @ToString(of = "containerName")
 @EqualsAndHashCode(of = "containerName")
@@ -48,7 +52,9 @@ public class ServiceInstanceImplementation implements ServiceInstance {
 
     private final DockerCompose dockerCompose;
 
-    private final Logger logger = Logger.getLogger();
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
+    private static final String LOG_PLACEHOLDER = "{} -> {}";
 
     ServiceInstanceImplementation(ServiceImplementation parentService, int number) {
         this.parentService = parentService;
@@ -61,7 +67,7 @@ public class ServiceInstanceImplementation implements ServiceInstance {
         synchronized (logs) {
             logs.add(message);
         }
-        logger.log(this, () -> message);
+        logger.info(LOG_MARKER, LOG_PLACEHOLDER, containerName, message);
     }
 
     public List<String> getLogs() {

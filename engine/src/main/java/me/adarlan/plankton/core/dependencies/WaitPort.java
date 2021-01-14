@@ -26,8 +26,6 @@ public class WaitPort implements ServiceDependency {
     @Getter
     ServiceDependencyStatus status = ServiceDependencyStatus.WAITING;
 
-    private final Logger logger = Logger.getLogger();
-
     public WaitPort(Service parentService, Service requiredService, Integer port) {
         this.parentService = parentService;
         this.requiredService = requiredService;
@@ -42,8 +40,6 @@ public class WaitPort implements ServiceDependency {
                 return true;
             } else if (requiredService.getStatus().equals(ServiceStatus.RUNNING)) {
                 try (Socket s = new Socket("localhost", port)) {
-                    logger.info(
-                            () -> "PORT " + port + "; isConnected: " + s.isConnected() + "; isBound: " + s.isBound());
                     status = ServiceDependencyStatus.PASSED;
                     return true;
                 } catch (IOException ex) {

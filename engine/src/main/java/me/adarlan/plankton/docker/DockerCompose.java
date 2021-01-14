@@ -7,7 +7,9 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import me.adarlan.plankton.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.compose.Compose;
 
@@ -17,7 +19,7 @@ public class DockerCompose extends Compose {
     private static final String BASE_COMMAND = "docker-compose";
     private String options;
 
-    private final Logger logger = Logger.getLogger();
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public DockerCompose(DockerComposeConfiguration configuration) {
         super(configuration);
@@ -88,7 +90,7 @@ public class DockerCompose extends Compose {
         script.forEachOutput(scriptOutput::add);
         script.runSuccessfully();
         final String json = scriptOutput.stream().collect(Collectors.joining());
-        logger.debug(() -> serviceInstance.getContainerName() + " container state JSON: " + json);
+        logger.debug("{}: {}", serviceInstance.getContainerName(), json);
         return parseContainerStateJson(json);
     }
 
@@ -116,10 +118,6 @@ public class DockerCompose extends Compose {
     private BashScript createScript(String name) {
         BashScript script = new BashScript(name);
         script.env("DOCKER_HOST=" + dockerHost);
-        script.forEachVariable(variable -> logger.debug(() -> script.getName() + " | " + variable));
-        script.forEachCommand(command -> logger.debug(() -> script.getName() + " | " + command));
-        script.forEachOutput(output -> logger.debug(() -> script.getName() + " >> " + output));
-        script.forEachError(error -> logger.error(() -> script.getName() + " >> " + error));
         return script;
     }
 }

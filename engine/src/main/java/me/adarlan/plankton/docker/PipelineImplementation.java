@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import lombok.Getter;
 import lombok.NonNull;
 import me.adarlan.plankton.core.Service;
@@ -15,7 +18,6 @@ import me.adarlan.plankton.core.ServiceDependency;
 import me.adarlan.plankton.core.dependencies.WaitFailureOf;
 import me.adarlan.plankton.core.dependencies.WaitPort;
 import me.adarlan.plankton.core.dependencies.WaitSuccessOf;
-import me.adarlan.plankton.logging.Logger;
 import me.adarlan.plankton.core.Pipeline;
 
 class PipelineImplementation implements Pipeline {
@@ -30,7 +32,7 @@ class PipelineImplementation implements Pipeline {
     private final Map<ServiceImplementation, Map<String, String>> labelsByServiceAndName = new HashMap<>();
     private final Map<Integer, ServiceImplementation> externalPorts = new HashMap<>();
 
-    private final Logger logger = Logger.getLogger();
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     PipelineImplementation(DockerCompose dockerCompose) {
         this.dockerCompose = dockerCompose;
@@ -130,6 +132,7 @@ class PipelineImplementation implements Pipeline {
 
     @Override
     public void run() throws InterruptedException {
+        logger.info("Pipeline running");
         boolean done = false;
         while (!done) {
             done = true;
@@ -141,7 +144,7 @@ class PipelineImplementation implements Pipeline {
             }
             Thread.sleep(1000);
         }
-        logger.info(() -> "Pipeline finished");
+        logger.info("Pipeline finished");
     }
 
     @Override

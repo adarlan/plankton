@@ -2,6 +2,8 @@ package me.adarlan.plankton.core;
 
 import java.util.Set;
 
+import me.adarlan.plankton.logging.Logger;
+
 public interface Pipeline {
 
     String getId();

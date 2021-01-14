@@ -9,13 +9,10 @@ import java.util.stream.Collectors;
 import me.adarlan.plankton.docker.DockerPipelineConfig;
 import me.adarlan.plankton.docker.DockerPipelineFactory;
 import me.adarlan.plankton.docker.PlanktonDockerException;
-import me.adarlan.plankton.logging.Logger;
 import me.adarlan.plankton.core.Pipeline;
 import me.adarlan.plankton.bash.BashScript;
 
 public class PlanktonApplication {
-
-    private static Logger logger;
 
     private static String runnerId;
     private static String runnerDirectoryOnHost;
@@ -46,9 +43,6 @@ public class PlanktonApplication {
     private static String planktonFile;
 
     public static void main(String[] args) throws InterruptedException {
-
-        Logger.setLevel(Logger.Level.TRACE);
-        logger = Logger.getLogger();
 
         runnerId = System.getenv("RUNNER_ID");
         runnerDirectoryOnHost = System.getenv("RUNNER_EXTERNAL_DIRECTORY");
@@ -141,7 +135,7 @@ public class PlanktonApplication {
         script.forEachOutput(scriptOutput::add);
         script.runSuccessfully();
         pipelineId = scriptOutput.stream().collect(Collectors.joining()).substring(0, 12);
-        logger.debug(() -> "pipelineId = " + pipelineId);
+        System.out.println("pipelineId = " + pipelineId);
     }
 
     private static void cleanContainers() {
@@ -237,9 +231,9 @@ public class PlanktonApplication {
         while (!sandboxReady) {
             try (Socket s = new Socket(sandboxContainerName, 2375)) {
                 sandboxReady = true;
-                logger.debug(() -> "Sandbox container is ready");
+                System.out.println("Sandbox container is ready");
             } catch (IOException ex) {
-                logger.debug(() -> "Waiting for sandbox container to be ready");
+                System.out.println("Waiting for sandbox container to be ready");
                 Thread.sleep(1000);
             }
         }
