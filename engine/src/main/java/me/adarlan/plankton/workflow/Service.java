@@ -175,12 +175,14 @@ public class Service {
     private void checkInstancesAndSetSucceededOrFailed() {
         boolean succeeded = true;
         boolean failed = false;
+        int failedNumber = 0;
         for (ServiceInstance instance : instances) {
             instance.refresh();
             if (instance.hasEnded()) {
                 Integer exitCode = instance.getExitCode();
                 if (exitCode == null || !exitCode.equals(0)) {
                     failed = true;
+                    failedNumber++;
                     succeeded = false;
                 }
             } else {
@@ -190,7 +192,13 @@ public class Service {
         if (succeeded) {
             setSucceeded();
         } else if (failed) {
-            setFailed("FAILED");
+            if (scale == 1) {
+                setFailed("Container returned a non-zero code");
+            } else if (failedNumber > 1) {
+                setFailed(failedNumber + " containers returned a non-zero code");
+            } else {
+                setFailed("A container returned a non-zero code");
+            }
         } else {
             checkTimeout();
         }
@@ -206,28 +214,28 @@ public class Service {
 
     private void setBlocked() {
         status = ServiceStatus.BLOCKED;
-        String m = Colors.BRIGHT_RED + "BLOCKED" + Colors.ANSI_RESET;
+        String m = Colors.BRIGHT_RED + status + Colors.ANSI_RESET;
         logger.error(INFO_PLACEHOLDER_2, prefix, m);
     }
 
     private void setRunning() {
         initialInstant = Instant.now();
         status = ServiceStatus.RUNNING;
-        String m = Colors.BRIGHT_GREEN + "RUNNING" + Colors.ANSI_RESET;
+        String m = Colors.BRIGHT_GREEN + status + Colors.ANSI_RESET;
         logger.info(INFO_PLACEHOLDER_2, prefix, m);
     }
 
     private void setFailed(String message) {
         finalInstant = Instant.now();
         status = ServiceStatus.FAILED;
-        String m = Colors.BRIGHT_RED + message + Colors.ANSI_RESET;
+        String m = Colors.BRIGHT_RED + status + Colors.BRIGHT_BLACK + " -> " + Colors.RED + message + Colors.ANSI_RESET;
         logger.error(INFO_PLACEHOLDER_2, prefix, m);
     }
 
     private void setSucceeded() {
         finalInstant = Instant.now();
         status = ServiceStatus.SUCCEEDED;
-        String m = Colors.BRIGHT_GREEN + "SUCCEEDED" + Colors.ANSI_RESET;
+        String m = Colors.BRIGHT_GREEN + status + Colors.ANSI_RESET;
         logger.info(INFO_PLACEHOLDER_2, prefix, m);
     }
 
