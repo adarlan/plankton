@@ -31,7 +31,5 @@ public interface Service {
 
     Duration getTimeoutLimit();
 
-    Boolean hasEnded();
-
     Instant getFinalInstant();
 }
