@@ -6,10 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import me.adarlan.plankton.docker.DockerPipelineConfig;
-import me.adarlan.plankton.docker.DockerPipelineFactory;
-import me.adarlan.plankton.core.Pipeline;
+import me.adarlan.plankton.docker.DockerCompose;
+import me.adarlan.plankton.docker.DockerComposeConfiguration;
+import me.adarlan.plankton.workflow.Pipeline;
 import me.adarlan.plankton.bash.BashScript;
+import me.adarlan.plankton.compose.Compose;
 
 public class PlanktonApplication {
 
@@ -266,39 +267,46 @@ public class PlanktonApplication {
         //
     }
 
-    private static DockerPipelineConfig dockerPipelineConfig() {
-        return new DockerPipelineConfig() {
+    private static DockerComposeConfiguration dockerComposeConfiguration() {
+        return new DockerComposeConfiguration() {
 
             @Override
-            public String getPipelineId() {
+            public String projectName() {
                 return pipelineId;
             }
 
             @Override
-            public String getComposeFilePath() {
+            public String filePath() {
                 return workspaceDirectoryOnRunner + "/" + planktonFile;
             }
 
             @Override
-            public String getWorkspaceDirectoryPath() {
+            public String projectDirectory() {
                 return workspaceDirectoryOnRunner;
             }
 
             @Override
-            public String getMetadataDirectoryPath() {
+            public String metadataDirectory() {
                 return metadataDirectoryOnRunner;
             }
 
             @Override
-            public String getDockerHost() {
+            public String dockerHost() {
                 return "tcp://" + sandboxContainerName + ":2375";
             }
         };
     }
 
+    private static Compose compose() {
+        return new DockerCompose(dockerComposeConfiguration());
+    }
+
+    private static Pipeline pipeline() {
+        return new Pipeline(compose());
+    }
+
     private static void runPipeline() throws InterruptedException {
-        DockerPipelineFactory pipelineFactory = new DockerPipelineFactory();
-        Pipeline pipeline = pipelineFactory.createPipeline(dockerPipelineConfig());
+        Pipeline pipeline = pipeline();
         pipeline.run();
     }
 

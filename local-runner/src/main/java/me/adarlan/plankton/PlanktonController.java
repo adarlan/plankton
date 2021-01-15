@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import me.adarlan.plankton.core.Pipeline;
+import me.adarlan.plankton.workflow.Pipeline;
 
 @RestController
 @CrossOrigin(origins = "*")
