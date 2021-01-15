@@ -51,6 +51,7 @@ public class Service {
     String prefix;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final String INFO_PLACEHOLDER = "{}" + Colors.BRIGHT_WHITE + "{}" + Colors.ANSI_RESET;
+    private static final String INFO_PLACEHOLDER_2 = "{}{}";
 
     private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
     private static final String LOG_PLACEHOLDER = "{}{}";
@@ -158,14 +159,15 @@ public class Service {
     }
 
     private void createContainers() {
-        logger.info(INFO_PLACEHOLDER, prefix, "Creating container(s)");
+        String info = "Creating container" + (scale > 1 ? "s" : "");
+        logger.info(INFO_PLACEHOLDER, prefix, info);
         if (!compose.createContainers(name, scale, this::logOutput, this::logError)) {
-            setFailure("Failed when creating container(s)");
+            String error = "Failed when creating container" + (scale > 1 ? "s" : "");
+            setFailure(error);
         }
     }
 
     private void startInstances() {
-        logger.info(INFO_PLACEHOLDER, prefix, "Starting instance(s)");
         instances.forEach(ServiceInstance::start);
         startedInstances = true;
     }
@@ -188,7 +190,7 @@ public class Service {
         if (success) {
             setSuccess();
         } else if (failure) {
-            setFailure("Failed");
+            setFailure("FAILED");
         } else {
             checkTimeout();
         }
@@ -204,26 +206,29 @@ public class Service {
 
     private void setBlocked() {
         status = ServiceStatus.BLOCKED;
-        logger.error(INFO_PLACEHOLDER, prefix, "Blocked");
+        String m = Colors.BRIGHT_RED + "BLOCKED" + Colors.ANSI_RESET;
+        logger.error(INFO_PLACEHOLDER_2, prefix, m);
     }
 
     private void setRunning() {
         initialInstant = Instant.now();
         status = ServiceStatus.RUNNING;
-        logger.info(INFO_PLACEHOLDER, prefix, "Ready to run");
+        String m = Colors.BRIGHT_GREEN + "RUNNING" + Colors.ANSI_RESET;
+        logger.info(INFO_PLACEHOLDER_2, prefix, m);
     }
 
     private void setFailure(String message) {
         finalInstant = Instant.now();
         status = ServiceStatus.FAILURE;
-        logger.error(INFO_PLACEHOLDER, prefix, message);
+        String m = Colors.BRIGHT_RED + message + Colors.ANSI_RESET;
+        logger.error(INFO_PLACEHOLDER_2, prefix, m);
     }
 
     private void setSuccess() {
         finalInstant = Instant.now();
         status = ServiceStatus.SUCCESS;
-        logger.info(INFO_PLACEHOLDER, prefix, "Succeeded");
-        // TODO log exit code information
+        String m = Colors.BRIGHT_GREEN + "SUCCEEDED" + Colors.ANSI_RESET;
+        logger.info(INFO_PLACEHOLDER_2, prefix, m);
     }
 
     public Duration getDuration() {
