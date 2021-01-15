@@ -251,7 +251,7 @@ public class Pipeline {
 
     public Service getServiceByName(@NonNull String serviceName) {
         if (!servicesByName.containsKey(serviceName))
-            throw new PlanktonDockerException("Service not found: " + serviceName);
+            throw new ServiceNotFoundException(serviceName);
         return servicesByName.get(serviceName);
     }
 
