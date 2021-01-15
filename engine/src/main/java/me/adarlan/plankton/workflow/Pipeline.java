@@ -39,6 +39,8 @@ public class Pipeline {
     private final Map<Service, Map<String, String>> labelsByServiceAndName = new HashMap<>();
     private final Map<Integer, Service> externalPorts = new HashMap<>();
 
+    private boolean abort = false;
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
     Integer biggestServiceNameLength;
 
@@ -57,6 +59,7 @@ public class Pipeline {
         services.forEach(this::initializeServiceStatus);
         this.initializeInstanceNamesAndBiggestName();
         this.initializeColors();
+        this.addShutdownHook();
         logger.info("Pipeline id: {}", id);
         logger.trace("Instantiate pipeline... (done)");
     }
@@ -233,12 +236,24 @@ public class Pipeline {
         }
     }
 
+    private void addShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                abort();
+            }
+        });
+    }
+
     public void run() throws InterruptedException {
         logger.info("Pipeline running");
         boolean done = false;
         while (!done) {
             done = true;
             for (Service service : getWaitingOrRunningServices()) {
+                if (abort) {
+                    return;
+                }
                 service.refresh();
                 if (service.isWaitingOrRunning()) {
                     done = false;
@@ -247,6 +262,11 @@ public class Pipeline {
             Thread.sleep(1000);
         }
         logger.info("Pipeline finished");
+    }
+
+    public void abort() {
+        abort = true;
+        compose.abort();
     }
 
     public Set<Service> getServices() {

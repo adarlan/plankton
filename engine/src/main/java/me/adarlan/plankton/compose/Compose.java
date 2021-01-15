@@ -131,4 +131,8 @@ public abstract class Compose {
     public abstract ContainerState getContainerState(String containerName);
 
     public abstract void stopContainer(String containerName);
+
+    public abstract boolean killContainer(String containerName);
+
+    public abstract void abort();
 }

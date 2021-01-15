@@ -1,7 +1,9 @@
 package me.adarlan.plankton.docker;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -19,6 +21,9 @@ public class DockerCompose extends Compose {
     private final String dockerHost;
     private static final String BASE_COMMAND = "docker-compose";
     private String options;
+
+    private final Set<String> startedContainers = new HashSet<>();
+    private boolean abort = false;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -106,6 +111,10 @@ public class DockerCompose extends Compose {
         script.command("docker container start --attach " + containerName);
         script.forEachOutput(forEachOutput);
         script.forEachError(forEachError);
+        if (abort) {
+            return;
+        }
+        startedContainers.add(containerName);
         script.run();
     }
 
@@ -140,6 +149,20 @@ public class DockerCompose extends Compose {
         BashScript script = createScript("stopContainer_" + containerName);
         script.command("docker container stop " + containerName);
         script.run();
+    }
+
+    @Override
+    public boolean killContainer(String containerName) {
+        BashScript script = createScript("killContainer_" + containerName);
+        script.command("docker container kill " + containerName);
+        script.run();
+        return script.getExitCode() == 0;
+    }
+
+    @Override
+    public void abort() {
+        abort = true;
+        startedContainers.forEach(this::killContainer);
     }
 
     private BashScript createScript(String name) {
