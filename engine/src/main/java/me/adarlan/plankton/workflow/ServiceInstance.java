@@ -54,15 +54,22 @@ public class ServiceInstance {
         this.compose = parentService.pipeline.compose;
     }
 
-    private void log(String message) {
+    private void logOutput(String message) {
         synchronized (logs) {
             logs.add(message);
         }
         logger.info(LOG_MARKER, LOG_PLACEHOLDER, logPrefix, message);
     }
 
+    private void logError(String message) {
+        synchronized (logs) {
+            logs.add(message);
+        }
+        logger.error(LOG_MARKER, LOG_PLACEHOLDER, logPrefix, message);
+    }
+
     void start() {
-        runContainerThread = new Thread(() -> compose.runContainer(containerName, this::log, this::log));
+        runContainerThread = new Thread(() -> compose.runContainer(containerName, this::logOutput, this::logError));
         runContainerThread.start();
         this.started = true;
     }

@@ -66,11 +66,18 @@ public class Service {
         this.name = name;
     }
 
-    private void log(String message) {
+    private void logOutput(String message) {
         synchronized (logs) {
             logs.add(message);
         }
         logger.info(LOG_MARKER, LOG_PLACEHOLDER, logPrefix, message);
+    }
+
+    private void logError(String message) {
+        synchronized (logs) {
+            logs.add(message);
+        }
+        logger.error(LOG_MARKER, LOG_PLACEHOLDER, logPrefix, message);
     }
 
     void refresh() {
@@ -115,7 +122,7 @@ public class Service {
         if (buildImage == null) {
             buildImage = new Thread(() -> {
                 Service service = Service.this;
-                if (compose.buildImage(name, service::log, service::log)) {
+                if (compose.buildImage(name, service::logOutput, service::logError)) {
                     imageBuilt = true;
                 } else {
                     setFailure("Failed when building image");
@@ -134,7 +141,7 @@ public class Service {
         if (pullImage == null) {
             pullImage = new Thread(() -> {
                 Service service = Service.this;
-                if (compose.pullImage(name, service::log, service::log)) {
+                if (compose.pullImage(name, service::logOutput, service::logError)) {
                     imagePulled = true;
                 } else {
                     setFailure("Failed when pulling image");
@@ -150,7 +157,7 @@ public class Service {
     }
 
     private void createContainers() {
-        if (!compose.createContainers(name, scale, this::log, this::log)) {
+        if (!compose.createContainers(name, scale, this::logOutput, this::logError)) {
             setFailure("Failed when creating " + (scale > 1 ? "containers" : "container"));
         }
     }
@@ -195,7 +202,7 @@ public class Service {
 
     private void setBlocked() {
         status = ServiceStatus.BLOCKED;
-        logger.info(INFO_PLACEHOLDER, infoPrefix, "Blocked");
+        logger.error(INFO_PLACEHOLDER, infoPrefix, "Blocked");
     }
 
     private void setRunning() {
@@ -207,7 +214,7 @@ public class Service {
     private void setFailure(String message) {
         finalInstant = Instant.now();
         status = ServiceStatus.FAILURE;
-        logger.info(INFO_PLACEHOLDER, infoPrefix, message);
+        logger.error(INFO_PLACEHOLDER, infoPrefix, message);
     }
 
     private void setSuccess() {
