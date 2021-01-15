@@ -1,4 +1,4 @@
-package me.adarlan.plankton.docker;
+package me.adarlan.plankton.workflow;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -15,8 +15,8 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import me.adarlan.plankton.compose.Compose;
 import me.adarlan.plankton.compose.ContainerState;
-import me.adarlan.plankton.core.Service;
-import me.adarlan.plankton.core.ServiceInstance;
+import me.adarlan.plankton.workflow.Service;
+import me.adarlan.plankton.workflow.ServiceInstance;
 
 @ToString(of = "containerName")
 @EqualsAndHashCode(of = "containerName")

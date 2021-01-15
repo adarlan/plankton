@@ -1,4 +1,4 @@
-package me.adarlan.plankton.docker;
+package me.adarlan.plankton.workflow;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

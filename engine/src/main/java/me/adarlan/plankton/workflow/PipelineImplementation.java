@@ -1,4 +1,4 @@
-package me.adarlan.plankton.docker;
+package me.adarlan.plankton.workflow;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -19,15 +19,15 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
 
-import me.adarlan.plankton.core.Service;
-import me.adarlan.plankton.core.ServiceStatus;
-import me.adarlan.plankton.core.dependencies.WaitFailureOf;
-import me.adarlan.plankton.core.dependencies.WaitPort;
-import me.adarlan.plankton.core.dependencies.WaitSuccessOf;
+import me.adarlan.plankton.workflow.Service;
+import me.adarlan.plankton.workflow.ServiceStatus;
+import me.adarlan.plankton.workflow.dependencies.WaitFailureOf;
+import me.adarlan.plankton.workflow.dependencies.WaitPort;
+import me.adarlan.plankton.workflow.dependencies.WaitSuccessOf;
 import me.adarlan.plankton.logging.Colors;
 import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.compose.Compose;
-import me.adarlan.plankton.core.Pipeline;
+import me.adarlan.plankton.workflow.Pipeline;
 
 @EqualsAndHashCode(of = "id")
 @ToString(of = "id")

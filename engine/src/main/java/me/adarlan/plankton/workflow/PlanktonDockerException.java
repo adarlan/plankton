@@ -1,4 +1,4 @@
-package me.adarlan.plankton.docker;
+package me.adarlan.plankton.workflow;
 
 public class PlanktonDockerException extends RuntimeException {
 
