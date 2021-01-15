@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import me.adarlan.plankton.docker.DockerPipelineConfig;
 import me.adarlan.plankton.docker.DockerPipelineFactory;
-import me.adarlan.plankton.docker.PlanktonDockerException;
 import me.adarlan.plankton.core.Pipeline;
 import me.adarlan.plankton.bash.BashScript;
 
@@ -221,7 +220,8 @@ public class PlanktonApplication {
                     + " plankton:remote-runner-sandbox " + dockerdOptions.stream().collect(Collectors.joining(" ")));
             script.run();
             if (script.getExitCode() != 0) {
-                throw new PlanktonDockerException("Unable to runSandboxContainer");
+                throw new RuntimeException("Unable to runSandboxContainer");
+                // TODO replace RuntimeException
             }
         }
     }
