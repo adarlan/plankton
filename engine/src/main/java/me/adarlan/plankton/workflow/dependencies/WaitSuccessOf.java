@@ -25,12 +25,12 @@ public class WaitSuccessOf implements ServiceDependency {
 
     @Override
     public boolean isSatisfied() {
-        return requiredService.getStatus().isSuccess();
+        return requiredService.getStatus().isSucceeded();
     }
 
     @Override
     public boolean isBlocked() {
         ServiceStatus status = requiredService.getStatus();
-        return !(status.isWaiting() || status.isRunning() || status.isSuccess());
+        return !(status.isWaiting() || status.isRunning() || status.isSucceeded());
     }
 }

@@ -1,7 +1,7 @@
 package me.adarlan.plankton.workflow;
 
 public enum ServiceStatus {
-    DISABLED, WAITING, BLOCKED, RUNNING, FAILURE, SUCCESS;
+    DISABLED, WAITING, BLOCKED, RUNNING, FAILED, SUCCEEDED;
 
     public boolean isDisabled() {
         return this == DISABLED;
@@ -19,11 +19,11 @@ public enum ServiceStatus {
         return this == RUNNING;
     }
 
-    public boolean isFailure() {
-        return this == FAILURE;
+    public boolean isFailed() {
+        return this == FAILED;
     }
 
-    public boolean isSuccess() {
-        return this == SUCCESS;
+    public boolean isSucceeded() {
+        return this == SUCCEEDED;
     }
 }

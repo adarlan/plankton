@@ -94,7 +94,7 @@ public class Service {
                     }
                 }
                 if (startedInstances) {
-                    checkInstancesAndSetSuccessOrFailure();
+                    checkInstancesAndSetSucceededOrFailed();
                 }
             }
         }
@@ -126,7 +126,7 @@ public class Service {
                 if (compose.buildImage(name, service::logOutput, service::logError)) {
                     imageBuilt = true;
                 } else {
-                    setFailure("Failed when building image");
+                    setFailed("Failed when building image");
                 }
             });
             buildImage.start();
@@ -134,7 +134,7 @@ public class Service {
             createContainers();
             startInstances();
         } else if (buildImage.isInterrupted()) {
-            setFailure("Interrupted when building image");
+            setFailed("Interrupted when building image");
         }
     }
 
@@ -146,7 +146,7 @@ public class Service {
                 if (compose.pullImage(name, service::logOutput, service::logError)) {
                     imagePulled = true;
                 } else {
-                    setFailure("Failed when pulling image");
+                    setFailed("Failed when pulling image");
                 }
             });
             pullImage.start();
@@ -154,7 +154,7 @@ public class Service {
             createContainers();
             startInstances();
         } else if (pullImage.isInterrupted()) {
-            setFailure("Interrupted when pulling image");
+            setFailed("Interrupted when pulling image");
         }
     }
 
@@ -163,7 +163,7 @@ public class Service {
         logger.info(INFO_PLACEHOLDER, prefix, info);
         if (!compose.createContainers(name, scale, this::logOutput, this::logError)) {
             String error = "Failed when creating container" + (scale > 1 ? "s" : "");
-            setFailure(error);
+            setFailed(error);
         }
     }
 
@@ -172,25 +172,25 @@ public class Service {
         startedInstances = true;
     }
 
-    private void checkInstancesAndSetSuccessOrFailure() {
-        boolean success = true;
-        boolean failure = false;
+    private void checkInstancesAndSetSucceededOrFailed() {
+        boolean succeeded = true;
+        boolean failed = false;
         for (ServiceInstance instance : instances) {
             instance.refresh();
             if (instance.hasEnded()) {
                 Integer exitCode = instance.getExitCode();
                 if (exitCode == null || !exitCode.equals(0)) {
-                    failure = true;
-                    success = false;
+                    failed = true;
+                    succeeded = false;
                 }
             } else {
-                success = false;
+                succeeded = false;
             }
         }
-        if (success) {
-            setSuccess();
-        } else if (failure) {
-            setFailure("FAILED");
+        if (succeeded) {
+            setSucceeded();
+        } else if (failed) {
+            setFailed("FAILED");
         } else {
             checkTimeout();
         }
@@ -217,16 +217,16 @@ public class Service {
         logger.info(INFO_PLACEHOLDER_2, prefix, m);
     }
 
-    private void setFailure(String message) {
+    private void setFailed(String message) {
         finalInstant = Instant.now();
-        status = ServiceStatus.FAILURE;
+        status = ServiceStatus.FAILED;
         String m = Colors.BRIGHT_RED + message + Colors.ANSI_RESET;
         logger.error(INFO_PLACEHOLDER_2, prefix, m);
     }
 
-    private void setSuccess() {
+    private void setSucceeded() {
         finalInstant = Instant.now();
-        status = ServiceStatus.SUCCESS;
+        status = ServiceStatus.SUCCEEDED;
         String m = Colors.BRIGHT_GREEN + "SUCCEEDED" + Colors.ANSI_RESET;
         logger.info(INFO_PLACEHOLDER_2, prefix, m);
     }
@@ -236,7 +236,7 @@ public class Service {
             if (status.isDisabled() || status.isBlocked()) {
                 duration = Duration.ZERO;
                 return duration;
-            } else if (status.isSuccess() || status.isFailure()) {
+            } else if (status.isSucceeded() || status.isFailed()) {
                 duration = Duration.between(initialInstant, finalInstant);
                 return duration;
             } else if (status.isWaiting()) {
