@@ -1,4 +1,4 @@
-package me.adarlan.plankton.core;
+package me.adarlan.plankton.workflow;
 
 import java.time.Duration;
 import java.time.Instant;

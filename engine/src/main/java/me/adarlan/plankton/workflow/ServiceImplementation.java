@@ -1,4 +1,4 @@
-package me.adarlan.plankton.docker;
+package me.adarlan.plankton.workflow;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -16,11 +16,11 @@ import org.slf4j.MarkerFactory;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import me.adarlan.plankton.compose.Compose;
-import me.adarlan.plankton.core.Pipeline;
-import me.adarlan.plankton.core.Service;
-import me.adarlan.plankton.core.ServiceDependency;
-import me.adarlan.plankton.core.ServiceInstance;
-import me.adarlan.plankton.core.ServiceStatus;
+import me.adarlan.plankton.workflow.Pipeline;
+import me.adarlan.plankton.workflow.Service;
+import me.adarlan.plankton.workflow.ServiceDependency;
+import me.adarlan.plankton.workflow.ServiceInstance;
+import me.adarlan.plankton.workflow.ServiceStatus;
 import me.adarlan.plankton.logging.Colors;
 
 @ToString(of = "name")

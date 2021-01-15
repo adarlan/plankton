@@ -1,12 +1,12 @@
-package me.adarlan.plankton.core.dependencies;
+package me.adarlan.plankton.workflow.dependencies;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import me.adarlan.plankton.core.Service;
-import me.adarlan.plankton.core.ServiceDependency;
-import me.adarlan.plankton.core.ServiceStatus;
+import me.adarlan.plankton.workflow.Service;
+import me.adarlan.plankton.workflow.ServiceDependency;
+import me.adarlan.plankton.workflow.ServiceStatus;
 
 @EqualsAndHashCode
 @ToString
