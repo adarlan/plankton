@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,7 @@ import org.yaml.snakeyaml.Yaml;
 import lombok.Getter;
 import me.adarlan.plankton.bash.BashScript;
 
-public class Compose {
+public abstract class Compose {
 
     @Getter
     private final String projectName;
@@ -37,7 +38,7 @@ public class Compose {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public Compose(ComposeConfiguration configuration) {
+    protected Compose(ComposeConfiguration configuration) {
         this.projectName = configuration.projectName();
         this.projectDirectory = configuration.projectDirectory();
         this.metadataDirectory = configuration.metadataDirectory();
@@ -113,4 +114,21 @@ public class Compose {
         // TODO the 'published' key is optional
         // add this key where it is null
     }
+
+    public abstract boolean buildImage(String serviceName, Consumer<String> forEachOutput,
+            Consumer<String> forEachError);
+
+    public abstract boolean pullImage(String serviceName, Consumer<String> forEachOutput,
+            Consumer<String> forEachError);
+
+    public abstract boolean createContainers(String serviceName, int serviceScale, Consumer<String> forEachOutput,
+            Consumer<String> forEachError);
+    // TODO remove serviceScale
+
+    public abstract void runContainer(String containerName, Consumer<String> forEachOutput,
+            Consumer<String> forEachError);
+
+    public abstract ContainerState getContainerState(String containerName);
+
+    public abstract void stopContainer(String containerName);
 }
