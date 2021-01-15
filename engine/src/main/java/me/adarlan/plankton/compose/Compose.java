@@ -125,7 +125,7 @@ public abstract class Compose {
             Consumer<String> forEachError);
     // TODO remove serviceScale
 
-    public abstract void runContainer(String containerName, Consumer<String> forEachOutput,
+    public abstract void startContainer(String containerName, Consumer<String> forEachOutput,
             Consumer<String> forEachError);
 
     public abstract ContainerState getContainerState(String containerName);

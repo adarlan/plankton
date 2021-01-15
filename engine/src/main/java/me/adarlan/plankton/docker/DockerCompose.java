@@ -101,7 +101,7 @@ public class DockerCompose extends Compose {
     }
 
     @Override
-    public void runContainer(String containerName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
+    public void startContainer(String containerName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
         final BashScript script = createScript("runContainer_" + containerName);
         script.command("docker container start --attach " + containerName);
         script.forEachOutput(forEachOutput);
