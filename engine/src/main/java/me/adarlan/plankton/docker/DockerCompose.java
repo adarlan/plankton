@@ -142,13 +142,6 @@ public class DockerCompose extends Compose {
         script.run();
     }
 
-    private boolean killContainer(String containerName) {
-        BashScript script = createScript("killContainer_" + containerName);
-        script.command("docker container kill " + containerName);
-        script.run();
-        return script.getExitCode() == 0;
-    }
-
     private BashScript createScript(String name) {
         BashScript script = new BashScript(name);
         script.env("DOCKER_HOST=" + dockerHost);
