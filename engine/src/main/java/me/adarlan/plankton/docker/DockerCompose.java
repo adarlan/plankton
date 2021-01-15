@@ -51,7 +51,13 @@ public class DockerCompose extends Compose {
         final String buildOptions = "";
         script.command(BASE_COMMAND + " " + options + " build " + buildOptions + " " + serviceName);
         script.forEachOutput(forEachOutput);
-        script.forEachError(forEachError);
+        script.forEachError(message -> {
+            String m = message.trim();
+            if (!m.equals("Building " + serviceName)) {
+                // TODO test if it is the first message?
+                forEachError.accept(message);
+            }
+        });
         script.run();
         return script.getExitCode() == 0;
     }
@@ -61,7 +67,14 @@ public class DockerCompose extends Compose {
         final BashScript script = createScript("pullImage_" + serviceName);
         script.command(BASE_COMMAND + " " + options + " pull " + serviceName);
         script.forEachOutput(forEachOutput);
-        script.forEachError(forEachError);
+        script.forEachError(message -> {
+            String m = message.trim();
+            if (m.startsWith("Pulling " + serviceName + " ...")) {
+                forEachOutput.accept(message);
+            } else {
+                forEachError.accept(message);
+            }
+        });
         script.run();
         return script.getExitCode() == 0;
     }
@@ -73,7 +86,16 @@ public class DockerCompose extends Compose {
         final String upOptions = "--no-start --scale " + serviceName + "=" + serviceScale;
         script.command(BASE_COMMAND + " " + options + " up " + upOptions + " " + serviceName);
         script.forEachOutput(forEachOutput);
-        script.forEachError(forEachError);
+        script.forEachError(message -> {
+            String m = message.trim();
+            if (m.equals("Creating " + getProjectName() + "_" + serviceName + "_1 ...")
+                    || m.equals("Creating " + getProjectName() + "_" + serviceName + "_1 ... done")) {
+                // TODO replace _1 by instance numbers
+                forEachOutput.accept(message);
+            } else {
+                forEachError.accept(message);
+            }
+        });
         script.run();
         return script.getExitCode() == 0;
     }
