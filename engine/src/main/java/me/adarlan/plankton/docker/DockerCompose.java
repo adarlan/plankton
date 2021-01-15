@@ -22,8 +22,8 @@ public class DockerCompose extends Compose {
     private static final String BASE_COMMAND = "docker-compose";
     private String options;
 
-    private final Set<String> startedContainers = new HashSet<>();
-    private boolean abort = false;
+    private final Set<String> runningContainers = new HashSet<>();
+    private boolean shutdown = false;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -111,10 +111,10 @@ public class DockerCompose extends Compose {
         script.command("docker container start --attach " + containerName);
         script.forEachOutput(forEachOutput);
         script.forEachError(forEachError);
-        if (abort) {
+        if (shutdown) {
             return;
         }
-        startedContainers.add(containerName);
+        runningContainers.add(containerName);
         script.run();
     }
 
@@ -133,7 +133,11 @@ public class DockerCompose extends Compose {
         script.runSuccessfully();
         final String json = scriptOutput.stream().collect(Collectors.joining());
         logger.debug("{}: {}", containerName, json);
-        return parseContainerStateJson(json);
+        DockerContainerState containerState = parseContainerStateJson(json);
+        if (containerState.exited()) {
+            runningContainers.remove(containerName);
+        }
+        return containerState;
     }
 
     private DockerContainerState parseContainerStateJson(String json) {
@@ -160,9 +164,9 @@ public class DockerCompose extends Compose {
     }
 
     @Override
-    public void abort() {
-        abort = true;
-        startedContainers.forEach(this::killContainer);
+    public void shutdown() {
+        shutdown = true;
+        runningContainers.forEach(this::killContainer);
     }
 
     private BashScript createScript(String name) {

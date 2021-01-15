@@ -39,7 +39,7 @@ public class Pipeline {
     private final Map<Service, Map<String, String>> labelsByServiceAndName = new HashMap<>();
     private final Map<Integer, Service> externalPorts = new HashMap<>();
 
-    private boolean abort = false;
+    private boolean shutdown = false;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     Integer biggestServiceNameLength;
@@ -240,7 +240,7 @@ public class Pipeline {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                abort();
+                shutdown();
             }
         });
     }
@@ -251,7 +251,7 @@ public class Pipeline {
         while (!done) {
             done = true;
             for (Service service : getWaitingOrRunningServices()) {
-                if (abort) {
+                if (shutdown) {
                     return;
                 }
                 service.refresh();
@@ -264,9 +264,9 @@ public class Pipeline {
         logger.info("Pipeline finished");
     }
 
-    public void abort() {
-        abort = true;
-        compose.abort();
+    public void shutdown() {
+        shutdown = true;
+        compose.shutdown();
     }
 
     public Set<Service> getServices() {

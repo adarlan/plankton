@@ -134,5 +134,5 @@ public abstract class Compose {
 
     public abstract boolean killContainer(String containerName);
 
-    public abstract void abort();
+    public abstract void shutdown();
 }
