@@ -265,6 +265,10 @@ public class Pipeline {
     }
 
     public void shutdown() {
+        if (shutdown) {
+            return;
+        }
+        logger.info("Pipeline shutdown");
         shutdown = true;
         compose.shutdown();
     }
