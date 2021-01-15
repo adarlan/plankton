@@ -175,9 +175,12 @@ public class BashScript {
             try {
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
-                    logger.debug("{} >> {}", name, line);
-                    if (forEachOutput != null) {
-                        forEachOutput.accept(line);
+                    if (!line.isBlank()) {
+                        if (forEachOutput != null) {
+                            forEachOutput.accept(line);
+                        } else {
+                            logger.info("{} >> {}", name, line);
+                        }
                     }
                 }
             } catch (IOException e) {
@@ -192,13 +195,12 @@ public class BashScript {
             try {
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
-
-                    logger.debug("{} >> {}", name, line);
-                    // TODO it should be logger.error
-                    // but docker-compose outputs some info as error
-
-                    if (forEachError != null) {
-                        forEachError.accept(line);
+                    if (!line.isBlank()) {
+                        if (forEachError != null) {
+                            forEachError.accept(line);
+                        } else {
+                            logger.error("{} >> {}", name, line);
+                        }
                     }
                 }
             } catch (IOException e) {
