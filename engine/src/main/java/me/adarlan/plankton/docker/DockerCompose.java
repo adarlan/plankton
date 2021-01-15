@@ -45,6 +45,7 @@ public class DockerCompose extends Compose {
         script.runSuccessfully();
     }
 
+    @Override
     public boolean buildImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
         final BashScript script = createScript("buildImage_" + serviceName);
         final String buildOptions = "";
@@ -55,6 +56,7 @@ public class DockerCompose extends Compose {
         return script.getExitCode() == 0;
     }
 
+    @Override
     public boolean pullImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
         final BashScript script = createScript("pullImage_" + serviceName);
         script.command(BASE_COMMAND + " " + options + " pull " + serviceName);
@@ -64,6 +66,7 @@ public class DockerCompose extends Compose {
         return script.getExitCode() == 0;
     }
 
+    @Override
     public boolean createContainers(String serviceName, int serviceScale, Consumer<String> forEachOutput,
             Consumer<String> forEachError) {
         final BashScript script = createScript("createContainers_" + serviceName);
@@ -75,7 +78,8 @@ public class DockerCompose extends Compose {
         return script.getExitCode() == 0;
     }
 
-    void runContainer(String containerName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
+    @Override
+    public void runContainer(String containerName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
         final BashScript script = createScript("runContainer_" + containerName);
         script.command("docker container start --attach " + containerName);
         script.forEachOutput(forEachOutput);
@@ -83,7 +87,8 @@ public class DockerCompose extends Compose {
         script.run();
     }
 
-    DockerContainerState getContainerState(String containerName) {
+    @Override
+    public DockerContainerState getContainerState(String containerName) {
         final List<String> scriptOutput = new ArrayList<>();
         final BashScript script = createScript("getContainerState_" + containerName);
         String d = getMetadataDirectory() + "/containers";
@@ -104,17 +109,18 @@ public class DockerCompose extends Compose {
         try {
             return new ObjectMapper().readValue(json, DockerContainerState.class);
         } catch (JsonProcessingException e) {
-            throw new PlanktonDockerException("Unable to parse container state JSON", e);
+            throw new DockerComposeException("Unable to parse container state JSON", e);
         }
     }
 
-    void stopContainer(String containerName) {
+    @Override
+    public void stopContainer(String containerName) {
         BashScript script = createScript("stopContainer_" + containerName);
         script.command("docker container stop " + containerName);
         script.run();
     }
 
-    boolean killContainer(String containerName) {
+    private boolean killContainer(String containerName) {
         BashScript script = createScript("killContainer_" + containerName);
         script.command("docker container kill " + containerName);
         script.run();
