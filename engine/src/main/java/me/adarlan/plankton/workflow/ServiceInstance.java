@@ -16,8 +16,8 @@ import lombok.ToString;
 import me.adarlan.plankton.compose.Compose;
 import me.adarlan.plankton.compose.ContainerState;
 
+@EqualsAndHashCode(of = { "parentService", "number" })
 @ToString(of = "containerName")
-@EqualsAndHashCode(of = "containerName")
 public class ServiceInstance {
 
     final Service parentService;
@@ -43,9 +43,10 @@ public class ServiceInstance {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
     private static final String LOG_PLACEHOLDER = "{}{}";
+    private static final String INFO_PLACEHOLDER = "{}{}";
 
     String name;
-    String logPrefix;
+    String prefix;
 
     ServiceInstance(Service parentService, int number) {
         this.parentService = parentService;
@@ -58,24 +59,28 @@ public class ServiceInstance {
         synchronized (logs) {
             logs.add(message);
         }
-        logger.info(LOG_MARKER, LOG_PLACEHOLDER, logPrefix, message);
+        logger.info(LOG_MARKER, LOG_PLACEHOLDER, prefix, message);
     }
 
     private void logError(String message) {
         synchronized (logs) {
             logs.add(message);
         }
-        logger.error(LOG_MARKER, LOG_PLACEHOLDER, logPrefix, message);
+        logger.error(LOG_MARKER, LOG_PLACEHOLDER, prefix, message);
     }
 
     void start() {
-        runContainerThread = new Thread(() -> compose.runContainer(containerName, this::logOutput, this::logError));
+        runContainerThread = new Thread(() -> {
+            logger.info(INFO_PLACEHOLDER, prefix, "Starting container");
+            compose.startContainer(containerName, this::logOutput, this::logError);
+        });
         runContainerThread.start();
         this.started = true;
     }
 
     void stop() {
         synchronized (this) {
+            logger.info(INFO_PLACEHOLDER, prefix, "Stopping container");
             compose.stopContainer(containerName);
         }
     }
@@ -94,6 +99,7 @@ public class ServiceInstance {
             if (!running) {
                 running = true;
                 initialInstant = containerState.initialInstant();
+                logger.info(INFO_PLACEHOLDER, prefix, "Container is running");
             }
         } else if (containerState.exited()) {
             running = false;
@@ -103,6 +109,12 @@ public class ServiceInstance {
             }
             finalInstant = containerState.finalInstant();
             exitCode = containerState.exitCode();
+            if (exitCode == 0) {
+                logger.info(INFO_PLACEHOLDER, prefix, "Container exited with code: 0");
+            } else {
+                String m = "Container exited with code: " + exitCode;
+                logger.error(INFO_PLACEHOLDER, prefix, m);
+            }
         }
     }
 

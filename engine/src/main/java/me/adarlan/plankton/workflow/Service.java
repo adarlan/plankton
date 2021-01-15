@@ -17,8 +17,8 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import me.adarlan.plankton.compose.Compose;
 
+@EqualsAndHashCode(of = { "pipeline", "name" })
 @ToString(of = "name")
-@EqualsAndHashCode(of = "name")
 public class Service {
 
     final Pipeline pipeline;
@@ -48,8 +48,7 @@ public class Service {
     private boolean startedInstances = false;
 
     String color;
-    String infoPrefix;
-    String logPrefix;
+    String prefix;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final String INFO_PLACEHOLDER = "{}" + Colors.BRIGHT_WHITE + "{}" + Colors.ANSI_RESET;
 
@@ -70,14 +69,14 @@ public class Service {
         synchronized (logs) {
             logs.add(message);
         }
-        logger.info(LOG_MARKER, LOG_PLACEHOLDER, logPrefix, message);
+        logger.info(LOG_MARKER, LOG_PLACEHOLDER, prefix, message);
     }
 
     private void logError(String message) {
         synchronized (logs) {
             logs.add(message);
         }
-        logger.error(LOG_MARKER, LOG_PLACEHOLDER, logPrefix, message);
+        logger.error(LOG_MARKER, LOG_PLACEHOLDER, prefix, message);
     }
 
     void refresh() {
@@ -122,6 +121,7 @@ public class Service {
         if (buildImage == null) {
             buildImage = new Thread(() -> {
                 Service service = Service.this;
+                logger.info(INFO_PLACEHOLDER, prefix, "Building image");
                 if (compose.buildImage(name, service::logOutput, service::logError)) {
                     imageBuilt = true;
                 } else {
@@ -141,6 +141,7 @@ public class Service {
         if (pullImage == null) {
             pullImage = new Thread(() -> {
                 Service service = Service.this;
+                logger.info(INFO_PLACEHOLDER, prefix, "Pulling image");
                 if (compose.pullImage(name, service::logOutput, service::logError)) {
                     imagePulled = true;
                 } else {
@@ -157,12 +158,14 @@ public class Service {
     }
 
     private void createContainers() {
+        logger.info(INFO_PLACEHOLDER, prefix, "Creating container(s)");
         if (!compose.createContainers(name, scale, this::logOutput, this::logError)) {
-            setFailure("Failed when creating " + (scale > 1 ? "containers" : "container"));
+            setFailure("Failed when creating container(s)");
         }
     }
 
     private void startInstances() {
+        logger.info(INFO_PLACEHOLDER, prefix, "Starting instance(s)");
         instances.forEach(ServiceInstance::start);
         startedInstances = true;
     }
@@ -186,7 +189,6 @@ public class Service {
             setSuccess();
         } else if (failure) {
             setFailure("Failed");
-            // TODO log exit code information
         } else {
             checkTimeout();
         }
@@ -195,32 +197,32 @@ public class Service {
     private void checkTimeout() {
         Duration d = getDuration();
         if (d.compareTo(timeoutLimit) > 0) {
-            logger.error(INFO_PLACEHOLDER, infoPrefix, "Time limit has been reached");
+            logger.error(INFO_PLACEHOLDER, prefix, "Time limit has been reached");
             instances.forEach(ServiceInstance::stop);
         }
     }
 
     private void setBlocked() {
         status = ServiceStatus.BLOCKED;
-        logger.error(INFO_PLACEHOLDER, infoPrefix, "Blocked");
+        logger.error(INFO_PLACEHOLDER, prefix, "Blocked");
     }
 
     private void setRunning() {
         initialInstant = Instant.now();
         status = ServiceStatus.RUNNING;
-        logger.info(INFO_PLACEHOLDER, infoPrefix, "Running");
+        logger.info(INFO_PLACEHOLDER, prefix, "Ready to run");
     }
 
     private void setFailure(String message) {
         finalInstant = Instant.now();
         status = ServiceStatus.FAILURE;
-        logger.error(INFO_PLACEHOLDER, infoPrefix, message);
+        logger.error(INFO_PLACEHOLDER, prefix, message);
     }
 
     private void setSuccess() {
         finalInstant = Instant.now();
         status = ServiceStatus.SUCCESS;
-        logger.info(INFO_PLACEHOLDER, infoPrefix, "Succeeded");
+        logger.info(INFO_PLACEHOLDER, prefix, "Succeeded");
         // TODO log exit code information
     }
 

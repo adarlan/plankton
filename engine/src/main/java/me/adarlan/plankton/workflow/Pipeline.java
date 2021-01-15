@@ -43,7 +43,7 @@ public class Pipeline {
     Integer biggestServiceNameLength;
 
     public Pipeline(Compose compose) {
-        logger.trace("Pipeline");
+        logger.trace("Instantiate pipeline...");
         this.compose = compose;
         this.id = compose.getProjectName();
         instantiateServices();
@@ -57,15 +57,20 @@ public class Pipeline {
         services.forEach(this::initializeServiceStatus);
         this.initializeInstanceNamesAndBiggestName();
         this.initializeColors();
+        logger.info("Pipeline id: {}", id);
+        logger.trace("Instantiate pipeline... (done)");
     }
 
     private void instantiateServices() {
-        logger.trace("instantiateServices");
+        logger.trace("Instantiate services...");
         compose.getServiceNames().forEach(serviceName -> {
+            logger.trace("Instantiate service: {}", serviceName);
             Service service = new Service(this, serviceName);
             this.services.add(service);
             this.servicesByName.put(serviceName, service);
+            logger.trace("Instantiate service: {} (done)", serviceName);
         });
+        logger.trace("Instantiate services... (done)");
     }
 
     private void initializeServiceLabels(Service service) {
@@ -221,10 +226,9 @@ public class Pipeline {
             int colorIndex = serviceIndex % list.size();
             service.color = list.get(colorIndex);
             serviceIndex++;
-            service.infoPrefix = Utils.infoPrefixOf(service);
-            service.logPrefix = Utils.logPrefixOf(service);
+            service.prefix = Utils.prefixOf(service);
             for (ServiceInstance instance : service.instances) {
-                instance.logPrefix = Utils.logPrefixOf(instance);
+                instance.prefix = Utils.prefixOf(instance);
             }
         }
     }
