@@ -43,7 +43,7 @@ public class ServiceInstance {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
     private static final String LOG_PLACEHOLDER = "{}{}";
-    private static final String INFO_PLACEHOLDER = "{}{}";
+    private static final String INFO_PLACEHOLDER = "{}" + Colors.BRIGHT_WHITE + "{}" + Colors.ANSI_RESET;
 
     String name;
     String prefix;
@@ -99,7 +99,6 @@ public class ServiceInstance {
             if (!running) {
                 running = true;
                 initialInstant = containerState.initialInstant();
-                logger.info(INFO_PLACEHOLDER, prefix, "Container is running");
             }
         } else if (containerState.exited()) {
             running = false;
