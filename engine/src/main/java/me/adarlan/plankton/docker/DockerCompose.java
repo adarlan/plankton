@@ -83,7 +83,7 @@ public class DockerCompose extends Compose {
         script.run();
     }
 
-    ContainerState getContainerState(String containerName) {
+    DockerContainerState getContainerState(String containerName) {
         final List<String> scriptOutput = new ArrayList<>();
         final BashScript script = createScript("getContainerState_" + containerName);
         String d = getMetadataDirectory() + "/containers";
@@ -100,9 +100,9 @@ public class DockerCompose extends Compose {
         return parseContainerStateJson(json);
     }
 
-    private ContainerState parseContainerStateJson(String json) {
+    private DockerContainerState parseContainerStateJson(String json) {
         try {
-            return new ObjectMapper().readValue(json, ContainerState.class);
+            return new ObjectMapper().readValue(json, DockerContainerState.class);
         } catch (JsonProcessingException e) {
             throw new PlanktonDockerException("Unable to parse container state JSON", e);
         }

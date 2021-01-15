@@ -77,13 +77,13 @@ public class ServiceInstanceImplementation implements ServiceInstance {
     void refresh() {
         synchronized (this) {
             if (started && !ended) {
-                ContainerState containerState = dockerCompose.getContainerState(containerName);
+                DockerContainerState containerState = dockerCompose.getContainerState(containerName);
                 refresh(containerState);
             }
         }
     }
 
-    private void refresh(ContainerState containerState) {
+    private void refresh(DockerContainerState containerState) {
         if (containerState.status.equals("running")) {
             if (!running) {
                 running = true;

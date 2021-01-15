@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
-public class ContainerState {
+public class DockerContainerState {
 
     @JsonProperty("Status")
     String status;
