@@ -215,12 +215,12 @@ public class Pipeline {
     private void initializeColors() {
         logger.trace("initializeColors");
         List<String> list = new ArrayList<>();
-        list.add(Colors.BRIGHT_RED);
-        list.add(Colors.BRIGHT_GREEN);
-        list.add(Colors.BRIGHT_YELLOW);
         list.add(Colors.BRIGHT_BLUE);
-        list.add(Colors.BRIGHT_PURPLE);
+        list.add(Colors.BRIGHT_YELLOW);
+        // list.add(Colors.BRIGHT_GREEN);
         list.add(Colors.BRIGHT_CYAN);
+        list.add(Colors.BRIGHT_PURPLE);
+        // list.add(Colors.BRIGHT_RED);
         int serviceIndex = 0;
         for (Service service : getEnabledServices()) {
             int colorIndex = serviceIndex % list.size();
