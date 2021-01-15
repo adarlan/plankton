@@ -15,7 +15,7 @@ import org.slf4j.MarkerFactory;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
+import me.adarlan.plankton.compose.Compose;
 import me.adarlan.plankton.core.Pipeline;
 import me.adarlan.plankton.core.Service;
 import me.adarlan.plankton.core.ServiceDependency;
@@ -62,13 +62,13 @@ class ServiceImplementation implements Service {
     private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
     private static final String LOG_PLACEHOLDER = "{}{}";
 
-    final DockerCompose dockerCompose;
+    final Compose compose;
 
     private final List<String> logs = new ArrayList<>();
 
     ServiceImplementation(PipelineImplementation pipeline, String name) {
         this.pipeline = pipeline;
-        this.dockerCompose = pipeline.dockerCompose;
+        this.compose = pipeline.compose;
         this.name = name;
     }
 
@@ -121,7 +121,7 @@ class ServiceImplementation implements Service {
         if (buildImage == null) {
             buildImage = new Thread(() -> {
                 ServiceImplementation service = ServiceImplementation.this;
-                if (dockerCompose.buildImage(name, service::log, service::log)) {
+                if (compose.buildImage(name, service::log, service::log)) {
                     imageBuilt = true;
                 } else {
                     setFailure("Failed when building image");
@@ -140,7 +140,7 @@ class ServiceImplementation implements Service {
         if (pullImage == null) {
             pullImage = new Thread(() -> {
                 ServiceImplementation service = ServiceImplementation.this;
-                if (dockerCompose.pullImage(name, service::log, service::log)) {
+                if (compose.pullImage(name, service::log, service::log)) {
                     imagePulled = true;
                 } else {
                     setFailure("Failed when pulling image");
@@ -156,7 +156,7 @@ class ServiceImplementation implements Service {
     }
 
     private void createContainers() {
-        if (!dockerCompose.createContainers(name, scale, this::log, this::log)) {
+        if (!compose.createContainers(name, scale, this::log, this::log)) {
             setFailure("Failed when creating " + (scale > 1 ? "containers" : "container"));
         }
     }

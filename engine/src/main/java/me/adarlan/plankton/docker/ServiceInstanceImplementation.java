@@ -13,7 +13,8 @@ import org.slf4j.MarkerFactory;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
+import me.adarlan.plankton.compose.Compose;
+import me.adarlan.plankton.compose.ContainerState;
 import me.adarlan.plankton.core.Service;
 import me.adarlan.plankton.core.ServiceInstance;
 
@@ -39,7 +40,7 @@ public class ServiceInstanceImplementation implements ServiceInstance {
 
     private Thread runContainerThread = null;
 
-    private final DockerCompose dockerCompose;
+    private final Compose compose;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
@@ -52,7 +53,7 @@ public class ServiceInstanceImplementation implements ServiceInstance {
         this.parentService = parentService;
         this.number = number;
         this.containerName = parentService.pipeline.getId() + "_" + parentService.getName() + "_" + number;
-        this.dockerCompose = parentService.pipeline.dockerCompose;
+        this.compose = parentService.pipeline.compose;
     }
 
     private void log(String message) {
@@ -63,63 +64,41 @@ public class ServiceInstanceImplementation implements ServiceInstance {
     }
 
     void start() {
-        runContainerThread = new Thread(() -> dockerCompose.runContainer(containerName, this::log, this::log));
+        runContainerThread = new Thread(() -> compose.runContainer(containerName, this::log, this::log));
         runContainerThread.start();
         this.started = true;
     }
 
     void stop() {
         synchronized (this) {
-            dockerCompose.stopContainer(containerName);
+            compose.stopContainer(containerName);
         }
     }
 
     void refresh() {
         synchronized (this) {
             if (started && !ended) {
-                DockerContainerState containerState = dockerCompose.getContainerState(containerName);
+                ContainerState containerState = compose.getContainerState(containerName);
                 refresh(containerState);
             }
         }
     }
 
-    private void refresh(DockerContainerState containerState) {
-        if (containerState.status.equals("running")) {
+    private void refresh(ContainerState containerState) {
+        if (containerState.running()) {
             if (!running) {
                 running = true;
-                initialInstant = parseInstant(containerState.startedAt);
+                initialInstant = containerState.initialInstant();
             }
-        } else if (containerState.status.equals("exited")) {
+        } else if (containerState.exited()) {
             running = false;
             ended = true;
             if (initialInstant == null) {
-                initialInstant = parseInstant(containerState.startedAt);
+                initialInstant = containerState.initialInstant();
             }
-            finalInstant = parseInstant(containerState.finishedAt);
-            exitCode = containerState.exitCode;
-        } else if (!containerState.error.isBlank()) {
-            running = false;
-            ended = true;
-            if (initialInstant == null) {
-                initialInstant = parseInstant(containerState.startedAt);
-            }
-            finalInstant = parseInstant(containerState.finishedAt);
-            if (containerState.exitCode != 0) {
-                exitCode = containerState.exitCode;
-            }
-        } else if (containerState.status.equals("created")) {
-            /* ok */
-        } else {
-            throw new PlanktonDockerException("Unexpected container state: " + containerState);
-            // TODO stop thread? failed?
+            finalInstant = containerState.finalInstant();
+            exitCode = containerState.exitCode();
         }
-    }
-
-    private Instant parseInstant(String text) {
-        if (text.equals("0001-01-01T00:00:00Z"))
-            return null;
-        else
-            return Instant.parse(text);
     }
 
     @Override

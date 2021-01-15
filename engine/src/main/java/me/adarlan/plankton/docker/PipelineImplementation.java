@@ -14,8 +14,10 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.ToString;
 
 import me.adarlan.plankton.core.Service;
 import me.adarlan.plankton.core.ServiceStatus;
@@ -24,11 +26,14 @@ import me.adarlan.plankton.core.dependencies.WaitPort;
 import me.adarlan.plankton.core.dependencies.WaitSuccessOf;
 import me.adarlan.plankton.logging.Colors;
 import me.adarlan.plankton.bash.BashScript;
+import me.adarlan.plankton.compose.Compose;
 import me.adarlan.plankton.core.Pipeline;
 
+@EqualsAndHashCode(of = "id")
+@ToString(of = "id")
 class PipelineImplementation implements Pipeline {
 
-    final DockerCompose dockerCompose;
+    final Compose compose;
 
     @Getter
     private final String id;
@@ -41,10 +46,10 @@ class PipelineImplementation implements Pipeline {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     Integer biggestServiceNameLength;
 
-    PipelineImplementation(DockerCompose dockerCompose) {
+    PipelineImplementation(Compose compose) {
         logger.trace("PipelineImplementation");
-        this.dockerCompose = dockerCompose;
-        this.id = dockerCompose.getProjectName();
+        this.compose = compose;
+        this.id = compose.getProjectName();
         instantiateServices();
         services.forEach(this::initializeServiceLabels);
         services.forEach(this::initializeServiceExpression);
@@ -60,7 +65,7 @@ class PipelineImplementation implements Pipeline {
 
     private void instantiateServices() {
         logger.trace("instantiateServices");
-        dockerCompose.getServiceNames().forEach(serviceName -> {
+        compose.getServiceNames().forEach(serviceName -> {
             ServiceImplementation service = new ServiceImplementation(this, serviceName);
             this.services.add(service);
             this.servicesByName.put(serviceName, service);
@@ -69,7 +74,7 @@ class PipelineImplementation implements Pipeline {
 
     private void initializeServiceLabels(ServiceImplementation service) {
         logger.trace("initializeServiceLabels: {}", service.name);
-        Map<String, String> labelsByName = dockerCompose.getServiceLabelsMap(service.name);
+        Map<String, String> labelsByName = compose.getServiceLabelsMap(service.name);
         labelsByServiceAndName.put(service, labelsByName);
     }
 
@@ -84,7 +89,7 @@ class PipelineImplementation implements Pipeline {
 
     private void initializeNeedToBuild(ServiceImplementation service) {
         logger.trace("initializeNeedToBuild: {}", service.name);
-        Map<String, Object> serviceConfigMap = dockerCompose.getServiceMap(service.name);
+        Map<String, Object> serviceConfigMap = compose.getServiceMap(service.name);
         if (serviceConfigMap.containsKey("build")) {
             service.needToBuild = true;
         } else {
@@ -119,7 +124,7 @@ class PipelineImplementation implements Pipeline {
 
     private void initializeExternalPorts(ServiceImplementation service) {
         logger.trace("initializeExternalPorts: {}", service.name);
-        List<Map<String, Object>> ports = dockerCompose.getServicePorts(service.name);
+        List<Map<String, Object>> ports = compose.getServicePorts(service.name);
         ports.forEach(p -> {
             Integer externalPort = (Integer) p.get("published"); // TODO what if published is null?
             externalPorts.put(externalPort, service);
