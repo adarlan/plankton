@@ -16,19 +16,19 @@ class Utils {
         return matcher.matches();
     }
 
-    static String infoPrefixOf(ServiceImplementation service) {
-        PipelineImplementation pipeline = service.pipeline;
+    static String infoPrefixOf(Service service) {
+        Pipeline pipeline = service.pipeline;
         return prefix(service.color, service.name, pipeline.biggestServiceNameLength, " ", "-", "--| ");
     }
 
-    static String logPrefixOf(ServiceImplementation service) {
-        PipelineImplementation pipeline = service.pipeline;
+    static String logPrefixOf(Service service) {
+        Pipeline pipeline = service.pipeline;
         return prefix(service.color, service.name, pipeline.biggestServiceNameLength, " ", "-", "--| ");
     }
 
-    static String logPrefixOf(ServiceInstanceImplementation instance) {
-        ServiceImplementation service = instance.parentService;
-        PipelineImplementation pipeline = service.pipeline;
+    static String logPrefixOf(ServiceInstance instance) {
+        Service service = instance.parentService;
+        Pipeline pipeline = service.pipeline;
         return prefix(service.color, instance.name, pipeline.biggestServiceNameLength, " ", "-", "--| ");
     }
 
