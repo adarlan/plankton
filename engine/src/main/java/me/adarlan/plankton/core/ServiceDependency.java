@@ -6,7 +6,7 @@ public interface ServiceDependency {
 
     Service getRequiredService();
 
-    ServiceDependencyStatus getStatus();
+    boolean isSatisfied();
 
-    Boolean updateStatus();
+    boolean isBlocked();
 }
