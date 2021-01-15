@@ -150,6 +150,7 @@ public class DockerCompose extends Compose {
 
     @Override
     public void stopContainer(String containerName) {
+        logger.info("DockerCompose stop container: {}", containerName);
         BashScript script = createScript("stopContainer_" + containerName);
         script.command("docker container stop " + containerName);
         script.run();
@@ -157,6 +158,7 @@ public class DockerCompose extends Compose {
 
     @Override
     public boolean killContainer(String containerName) {
+        logger.info("DockerCompose kill container: {}", containerName);
         BashScript script = createScript("killContainer_" + containerName);
         script.command("docker container kill " + containerName);
         script.run();
@@ -165,6 +167,10 @@ public class DockerCompose extends Compose {
 
     @Override
     public void shutdown() {
+        if (shutdown) {
+            return;
+        }
+        logger.info("DockerCompose shutdown");
         shutdown = true;
         runningContainers.forEach(this::killContainer);
     }
