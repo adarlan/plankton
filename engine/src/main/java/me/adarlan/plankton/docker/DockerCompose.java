@@ -2,6 +2,7 @@ package me.adarlan.plankton.docker;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -44,53 +45,58 @@ public class DockerCompose extends Compose {
         script.runSuccessfully();
     }
 
-    public boolean buildImage(ServiceImplementation service) {
-        final BashScript script = createScript("buildImage_" + service.getName());
+    public boolean buildImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
+        final BashScript script = createScript("buildImage_" + serviceName);
         final String buildOptions = "";
-        script.command(BASE_COMMAND + " " + options + " build " + buildOptions + " " + service.getName());
-        script.forEachOutputAndError(service::log);
+        script.command(BASE_COMMAND + " " + options + " build " + buildOptions + " " + serviceName);
+        script.forEachOutput(forEachOutput);
+        script.forEachError(forEachError);
         script.run();
         return script.getExitCode() == 0;
     }
 
-    public boolean pullImage(ServiceImplementation service) {
-        final BashScript script = createScript("pullImage_" + service.getName());
-        script.command(BASE_COMMAND + " " + options + " pull " + service.getName());
-        script.forEachOutputAndError(service::log);
+    public boolean pullImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
+        final BashScript script = createScript("pullImage_" + serviceName);
+        script.command(BASE_COMMAND + " " + options + " pull " + serviceName);
+        script.forEachOutput(forEachOutput);
+        script.forEachError(forEachError);
         script.run();
         return script.getExitCode() == 0;
     }
 
-    public boolean createContainers(ServiceImplementation service) {
-        final BashScript script = createScript("createContainers_" + service.getName());
-        final String upOptions = "--no-start --scale " + service.getName() + "=" + service.getScale();
-        script.command(BASE_COMMAND + " " + options + " up " + upOptions + " " + service.getName());
-        script.forEachOutputAndError(service::log);
+    public boolean createContainers(String serviceName, int serviceScale, Consumer<String> forEachOutput,
+            Consumer<String> forEachError) {
+        final BashScript script = createScript("createContainers_" + serviceName);
+        final String upOptions = "--no-start --scale " + serviceName + "=" + serviceScale;
+        script.command(BASE_COMMAND + " " + options + " up " + upOptions + " " + serviceName);
+        script.forEachOutput(forEachOutput);
+        script.forEachError(forEachError);
         script.run();
         return script.getExitCode() == 0;
     }
 
-    void runContainer(ServiceInstanceImplementation serviceInstance) {
-        final BashScript script = createScript("runContainer_" + serviceInstance.getContainerName());
-        script.command("docker container start --attach " + serviceInstance.getContainerName());
-        script.forEachOutputAndError(serviceInstance::log);
+    void runContainer(String containerName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
+        final BashScript script = createScript("runContainer_" + containerName);
+        script.command("docker container start --attach " + containerName);
+        script.forEachOutput(forEachOutput);
+        script.forEachError(forEachError);
         script.run();
     }
 
-    ContainerState getContainerState(ServiceInstanceImplementation serviceInstance) {
+    ContainerState getContainerState(String containerName) {
         final List<String> scriptOutput = new ArrayList<>();
-        final BashScript script = createScript("getContainerState_" + serviceInstance.getContainerName());
+        final BashScript script = createScript("getContainerState_" + containerName);
         String d = getMetadataDirectory() + "/containers";
-        String f = d + "/" + serviceInstance.getContainerName();
+        String f = d + "/" + containerName;
         script.command("mkdir -p " + d);
-        script.command("docker container inspect " + serviceInstance.getContainerName() + " > " + f);
+        script.command("docker container inspect " + containerName + " > " + f);
         script.command("cat " + f + " | jq --compact-output '.[] | .State'");
         script.command("STATUS=$(cat " + f + " | jq -r '.[] | .State.Status')");
         script.command("cat " + f + " > " + f + ".$STATUS");
         script.forEachOutput(scriptOutput::add);
         script.runSuccessfully();
         final String json = scriptOutput.stream().collect(Collectors.joining());
-        logger.debug("{}: {}", serviceInstance.getContainerName(), json);
+        logger.debug("{}: {}", containerName, json);
         return parseContainerStateJson(json);
     }
 
@@ -102,15 +108,15 @@ public class DockerCompose extends Compose {
         }
     }
 
-    void stopContainer(ServiceInstanceImplementation serviceInstance) {
-        BashScript script = createScript("stopContainer_" + serviceInstance.getContainerName());
-        script.command("docker container stop " + serviceInstance.getContainerName());
+    void stopContainer(String containerName) {
+        BashScript script = createScript("stopContainer_" + containerName);
+        script.command("docker container stop " + containerName);
         script.run();
     }
 
-    boolean killContainer(ServiceInstanceImplementation serviceInstance) {
-        BashScript script = createScript("killContainer_" + serviceInstance.getContainerName());
-        script.command("docker container kill " + serviceInstance.getContainerName());
+    boolean killContainer(String containerName) {
+        BashScript script = createScript("killContainer_" + containerName);
+        script.command("docker container kill " + containerName);
         script.run();
         return script.getExitCode() == 0;
     }
