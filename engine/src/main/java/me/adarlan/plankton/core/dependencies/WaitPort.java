@@ -5,13 +5,13 @@ import java.net.Socket;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import me.adarlan.plankton.logging.Logger;
+import lombok.ToString;
 import me.adarlan.plankton.core.Service;
 import me.adarlan.plankton.core.ServiceDependency;
-import me.adarlan.plankton.core.ServiceDependencyStatus;
 import me.adarlan.plankton.core.ServiceStatus;
 
-@EqualsAndHashCode(of = { "parentService", "requiredService", "port" })
+@EqualsAndHashCode
+@ToString
 public class WaitPort implements ServiceDependency {
 
     @Getter
@@ -23,9 +23,6 @@ public class WaitPort implements ServiceDependency {
     @Getter
     Integer port;
 
-    @Getter
-    ServiceDependencyStatus status = ServiceDependencyStatus.WAITING;
-
     public WaitPort(Service parentService, Service requiredService, Integer port) {
         this.parentService = parentService;
         this.requiredService = requiredService;
@@ -33,36 +30,21 @@ public class WaitPort implements ServiceDependency {
     }
 
     @Override
-    public Boolean updateStatus() {
-        if (status.equals(ServiceDependencyStatus.WAITING)) {
-            if (requiredService.hasEnded()) {
-                status = ServiceDependencyStatus.BLOCKED;
+    public boolean isSatisfied() {
+        if (requiredService.getStatus().isRunning()) {
+            try (Socket s = new Socket("localhost", port)) {
                 return true;
-            } else if (requiredService.getStatus().equals(ServiceStatus.RUNNING)) {
-                try (Socket s = new Socket("localhost", port)) {
-                    status = ServiceDependencyStatus.PASSED;
-                    return true;
-                } catch (IOException ex) {
-                    /* ignore */
-                }
+            } catch (IOException ex) {
+                return false;
             }
+        } else {
+            return false;
         }
-        return false;
     }
 
     @Override
-    public String toString() {
-        String providedBy = "provided by " + requiredService.getName();
-        switch (status) {
-            case WAITING:
-                return "Waiting for port " + port + ", which is " + providedBy;
-            case PASSED:
-                return "Satisfied because port " + port + ", " + providedBy + ", is responding";
-            case BLOCKED:
-                return "Blocked because " + requiredService.getName() + ", which provides port " + port
-                        + ", is not running anymore";
-            default:
-                return super.toString();
-        }
+    public boolean isBlocked() {
+        ServiceStatus status = requiredService.getStatus();
+        return !(status.isWaiting() || status.isRunning());
     }
 }
