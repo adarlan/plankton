@@ -3,8 +3,6 @@ package me.adarlan.plankton.workflow;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import me.adarlan.plankton.logging.Colors;
-
 class Utils {
 
     private Utils() {

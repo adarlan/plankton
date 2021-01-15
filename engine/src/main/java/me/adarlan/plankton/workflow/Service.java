@@ -16,7 +16,6 @@ import org.slf4j.MarkerFactory;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import me.adarlan.plankton.compose.Compose;
-import me.adarlan.plankton.logging.Colors;
 
 @ToString(of = "name")
 @EqualsAndHashCode(of = "name")

@@ -22,7 +22,6 @@ import lombok.ToString;
 import me.adarlan.plankton.workflow.dependencies.WaitFailureOf;
 import me.adarlan.plankton.workflow.dependencies.WaitPort;
 import me.adarlan.plankton.workflow.dependencies.WaitSuccessOf;
-import me.adarlan.plankton.logging.Colors;
 import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.compose.Compose;
 

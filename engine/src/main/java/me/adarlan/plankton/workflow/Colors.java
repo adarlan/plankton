@@ -1,4 +1,4 @@
-package me.adarlan.plankton.logging;
+package me.adarlan.plankton.workflow;
 
 public class Colors {
 
