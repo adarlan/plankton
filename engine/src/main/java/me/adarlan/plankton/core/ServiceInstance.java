@@ -18,11 +18,11 @@ public interface ServiceInstance {
 
     Duration getDuration();
 
-    Boolean hasStarted();
+    boolean hasStarted();
 
-    Boolean isRunning();
+    boolean isRunning();
 
-    Boolean hasEnded();
+    boolean hasEnded();
 
     Integer getExitCode();
 
