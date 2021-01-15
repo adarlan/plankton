@@ -19,18 +19,17 @@ import lombok.ToString;
 import me.adarlan.plankton.core.Pipeline;
 import me.adarlan.plankton.core.Service;
 import me.adarlan.plankton.core.ServiceDependency;
-import me.adarlan.plankton.core.ServiceDependencyStatus;
 import me.adarlan.plankton.core.ServiceInstance;
 import me.adarlan.plankton.core.ServiceStatus;
 import me.adarlan.plankton.logging.Colors;
 
 @ToString(of = "name")
 @EqualsAndHashCode(of = "name")
-public class ServiceImplementation implements Service {
+class ServiceImplementation implements Service {
 
     final PipelineImplementation pipeline;
     final String name;
-    final DockerCompose dockerCompose;
+    ServiceStatus status;
 
     String expression;
     Boolean expressionResult;
@@ -43,25 +42,29 @@ public class ServiceImplementation implements Service {
     private Instant initialInstant = null;
     private Instant finalInstant = null;
     private Duration duration = null;
+
     Duration timeoutLimit;
 
-    ServiceStatus status;
-
     boolean needToBuild;
-    private Thread buildOrPullImage = null;
-    private boolean imageBuiltOrPulled = false;
-    private boolean startedInstances = false;
-    private boolean ended = false;
+    private Thread buildImage = null;
+    private Thread pullImage = null;
+    private boolean imageBuilt = false;
+    private boolean imagePulled = false;
 
-    private final List<String> logs = new ArrayList<>();
+    private boolean startedInstances = false;
+
     String color;
-    // String colorizedName;
     String infoPrefix;
     String logPrefix;
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final String INFO_PLACEHOLDER = "{}" + Colors.BRIGHT_WHITE + "{}" + Colors.ANSI_RESET;
+
     private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
     private static final String LOG_PLACEHOLDER = "{}{}";
-    private static final String INFO_PLACEHOLDER = "{}" + Colors.BRIGHT_WHITE + "{}" + Colors.ANSI_RESET;
+
+    final DockerCompose dockerCompose;
+
+    private final List<String> logs = new ArrayList<>();
 
     ServiceImplementation(PipelineImplementation pipeline, String name) {
         this.pipeline = pipeline;
@@ -69,7 +72,7 @@ public class ServiceImplementation implements Service {
         this.name = name;
     }
 
-    void log(String message) {
+    private void log(String message) {
         synchronized (logs) {
             logs.add(message);
         }
@@ -78,25 +81,19 @@ public class ServiceImplementation implements Service {
 
     void refresh() {
         synchronized (this) {
-            if (!ended) {
-                if (status == ServiceStatus.WAITING) {
-                    checkDependenciesAndSetRunningOrBlocked();
-                }
-                if (status == ServiceStatus.RUNNING) {
-                    if (startedInstances) {
-                        checkInstancesAndSetSuccessOrFailure();
+            if (status == ServiceStatus.WAITING) {
+                checkDependenciesAndSetRunningOrBlocked();
+            }
+            if (status == ServiceStatus.RUNNING) {
+                if (!startedInstances) {
+                    if (needToBuild) {
+                        buildImageAndCreateContainersAndStartInstances();
                     } else {
-                        if (buildOrPullImage == null) {
-                            buildOrPullImage = new BuildOrPullImage();
-                            buildOrPullImage.start();
-                        } else if (imageBuiltOrPulled) {
-                            createContainers();
-                            startInstances();
-                        } else if (buildOrPullImage.isInterrupted()) {
-                            logger.error(INFO_PLACEHOLDER, infoPrefix, "Interrupted when building/pulling image");
-                            setStatus(ServiceStatus.FAILURE);
-                        }
+                        pullImageAndCreateContainersAndStartInstances();
                     }
+                }
+                if (startedInstances) {
+                    checkInstancesAndSetSuccessOrFailure();
                 }
             }
         }
@@ -106,45 +103,61 @@ public class ServiceImplementation implements Service {
         boolean passed = true;
         boolean blocked = false;
         for (final ServiceDependency dependency : dependencies) {
-            if (dependency.updateStatus()) {
-                logDependencyInfo(dependency);
-            }
-            if (!dependency.getStatus().equals(ServiceDependencyStatus.PASSED))
+            if (!dependency.isSatisfied()) {
                 passed = false;
-            if (dependency.getStatus().equals(ServiceDependencyStatus.BLOCKED))
+            }
+            if (dependency.isBlocked()) {
                 blocked = true;
+            }
         }
         if (passed) {
-            setStatus(ServiceStatus.RUNNING);
+            setRunning();
         } else if (blocked) {
-            setStatus(ServiceStatus.BLOCKED);
+            setBlocked();
         }
     }
 
-    private class BuildOrPullImage extends Thread {
-
-        private BuildOrPullImage() {
-            super();
+    private void buildImageAndCreateContainersAndStartInstances() {
+        if (buildImage == null) {
+            buildImage = new Thread(() -> {
+                ServiceImplementation service = ServiceImplementation.this;
+                if (dockerCompose.buildImage(name, service::log, service::log)) {
+                    imageBuilt = true;
+                } else {
+                    setFailure("Failed when building image");
+                }
+            });
+            buildImage.start();
+        } else if (imageBuilt) {
+            createContainers();
+            startInstances();
+        } else if (buildImage.isInterrupted()) {
+            setFailure("Interrupted when building image");
         }
+    }
 
-        @Override
-        public void run() {
-            if (needToBuild) {
-                if (!dockerCompose.buildImage(ServiceImplementation.this)) {
-                    setStatus(ServiceStatus.FAILURE);
+    private void pullImageAndCreateContainersAndStartInstances() {
+        if (pullImage == null) {
+            pullImage = new Thread(() -> {
+                ServiceImplementation service = ServiceImplementation.this;
+                if (dockerCompose.pullImage(name, service::log, service::log)) {
+                    imagePulled = true;
+                } else {
+                    setFailure("Failed when pulling image");
                 }
-            } else {
-                if (!dockerCompose.pullImage(ServiceImplementation.this)) {
-                    setStatus(ServiceStatus.FAILURE);
-                }
-            }
-            imageBuiltOrPulled = true;
+            });
+            pullImage.start();
+        } else if (imagePulled) {
+            createContainers();
+            startInstances();
+        } else if (pullImage.isInterrupted()) {
+            setFailure("Interrupted when pulling image");
         }
     }
 
     private void createContainers() {
-        if (!dockerCompose.createContainers(this)) {
-            setStatus(ServiceStatus.FAILURE);
+        if (!dockerCompose.createContainers(name, scale, this::log, this::log)) {
+            setFailure("Failed when creating " + (scale > 1 ? "containers" : "container"));
         }
     }
 
@@ -169,9 +182,10 @@ public class ServiceImplementation implements Service {
             }
         }
         if (success) {
-            setStatus(ServiceStatus.SUCCESS);
+            setSuccess();
         } else if (failure) {
-            setStatus(ServiceStatus.FAILURE);
+            setFailure("Failed");
+            // TODO log exit code information
         } else {
             checkTimeout();
         }
@@ -185,43 +199,40 @@ public class ServiceImplementation implements Service {
         }
     }
 
-    private void setStatus(ServiceStatus status) {
-        this.status = status;
-        switch (status) {
-            case DISABLED:
-                ended = true;
-                logger.info(INFO_PLACEHOLDER, infoPrefix, "Disabled");
-                break;
-            case WAITING:
-                dependencies.forEach(this::logDependencyInfo);
-                break;
-            case BLOCKED:
-                ended = true;
-                logger.info(INFO_PLACEHOLDER, infoPrefix, "Blocked");
-                break;
-            case RUNNING:
-                initialInstant = Instant.now();
-                logger.info(INFO_PLACEHOLDER, infoPrefix, "Running");
-                break;
-            case FAILURE:
-                logger.info(INFO_PLACEHOLDER, infoPrefix, "Failed");
-                break;
-            case SUCCESS:
-                ended = true;
-                finalInstant = Instant.now();
-                duration = Duration.between(initialInstant, finalInstant);
-                logger.info(INFO_PLACEHOLDER, infoPrefix, "Succeeded");
-                break;
-        }
+    private void setBlocked() {
+        status = ServiceStatus.BLOCKED;
+        logger.info(INFO_PLACEHOLDER, infoPrefix, "Blocked");
     }
 
-    private void logDependencyInfo(ServiceDependency dependency) {
-        logger.info(INFO_PLACEHOLDER, infoPrefix, dependency);
+    private void setRunning() {
+        initialInstant = Instant.now();
+        status = ServiceStatus.RUNNING;
+        logger.info(INFO_PLACEHOLDER, infoPrefix, "Running");
     }
 
+    private void setFailure(String message) {
+        finalInstant = Instant.now();
+        status = ServiceStatus.FAILURE;
+        logger.info(INFO_PLACEHOLDER, infoPrefix, message);
+    }
+
+    private void setSuccess() {
+        finalInstant = Instant.now();
+        status = ServiceStatus.SUCCESS;
+        logger.info(INFO_PLACEHOLDER, infoPrefix, "Succeeded");
+        // TODO log exit code information
+    }
+
+    @Override
     public Duration getDuration() {
         if (duration == null) {
-            if (initialInstant == null) {
+            if (status.isDisabled() || status.isBlocked()) {
+                duration = Duration.ZERO;
+                return duration;
+            } else if (status.isSuccess() || status.isFailure()) {
+                duration = Duration.between(initialInstant, finalInstant);
+                return duration;
+            } else if (status.isWaiting()) {
                 return Duration.ZERO;
             } else {
                 return Duration.between(initialInstant, Instant.now());
@@ -231,10 +242,12 @@ public class ServiceImplementation implements Service {
         }
     }
 
+    @Override
     public List<String> getLogs() {
         return Collections.unmodifiableList(logs);
     }
 
+    @Override
     public List<ServiceInstance> getInstances() {
         return Collections.unmodifiableList(instances);
     }
@@ -242,11 +255,6 @@ public class ServiceImplementation implements Service {
     @Override
     public Set<ServiceDependency> getDependencies() {
         return Collections.unmodifiableSet(dependencies);
-    }
-
-    @Override
-    public Boolean hasEnded() {
-        return ended;
     }
 
     @Override
@@ -292,5 +300,13 @@ public class ServiceImplementation implements Service {
     @Override
     public Instant getFinalInstant() {
         return finalInstant;
+    }
+
+    public boolean isEnabled() {
+        return status != ServiceStatus.DISABLED;
+    }
+
+    public boolean isWaitingOrRunning() {
+        return status == ServiceStatus.WAITING || status == ServiceStatus.RUNNING;
     }
 }

@@ -234,9 +234,9 @@ class PipelineImplementation implements Pipeline {
         boolean done = false;
         while (!done) {
             done = true;
-            for (ServiceImplementation service : getEnabledServices()) {
+            for (ServiceImplementation service : getWaitingOrRunningServices()) {
                 service.refresh();
-                if (!service.hasEnded()) {
+                if (service.isWaitingOrRunning()) {
                     done = false;
                 }
             }
@@ -258,7 +258,12 @@ class PipelineImplementation implements Pipeline {
     }
 
     public Set<ServiceImplementation> getEnabledServices() {
-        return Collections.unmodifiableSet(services.stream().filter(service -> service.status != ServiceStatus.DISABLED)
-                .collect(Collectors.toSet()));
+        return Collections.unmodifiableSet(
+                services.stream().filter(ServiceImplementation::isEnabled).collect(Collectors.toSet()));
+    }
+
+    public Set<ServiceImplementation> getWaitingOrRunningServices() {
+        return Collections.unmodifiableSet(
+                services.stream().filter(ServiceImplementation::isWaitingOrRunning).collect(Collectors.toSet()));
     }
 }

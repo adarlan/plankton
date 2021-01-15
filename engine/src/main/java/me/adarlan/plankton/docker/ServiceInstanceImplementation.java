@@ -30,11 +30,10 @@ public class ServiceInstanceImplementation implements ServiceInstance {
     private boolean started = false;
     private boolean running = false;
     private boolean ended = false;
-    private boolean stop = false;
 
     private Instant initialInstant = null;
     private Instant finalInstant = null;
-    private Duration duration = Duration.ZERO;
+    private Duration duration = null;
 
     private Integer exitCode = null;
 
@@ -47,8 +46,6 @@ public class ServiceInstanceImplementation implements ServiceInstance {
     private static final String LOG_PLACEHOLDER = "{}{}";
 
     String name;
-    // String colorizedName;
-    // String infoPrefix;
     String logPrefix;
 
     ServiceInstanceImplementation(ServiceImplementation parentService, int number) {
@@ -58,29 +55,30 @@ public class ServiceInstanceImplementation implements ServiceInstance {
         this.dockerCompose = parentService.pipeline.dockerCompose;
     }
 
-    void log(String message) {
+    private void log(String message) {
         synchronized (logs) {
             logs.add(message);
         }
         logger.info(LOG_MARKER, LOG_PLACEHOLDER, logPrefix, message);
     }
 
-    public List<String> getLogs() {
-        return Collections.unmodifiableList(logs);
-    }
-
     void start() {
-        runContainerThread = new Thread(() -> dockerCompose.runContainer(this));
+        runContainerThread = new Thread(() -> dockerCompose.runContainer(containerName, this::log, this::log));
         runContainerThread.start();
         this.started = true;
+    }
+
+    void stop() {
+        synchronized (this) {
+            dockerCompose.stopContainer(containerName);
+        }
     }
 
     void refresh() {
         synchronized (this) {
             if (started && !ended) {
-                ContainerState containerState = dockerCompose.getContainerState(this);
+                ContainerState containerState = dockerCompose.getContainerState(containerName);
                 refresh(containerState);
-                refreshDuration();
             }
         }
     }
@@ -90,9 +88,6 @@ public class ServiceInstanceImplementation implements ServiceInstance {
             if (!running) {
                 running = true;
                 initialInstant = parseInstant(containerState.startedAt);
-            }
-            if (stop) {
-                dockerCompose.stopContainer(this);
             }
         } else if (containerState.status.equals("exited")) {
             running = false;
@@ -127,31 +122,39 @@ public class ServiceInstanceImplementation implements ServiceInstance {
             return Instant.parse(text);
     }
 
-    private void refreshDuration() {
-        if (running) {
-            duration = Duration.between(initialInstant, Instant.now());
-        } else if (ended && initialInstant != null && finalInstant != null) {
-            duration = Duration.between(initialInstant, finalInstant);
+    @Override
+    public Duration getDuration() {
+        if (duration == null) {
+            if (initialInstant != null && finalInstant != null) {
+                duration = Duration.between(initialInstant, finalInstant);
+                return duration;
+            } else if (initialInstant != null) {
+                return Duration.between(initialInstant, Instant.now());
+            } else {
+                return Duration.ZERO;
+            }
+        } else {
+            return duration;
         }
     }
 
-    void stop() {
-        stop = true;
-        dockerCompose.stopContainer(this);
+    @Override
+    public List<String> getLogs() {
+        return Collections.unmodifiableList(logs);
     }
 
     @Override
-    public Boolean hasStarted() {
+    public boolean hasStarted() {
         return started;
     }
 
     @Override
-    public Boolean isRunning() {
+    public boolean isRunning() {
         return running;
     }
 
     @Override
-    public Boolean hasEnded() {
+    public boolean hasEnded() {
         return ended;
     }
 
@@ -178,11 +181,6 @@ public class ServiceInstanceImplementation implements ServiceInstance {
     @Override
     public Instant getFinalInstant() {
         return finalInstant;
-    }
-
-    @Override
-    public Duration getDuration() {
-        return duration;
     }
 
     @Override
