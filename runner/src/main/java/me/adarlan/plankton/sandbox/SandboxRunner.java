@@ -102,7 +102,7 @@ public class SandboxRunner {
             String sandboxOptions = sandboxOptionList.stream().collect(Collectors.joining(" "));
 
             BashScript script = new BashScript("run_sandbox_container");
-            script.command("docker run " + runOptions + " adarlan/plankton:remote-runner-sandbox " + sandboxOptions);
+            script.command("docker run " + runOptions + " adarlan/plankton:sandbox " + sandboxOptions);
             script.run();
             if (script.getExitCode() != 0) {
                 throw new RuntimeException("Sandbox container failed");

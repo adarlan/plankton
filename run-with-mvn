@@ -13,5 +13,5 @@ cd -
 
 COMPOSE_FILE=${WORKSPACE}/plankton.compose.yaml
 
-cd $PLANKTON_DIR/local-runner
+cd $PLANKTON_DIR/runner
 mvn spring-boot:run -Dspring-boot.run.arguments="--plankton.compose.file=$COMPOSE_FILE --plankton.workspace=$WORKSPACE"

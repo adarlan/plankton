@@ -8,5 +8,5 @@ WORKSPACE=$PWD
 cd -
 
 cd $WORKSPACE
-JAR=$PLANKTON_DIR/local-runner/target/plankton-local-runner.jar
+JAR=$PLANKTON_DIR/runner/target/plankton-runner.jar
 java -jar $JAR

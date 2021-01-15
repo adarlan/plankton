@@ -1,4 +1,4 @@
-package me.adarlan.plankton;
+package me.adarlan.plankton.sandbox;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -12,7 +12,7 @@ import me.adarlan.plankton.workflow.Pipeline;
 import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.compose.Compose;
 
-public class PlanktonApplication {
+public class RemoteRunner {
 
     private static String runnerId;
     private static String runnerDirectoryOnHost;

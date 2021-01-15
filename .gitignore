@@ -7,16 +7,9 @@ engine/.classpath
 engine/.project
 engine/dependency-reduced-pom.xml
 
-local-runner/target/
-local-runner/.settings/
-local-runner/.factorypath
-local-runner/.classpath
-local-runner/.project
-local-runner/dependency-reduced-pom.xml
-
-remote-runner/target/
-remote-runner/.settings/
-remote-runner/.factorypath
-remote-runner/.classpath
-remote-runner/.project
-remote-runner/dependency-reduced-pom.xml
+runner/target/
+runner/.settings/
+runner/.factorypath
+runner/.classpath
+runner/.project
+runner/dependency-reduced-pom.xml

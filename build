@@ -17,8 +17,8 @@ buildEngine () {
         mvn install
 }
 
-buildLocalRunner () {
-    cd $BASE_DIR/local-runner
+buildRunner () {
+    cd $BASE_DIR/runner
     docker run -it --rm \
         -u $(id -u $USER):$(id -g $USER) \
         -v /etc/passwd:/etc/passwd:ro \
@@ -28,56 +28,32 @@ buildLocalRunner () {
         --entrypoint "" \
         maven:$MAVEN_TAG \
         mvn install
-    docker build -t plankton .
-    docker image tag plankton adarlan/plankton
-}
-
-buildRemoteRunner () {
-    cd $BASE_DIR/remote-runner
-    docker run -it --rm \
-        -u $(id -u $USER):$(id -g $USER) \
-        -v /etc/passwd:/etc/passwd:ro \
-        -v $HOME/.m2/repository:$HOME/.m2/repository \
-        -v $PWD:/workspace \
-        -w /workspace \
-        --entrypoint "" \
-        maven:$MAVEN_TAG \
-        mvn install
-    docker build -t plankton:remote-runner .
-    docker build -t plankton:remote-runner-sandbox -f sandbox.Dockerfile .
-    docker image tag plankton:remote-runner adarlan/plankton:remote-runner
-    docker image tag plankton:remote-runner-sandbox adarlan/plankton:remote-runner-sandbox
+    docker build -t adarlan/plankton .
+    docker build -t adarlan/plankton:sandbox -f sandbox.Dockerfile .
 }
 
 pushImages () {
     docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
     docker push adarlan/plankton
-    docker push adarlan/plankton:remote-runner
-    docker push adarlan/plankton:remote-runner-sandbox
+    docker push adarlan/plankton:sandbox
 }
 
 if [ "$1" = "" ]; then
     set -exu
     buildEngine && echo
-    buildLocalRunner && echo
-    buildRemoteRunner
+    buildRunner
 
 elif [ "$1" = "engine" ]; then
     set -exu
     buildEngine
 
-elif [ "$1" = "local-runner" ]; then
+elif [ "$1" = "runner" ]; then
     set -exu
-    buildLocalRunner
-
-elif [ "$1" = "remote-runner" ]; then
-    set -exu
-    buildRemoteRunner
+    buildRunner
 
 elif [ "$1" = "--push" ]; then
     set -exu
     buildEngine && echo
-    buildLocalRunner && echo
-    buildRemoteRunner && echo
+    buildRunner && echo
     pushImages
 fi

@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>me.adarlan</groupId>
-	<artifactId>plankton-local-runner</artifactId>
+	<artifactId>plankton-runner</artifactId>
 	<version>0.1.0</version>
 
 	<parent>
@@ -82,7 +82,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>plankton-local-runner</finalName>
+		<finalName>plankton-runner</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
