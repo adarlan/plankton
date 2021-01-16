@@ -170,7 +170,6 @@ public class DockerCompose extends Compose {
         if (shutdown) {
             return;
         }
-        logger.info("DockerCompose shutdown");
         shutdown = true;
         runningContainers.forEach(this::killContainer);
     }
