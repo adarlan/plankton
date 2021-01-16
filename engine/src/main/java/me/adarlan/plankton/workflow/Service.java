@@ -228,7 +228,8 @@ public class Service {
     private void setFailed(String message) {
         finalInstant = Instant.now();
         status = ServiceStatus.FAILED;
-        String m = Colors.BRIGHT_RED + status + Colors.BRIGHT_BLACK + " -> " + Colors.RED + message + Colors.ANSI_RESET;
+        String m = Colors.BRIGHT_RED + status + Colors.ANSI_RESET + Colors.BRIGHT_BLACK + " -> " + Colors.ANSI_RESET
+                + Colors.RED + message + Colors.ANSI_RESET;
         logger.error(INFO_PLACEHOLDER_2, prefix, m);
     }
 
