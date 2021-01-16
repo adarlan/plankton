@@ -1,9 +1,9 @@
 #!/bin/bash
 set -ex
 
-./run-with-mvn examples/build-job-image
-./run-with-mvn examples/demo-1
-./run-with-mvn examples/demo-2
-./run-with-mvn examples/getting-started
-./run-with-mvn examples/pull-job-image
-./run-with-mvn examples/wait-ports
+./run-with-$1 examples/build-job-image
+./run-with-$1 examples/demo-1
+./run-with-$1 examples/demo-2
+./run-with-$1 examples/getting-started
+./run-with-$1 examples/pull-job-image
+./run-with-$1 examples/wait-ports
