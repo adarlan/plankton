@@ -1,6 +1,6 @@
 package me.adarlan.plankton.compose;
 
-public interface ComposeConfiguration {
+public interface ComposeDocumentConfiguration {
 
     String projectName();
 
