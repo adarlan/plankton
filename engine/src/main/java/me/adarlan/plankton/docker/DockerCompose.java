@@ -15,39 +15,36 @@ import org.slf4j.LoggerFactory;
 
 import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.compose.Compose;
+import me.adarlan.plankton.compose.ComposeDocument;
 
-public class DockerCompose extends Compose {
+public class DockerCompose implements Compose {
+
+    private final ComposeDocument document;
 
     private final String dockerHost;
     private static final String BASE_COMMAND = "docker-compose";
     private String options;
 
+    private boolean networkCreated = false;
+
     private final Set<String> runningContainers = new HashSet<>();
-    private boolean shutdown = false;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public DockerCompose(DockerComposeConfiguration configuration) {
-        super(configuration);
-        this.dockerHost = configuration.dockerHost();
+    public DockerCompose(DockerConfiguration dockerConfiguration, ComposeDocument document) {
+        this.document = document;
+        this.dockerHost = dockerConfiguration.socketAddress();
         this.initializeOptions();
-        this.createNetwork();
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
     private void initializeOptions() {
         List<String> list = new ArrayList<>();
         list.add("--no-ansi");
-        list.add("--project-name " + getProjectName());
-        list.add("--file " + getFilePath());
-        list.add("--project-directory " + getProjectDirectory());
+        list.add("--project-name " + document.getProjectName());
+        list.add("--file " + document.getFilePath());
+        list.add("--project-directory " + document.getProjectDirectory());
         options = list.stream().collect(Collectors.joining(" "));
-    }
-
-    private void createNetwork() {
-        BashScript script = createScript("createNetwork");
-        String networkName = getProjectName() + "_default";
-        script.command("docker network create --attachable " + networkName);
-        script.runSuccessfully();
     }
 
     @Override
@@ -84,17 +81,30 @@ public class DockerCompose extends Compose {
         return script.getExitCode() == 0;
     }
 
+    private void createNetwork() {
+        BashScript script = createScript("createNetwork");
+        String networkName = document.getProjectName() + "_default";
+        script.command("docker network create --attachable " + networkName);
+        script.runSuccessfully();
+    }
+
     @Override
     public boolean createContainers(String serviceName, int serviceScale, Consumer<String> forEachOutput,
             Consumer<String> forEachError) {
+        synchronized (this) {
+            if (!networkCreated) {
+                createNetwork();
+                networkCreated = true;
+            }
+        }
         final BashScript script = createScript("createContainers_" + serviceName);
         final String upOptions = "--no-start --scale " + serviceName + "=" + serviceScale;
         script.command(BASE_COMMAND + " " + options + " up " + upOptions + " " + serviceName);
         script.forEachOutput(forEachOutput);
         script.forEachError(message -> {
             String m = message.trim();
-            if (m.equals("Creating " + getProjectName() + "_" + serviceName + "_1 ...")
-                    || m.equals("Creating " + getProjectName() + "_" + serviceName + "_1 ... done")) {
+            if (m.equals("Creating " + document.getProjectName() + "_" + serviceName + "_1 ...")
+                    || m.equals("Creating " + document.getProjectName() + "_" + serviceName + "_1 ... done")) {
                 // TODO replace _1 by instance numbers
                 forEachOutput.accept(message);
             } else {
@@ -122,7 +132,7 @@ public class DockerCompose extends Compose {
     public DockerContainerState getContainerState(String containerName) {
         final List<String> scriptOutput = new ArrayList<>();
         final BashScript script = createScript("getContainerState_" + containerName);
-        String d = getMetadataDirectory() + "/containers";
+        String d = document.getMetadataDirectory() + "/containers";
         String f = d + "/" + containerName;
         script.command("mkdir -p " + d);
         script.command("docker container inspect " + containerName + " > " + f);
@@ -165,18 +175,24 @@ public class DockerCompose extends Compose {
         return script.getExitCode() == 0;
     }
 
+    private BashScript createScript(String name) {
+        BashScript script = new BashScript(name);
+        script.env("DOCKER_HOST=" + dockerHost);
+        return script;
+    }
+
     @Override
-    public void shutdown() {
+    public ComposeDocument getDocument() {
+        return document;
+    }
+
+    private boolean shutdown = false;
+
+    private void shutdown() {
         if (shutdown) {
             return;
         }
         shutdown = true;
         runningContainers.forEach(this::killContainer);
-    }
-
-    private BashScript createScript(String name) {
-        BashScript script = new BashScript(name);
-        script.env("DOCKER_HOST=" + dockerHost);
-        return script;
     }
 }
