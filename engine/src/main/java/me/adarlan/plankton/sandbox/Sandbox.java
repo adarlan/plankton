@@ -14,7 +14,7 @@ import me.adarlan.plankton.bash.BashScript;
 public class Sandbox {
 
     private final String id;
-    private final boolean fromHost;
+    private boolean fromHost;
 
     private final String containerName;
     private final String networkName;
@@ -30,19 +30,17 @@ public class Sandbox {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public Sandbox(SandboxConfiguration configuration) {
-        id = configuration.id();
+        this.id = configuration.id();
+        initializeMode();
         containerName = id + "_sandbox";
-        fromHost = configuration.fromHost();
         if (fromHost) {
             networkName = null;
-            socketIp = "localhost";
-            socketAddress = "tcp://" + socketIp + ":2375";
-            // TODO does containerName work instead of localhost?
+            socketIp = "127.0.0.1";
         } else {
             networkName = id + "_sandbox";
             socketIp = containerName;
-            socketAddress = "tcp://" + containerName + ":2375";
         }
+        socketAddress = "tcp://" + socketIp + ":2375";
         workspaceDirectorySource = configuration.workspaceDirectoryOnHost();
         workspaceDirectoryTarget = "/workspace";
         getReady = new Thread(() -> {
@@ -59,14 +57,12 @@ public class Sandbox {
     }
 
     private void initializeMode() {
-        // TODO verificar se está dentro de um container ou no host
-        if (fromHost) {
-            // id = timestamp
-            // workspaceOnHost = workspace
-        } else {
-            // id = container id
-            // workspaceOnHost: inspecionar container
-        }
+        List<String> scriptOutput = new ArrayList<>();
+        BashScript script = new BashScript("get_sandbox_container_id");
+        script.command("cat /proc/self/cgroup | grep docker | head -n 1 | cut -d/ -f3");
+        script.forEachOutput(scriptOutput::add);
+        script.runSuccessfully();
+        fromHost = scriptOutput.isEmpty();
     }
 
     private void createNetwork() {

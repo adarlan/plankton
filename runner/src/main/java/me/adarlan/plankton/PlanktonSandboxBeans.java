@@ -36,11 +36,6 @@ public class PlanktonSandboxBeans {
         return new Sandbox(new SandboxConfiguration() {
 
             @Override
-            public boolean fromHost() {
-                return true;
-            }
-
-            @Override
             public String id() {
                 return String.valueOf(Instant.now().getEpochSecond());
             }
