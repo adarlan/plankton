@@ -3,15 +3,18 @@ package me.adarlan.plankton;
 import java.time.Instant;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import me.adarlan.plankton.compose.Compose;
+import me.adarlan.plankton.compose.ComposeDocument;
+import me.adarlan.plankton.compose.ComposeDocumentConfiguration;
 import me.adarlan.plankton.docker.DockerCompose;
-import me.adarlan.plankton.docker.DockerComposeConfiguration;
 import me.adarlan.plankton.workflow.Pipeline;
 
 @Configuration
+@ConditionalOnExpression("'${plankton.runner.mode}'!='sandbox'")
 public class PlanktonBeans {
 
     @Value("${plankton.compose.file}")
@@ -27,8 +30,8 @@ public class PlanktonBeans {
     private String dockerHost;
 
     @Bean
-    public DockerComposeConfiguration dockerComposeConfiguration() {
-        return new DockerComposeConfiguration() {
+    public ComposeDocument composeDocument() {
+        return new ComposeDocument(new ComposeDocumentConfiguration() {
 
             @Override
             public String projectName() {
@@ -50,23 +53,18 @@ public class PlanktonBeans {
                 return expandUserHomeTilde(metadata);
             }
 
-            @Override
-            public String dockerHost() {
-                return dockerHost;
-            }
-
             private String expandUserHomeTilde(String path) {
                 if (path.startsWith("~"))
                     return path.replaceFirst("^~", System.getProperty("user.home"));
                 else
                     return path;
             }
-        };
+        });
     }
 
     @Bean
     public Compose compose() {
-        return new DockerCompose(dockerComposeConfiguration());
+        return new DockerCompose(() -> dockerHost, composeDocument());
     }
 
     @Bean
