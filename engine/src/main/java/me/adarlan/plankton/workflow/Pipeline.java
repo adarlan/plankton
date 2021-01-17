@@ -24,11 +24,13 @@ import me.adarlan.plankton.workflow.dependencies.WaitPort;
 import me.adarlan.plankton.workflow.dependencies.WaitSuccessOf;
 import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.compose.Compose;
+import me.adarlan.plankton.compose.ComposeDocument;
 
 @EqualsAndHashCode(of = "id")
 @ToString(of = "id")
 public class Pipeline {
 
+    private final ComposeDocument composeDocument;
     final Compose compose;
 
     @Getter
@@ -39,15 +41,14 @@ public class Pipeline {
     private final Map<Service, Map<String, String>> labelsByServiceAndName = new HashMap<>();
     private final Map<Integer, Service> externalPorts = new HashMap<>();
 
-    private boolean shutdown = false;
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
     Integer biggestServiceNameLength;
 
     public Pipeline(Compose compose) {
         logger.trace("Instantiate pipeline...");
         this.compose = compose;
-        this.id = compose.getProjectName();
+        this.composeDocument = compose.getDocument();
+        this.id = composeDocument.getProjectName();
         instantiateServices();
         services.forEach(this::initializeServiceLabels);
         services.forEach(this::initializeServiceExpression);
@@ -59,14 +60,13 @@ public class Pipeline {
         services.forEach(this::initializeServiceStatus);
         this.initializeInstanceNamesAndBiggestName();
         this.initializeColors();
-        this.addShutdownHook();
         logger.info("Pipeline id: {}", id);
         logger.trace("Instantiate pipeline... (done)");
     }
 
     private void instantiateServices() {
         logger.trace("Instantiate services...");
-        compose.getServiceNames().forEach(serviceName -> {
+        composeDocument.getServiceNames().forEach(serviceName -> {
             logger.trace("Instantiate service: {}", serviceName);
             Service service = new Service(this, serviceName);
             this.services.add(service);
@@ -78,7 +78,7 @@ public class Pipeline {
 
     private void initializeServiceLabels(Service service) {
         logger.trace("initializeServiceLabels: {}", service.name);
-        Map<String, String> labelsByName = compose.getServiceLabelsMap(service.name);
+        Map<String, String> labelsByName = composeDocument.getServiceLabelsMap(service.name);
         labelsByServiceAndName.put(service, labelsByName);
     }
 
@@ -93,7 +93,7 @@ public class Pipeline {
 
     private void initializeNeedToBuild(Service service) {
         logger.trace("initializeNeedToBuild: {}", service.name);
-        Map<String, Object> serviceConfigMap = compose.getServiceMap(service.name);
+        Map<String, Object> serviceConfigMap = composeDocument.getServiceMap(service.name);
         if (serviceConfigMap.containsKey("build")) {
             service.needToBuild = true;
         } else {
@@ -128,7 +128,7 @@ public class Pipeline {
 
     private void initializeExternalPorts(Service service) {
         logger.trace("initializeExternalPorts: {}", service.name);
-        List<Map<String, Object>> ports = compose.getServicePorts(service.name);
+        List<Map<String, Object>> ports = composeDocument.getServicePorts(service.name);
         ports.forEach(p -> {
             Integer externalPort = (Integer) p.get("published"); // TODO what if published is null?
             externalPorts.put(externalPort, service);
@@ -236,24 +236,12 @@ public class Pipeline {
         }
     }
 
-    private void addShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                shutdown();
-            }
-        });
-    }
-
     public void run() throws InterruptedException {
         logger.info("Pipeline running");
         boolean done = false;
         while (!done) {
             done = true;
             for (Service service : getWaitingOrRunningServices()) {
-                if (shutdown) {
-                    return;
-                }
                 service.refresh();
                 if (service.isWaitingOrRunning()) {
                     done = false;
@@ -262,14 +250,6 @@ public class Pipeline {
             Thread.sleep(1000);
         }
         logger.info("Pipeline finished");
-    }
-
-    public void shutdown() {
-        if (shutdown) {
-            return;
-        }
-        shutdown = true;
-        compose.shutdown();
     }
 
     public Set<Service> getServices() {
