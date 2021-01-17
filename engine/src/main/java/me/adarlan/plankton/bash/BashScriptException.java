@@ -4,11 +4,11 @@ public class BashScriptException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public BashScriptException(BashScript bashScript, String msg) {
+    BashScriptException(BashScript bashScript, String msg) {
         super(makeMessage(bashScript, msg));
     }
 
-    public BashScriptException(BashScript bashScript, String msg, Throwable e) {
+    BashScriptException(BashScript bashScript, String msg, Throwable e) {
         super(makeMessage(bashScript, msg), e);
     }
 
