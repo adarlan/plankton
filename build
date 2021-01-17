@@ -1,11 +1,7 @@
 #!/bin/bash
 set -e
 
-MAVEN_TAG=3.6-jdk-11
-BASE_DIR=$PWD
-
-buildEngine () {
-    cd $BASE_DIR/engine
+buildJar () {
     docker run -it --rm \
         -u $(id -u $USER):$(id -g $USER) \
         -v /etc/passwd:/etc/passwd:ro \
@@ -13,21 +9,11 @@ buildEngine () {
         -v $PWD:/workspace \
         -w /workspace \
         --entrypoint "" \
-        maven:$MAVEN_TAG \
+        maven:3.6-jdk-11 \
         mvn install
 }
 
-buildRunner () {
-    cd $BASE_DIR/runner
-    docker run -it --rm \
-        -u $(id -u $USER):$(id -g $USER) \
-        -v /etc/passwd:/etc/passwd:ro \
-        -v $HOME/.m2/repository:$HOME/.m2/repository \
-        -v $PWD:/workspace \
-        -w /workspace \
-        --entrypoint "" \
-        maven:$MAVEN_TAG \
-        mvn install
+buildImages () {
     docker build -t adarlan/plankton .
     docker build -t adarlan/plankton:sandbox -f sandbox.Dockerfile .
 }
@@ -40,20 +26,20 @@ pushImages () {
 
 if [ "$1" = "" ]; then
     set -exu
-    buildEngine && echo
-    buildRunner
+    buildJar && echo
+    buildImages
 
-elif [ "$1" = "engine" ]; then
+elif [ "$1" = "jar" ]; then
     set -exu
-    buildEngine
+    buildJar
 
-elif [ "$1" = "runner" ]; then
+elif [ "$1" = "images" ]; then
     set -exu
-    buildRunner
+    buildImages
 
 elif [ "$1" = "--push" ]; then
     set -exu
-    buildEngine && echo
-    buildRunner && echo
+    buildJar && echo
+    buildImages && echo
     pushImages
 fi

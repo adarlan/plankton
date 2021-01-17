@@ -1,12 +1,7 @@
 #!/bin/bash
 set -ex
 
-PLANKTON_DIR=$PWD
+JAR=$PWD/target/plankton.jar
 
 cd $1
-WORKSPACE=$PWD
-cd -
-
-cd $WORKSPACE
-JAR=$PLANKTON_DIR/runner/target/plankton-runner.jar
 java -jar $JAR

@@ -1,15 +1,9 @@
 .vscode/
 
-engine/target/
-engine/.settings/
-engine/.factorypath
-engine/.classpath
-engine/.project
-engine/dependency-reduced-pom.xml
+target/
+.settings/
+.factorypath
+.classpath
+.project
 
-runner/target/
-runner/.settings/
-runner/.factorypath
-runner/.classpath
-runner/.project
-runner/dependency-reduced-pom.xml
+zzz/
