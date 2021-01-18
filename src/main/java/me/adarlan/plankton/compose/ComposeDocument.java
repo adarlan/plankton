@@ -28,9 +28,6 @@ public class ComposeDocument {
     @Getter
     private final String projectDirectory;
 
-    @Getter
-    private final String metadataDirectory;
-
     private Map<String, Object> documentMap;
     private Map<String, Object> servicesMap;
     private final Set<String> serviceNames = new HashSet<>();
@@ -40,24 +37,15 @@ public class ComposeDocument {
     public ComposeDocument(ComposeDocumentConfiguration configuration) {
         this.projectName = configuration.projectName();
         this.projectDirectory = configuration.projectDirectory();
-        this.metadataDirectory = configuration.metadataDirectory();
-        this.filePath = metadataDirectory + "/compose.yaml";
-        this.createMetadataDirectory();
-        this.initializeFile(configuration.filePath());
+        this.filePath = configuration.filePath();
+        this.initializeFile();
         this.initializeDocumentMap();
     }
 
-    private void createMetadataDirectory() {
-        logger.info("Creating Compose metadata directory");
-        BashScript script = new BashScript("create_metadata_directory");
-        script.command("mkdir -p " + metadataDirectory);
-        script.runSuccessfully();
-    }
-
-    private void initializeFile(String originalFile) {
+    private void initializeFile() {
         logger.info("Initializing Compose file");
         BashScript script = new BashScript("initialize_file");
-        script.command("docker-compose --file " + originalFile + " config > " + filePath);
+        script.command("docker-compose --file " + filePath + " config > " + filePath);
         script.command("cat " + filePath);
         script.runSuccessfully();
     }
