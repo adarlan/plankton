@@ -2,8 +2,8 @@
 set -ex
 
 cd $1
-WORKSPACE=$PWD
+PROJECT_PATH=$PWD
 COMPOSE_FILE=$PWD/plankton.compose.yaml
 cd -
 
-mvn spring-boot:run -Dspring-boot.run.arguments="--plankton.compose.file=$COMPOSE_FILE --plankton.workspace=$WORKSPACE"
+mvn spring-boot:run -Dspring-boot.run.arguments="--plankton.compose.file=$COMPOSE_FILE --plankton.project.directory=$PROJECT_PATH"
