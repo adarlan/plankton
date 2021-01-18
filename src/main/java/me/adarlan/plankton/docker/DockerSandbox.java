@@ -1,4 +1,4 @@
-package me.adarlan.plankton.sandbox;
+package me.adarlan.plankton.docker;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -11,16 +11,17 @@ import org.slf4j.LoggerFactory;
 
 import me.adarlan.plankton.bash.BashScript;
 
-public class Sandbox {
+public class DockerSandbox implements DockerDaemon {
 
+    private final String dockerHostSocketAddress;
     private final String id;
     private boolean fromHost;
 
     private final String containerName;
     private final String networkName;
 
-    private final String workspaceDirectorySource;
-    private final String workspaceDirectoryTarget;
+    private final String dockerHostWorkspaceDirectoryPath;
+    private final String workspaceDirectoryPath;
 
     private final String socketAddress;
     private final String socketIp;
@@ -29,8 +30,9 @@ public class Sandbox {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public Sandbox(SandboxConfiguration configuration) {
-        this.id = configuration.id();
+    public DockerSandbox(DockerSandboxConfiguration configuration) {
+        id = configuration.id();
+        dockerHostSocketAddress = configuration.dockerHostConfiguration().socketAddress();
         initializeMode();
         containerName = id + "_sandbox";
         if (fromHost) {
@@ -41,18 +43,9 @@ public class Sandbox {
             socketIp = containerName;
         }
         socketAddress = "tcp://" + socketIp + ":2375";
-        workspaceDirectorySource = configuration.workspaceDirectoryOnHost();
-        workspaceDirectoryTarget = "/workspace";
-        getReady = new Thread(() -> {
-            if (!fromHost) {
-                createNetwork();
-                connectNetwork(id);
-                inspectNetwork();
-            }
-            createContainer();
-            startContainer();
-            waitUntilSocketIsReady();
-        });
+        workspaceDirectoryPath = configuration.workspaceDirectoryPath();
+        dockerHostWorkspaceDirectoryPath = configuration.dockerHostConfiguration().workspaceDirectoryPath();
+        getReady = new Thread(this::getReady);
         getReady.start();
     }
 
@@ -65,20 +58,31 @@ public class Sandbox {
         fromHost = scriptOutput.isEmpty();
     }
 
+    private void getReady() {
+        if (!fromHost) {
+            createNetwork();
+            connectNetwork(id);
+            inspectNetwork();
+        }
+        createContainer();
+        startContainer();
+        waitUntilSocketIsReady();
+    }
+
     private void createNetwork() {
-        BashScript script = new BashScript("create_sandbox_network");
+        BashScript script = createDockerHostScript("create_sandbox_network");
         script.command("docker network create --driver bridge --attachable " + networkName);
         script.runSuccessfully();
     }
 
     private void connectNetwork(String runnerContainerName) {
-        BashScript script = new BashScript("connect_sandbox_network");
+        BashScript script = createDockerHostScript("connect_sandbox_network");
         script.command("docker network connect " + networkName + " " + runnerContainerName);
         script.runSuccessfully();
     }
 
     private void inspectNetwork() {
-        BashScript script = new BashScript("inspect_sandbox_network");
+        BashScript script = createDockerHostScript("inspect_sandbox_network");
         script.command("docker network inspect " + networkName);
         script.runSuccessfully();
     }
@@ -90,7 +94,7 @@ public class Sandbox {
         containerOptionList.add("--name " + containerName);
         containerOptionList.add("--tty");
         containerOptionList.add("--rm");
-        containerOptionList.add("-v " + workspaceDirectorySource + ":" + workspaceDirectoryTarget);
+        containerOptionList.add("-v " + dockerHostWorkspaceDirectoryPath + ":" + workspaceDirectoryPath);
         if (fromHost) {
             containerOptionList.add("-p 2375:2375");
         } else {
@@ -104,24 +108,25 @@ public class Sandbox {
         String containerOptions = containerOptionList.stream().collect(Collectors.joining(" "));
         String sandboxOptions = sandboxOptionList.stream().collect(Collectors.joining(" "));
 
-        BashScript script = new BashScript("create_sandbox_container");
+        BashScript script = createDockerHostScript("create_sandbox_container");
         script.command("docker container create " + containerOptions + " adarlan/plankton:sandbox " + sandboxOptions);
         script.run();
         if (script.getExitCode() != 0) {
-            throw new SandboxException(
+            throw new DockerSandboxException(
                     "Unable to create sandbox container; Script exited with code: " + script.getExitCode());
         }
     }
 
     private void startContainer() {
         new Thread(() -> {
-            BashScript script = new BashScript("start_sandbox_container");
+            BashScript script = createDockerHostScript("start_sandbox_container");
             script.command("docker container start --attach " + containerName);
             script.forEachOutput(logger::info);
             script.forEachError(logger::error);
             script.run();
             if (script.getExitCode() != 0) {
-                throw new SandboxException("Sandbox container exited with a non-zero code: " + script.getExitCode());
+                throw new DockerSandboxException(
+                        "Sandbox container exited with a non-zero code: " + script.getExitCode());
             }
         }).start();
     }
@@ -164,6 +169,7 @@ public class Sandbox {
         }
     }
 
+    @Override
     public String getSocketAddress() {
         waitUntilSandboxIsReady();
         return socketAddress;
@@ -179,11 +185,17 @@ public class Sandbox {
     }
 
     public void stop() {
-        BashScript script = new BashScript("stop_sandbox_container");
+        BashScript script = createDockerHostScript("stop_sandbox_container");
         script.command("docker stop " + containerName);
         script.runSuccessfully();
         // TODO interrupt getReady thread
         // TODO disconnect sandbox network
         // TODO remove sandbox network
+    }
+
+    private BashScript createDockerHostScript(String name) {
+        BashScript script = new BashScript(name);
+        script.env("DOCKER_HOST=" + dockerHostSocketAddress);
+        return script;
     }
 }

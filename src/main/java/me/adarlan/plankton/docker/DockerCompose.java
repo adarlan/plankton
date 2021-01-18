@@ -19,9 +19,10 @@ import me.adarlan.plankton.compose.ComposeDocument;
 
 public class DockerCompose implements Compose {
 
-    private final ComposeDocument document;
+    private final DockerDaemon dockerDaemon;
+    private final ComposeDocument composeDocument;
+    private final String metadataDirectoryPath;
 
-    private final String dockerHost;
     private static final String BASE_COMMAND = "docker-compose";
     private String options;
 
@@ -31,9 +32,10 @@ public class DockerCompose implements Compose {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public DockerCompose(DockerConfiguration dockerConfiguration, ComposeDocument document) {
-        this.document = document;
-        this.dockerHost = dockerConfiguration.socketAddress();
+    public DockerCompose(DockerComposeConfiguration configuration) {
+        this.dockerDaemon = configuration.dockerDaemon();
+        this.composeDocument = configuration.composeDocument();
+        this.metadataDirectoryPath = configuration.metadataDirectoryPath();
         this.initializeOptions();
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
@@ -41,9 +43,9 @@ public class DockerCompose implements Compose {
     private void initializeOptions() {
         List<String> list = new ArrayList<>();
         list.add("--no-ansi");
-        list.add("--project-name " + document.getProjectName());
-        list.add("--file " + document.getFilePath());
-        list.add("--project-directory " + document.getProjectDirectory());
+        list.add("--project-name " + composeDocument.getProjectName());
+        list.add("--file " + composeDocument.getFilePath());
+        list.add("--project-directory " + composeDocument.getProjectDirectory());
         options = list.stream().collect(Collectors.joining(" "));
     }
 
@@ -83,7 +85,7 @@ public class DockerCompose implements Compose {
 
     private void createNetwork() {
         BashScript script = createScript("createNetwork");
-        String networkName = document.getProjectName() + "_default";
+        String networkName = composeDocument.getProjectName() + "_default";
         script.command("docker network create --attachable " + networkName);
         script.runSuccessfully();
     }
@@ -103,8 +105,8 @@ public class DockerCompose implements Compose {
         script.forEachOutput(forEachOutput);
         script.forEachError(message -> {
             String m = message.trim();
-            if (m.equals("Creating " + document.getProjectName() + "_" + serviceName + "_1 ...")
-                    || m.equals("Creating " + document.getProjectName() + "_" + serviceName + "_1 ... done")) {
+            if (m.equals("Creating " + composeDocument.getProjectName() + "_" + serviceName + "_1 ...")
+                    || m.equals("Creating " + composeDocument.getProjectName() + "_" + serviceName + "_1 ... done")) {
                 // TODO replace _1 by instance numbers
                 forEachOutput.accept(message);
             } else {
@@ -132,7 +134,7 @@ public class DockerCompose implements Compose {
     public DockerContainerState getContainerState(String containerName) {
         final List<String> scriptOutput = new ArrayList<>();
         final BashScript script = createScript("getContainerState_" + containerName);
-        String d = document.getMetadataDirectory() + "/containers";
+        String d = metadataDirectoryPath + "/containers";
         String f = d + "/" + containerName;
         script.command("mkdir -p " + d);
         script.command("docker container inspect " + containerName + " > " + f);
@@ -177,13 +179,13 @@ public class DockerCompose implements Compose {
 
     private BashScript createScript(String name) {
         BashScript script = new BashScript(name);
-        script.env("DOCKER_HOST=" + dockerHost);
+        script.env("DOCKER_HOST=" + dockerDaemon.getSocketAddress());
         return script;
     }
 
     @Override
     public ComposeDocument getDocument() {
-        return document;
+        return composeDocument;
     }
 
     private boolean shutdown = false;
