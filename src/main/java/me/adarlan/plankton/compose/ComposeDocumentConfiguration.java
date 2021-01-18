@@ -7,6 +7,4 @@ public interface ComposeDocumentConfiguration {
     String filePath();
 
     String projectDirectory();
-
-    String metadataDirectory();
 }
