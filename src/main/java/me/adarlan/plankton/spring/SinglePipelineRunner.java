@@ -1,13 +1,15 @@
-package me.adarlan.plankton;
+package me.adarlan.plankton.spring;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 import me.adarlan.plankton.workflow.Pipeline;
 
 @Component
-public class PlanktonRunner implements CommandLineRunner {
+@ConditionalOnExpression("'${plankton.runner.mode}'=='single-pipeline'")
+public class SinglePipelineRunner implements CommandLineRunner {
 
     @Autowired
     private Pipeline pipeline;
