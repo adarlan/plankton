@@ -8,5 +8,5 @@ public interface DockerComposeConfiguration {
 
     ComposeDocument composeDocument();
 
-    String metadataDirectoryPath();
+    String containerStateDirectoryPath();
 }

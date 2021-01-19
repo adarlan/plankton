@@ -23,7 +23,7 @@ public class DockerCompose implements Compose {
 
     private final DockerDaemon dockerDaemon;
     private final ComposeDocument composeDocument;
-    private final String metadataDirectoryPath;
+    private final String containerStateDirectoryPath;
 
     private static final String BASE_COMMAND = "docker-compose";
     private String options;
@@ -40,8 +40,8 @@ public class DockerCompose implements Compose {
         logger.info("dockerDaemon={}", dockerDaemon);
         this.composeDocument = configuration.composeDocument();
         logger.info("composeDocument={}", composeDocument);
-        this.metadataDirectoryPath = configuration.metadataDirectoryPath();
-        logger.info("metadataDirectoryPath={}", metadataDirectoryPath);
+        this.containerStateDirectoryPath = configuration.containerStateDirectoryPath();
+        logger.info("metadataDirectoryPath={}", containerStateDirectoryPath);
         initializeOptions();
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
@@ -147,9 +147,7 @@ public class DockerCompose implements Compose {
         logger.info("Getting container state: {}", containerName);
         final List<String> scriptOutput = new ArrayList<>();
         final BashScript script = createScript("getContainerState_" + containerName);
-        String d = metadataDirectoryPath + "/containers";
-        String f = d + "/" + containerName;
-        script.command("mkdir -p " + d);
+        String f = containerStateDirectoryPath + "/" + containerName;
         script.command("docker container inspect " + containerName + " > " + f);
         script.command("cat " + f + " | jq --compact-output '.[] | .State'");
         script.command("STATUS=$(cat " + f + " | jq -r '.[] | .State.Status')");
