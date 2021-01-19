@@ -7,11 +7,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.Getter;
+import lombok.ToString;
 import me.adarlan.plankton.bash.BashScript;
 
+@ToString(of = { "id", "directoryPath", "composeFilePath" })
 public class PlanktonConfiguration {
 
-    private static final String PLANKTON_DIRECTORY_PATH = "/var/lib/plankton";
+    private static final String PLANKTON_DIRECTORY_PATH = "/home/adarlan/.plankton";
 
     @Getter
     private final String id;
@@ -27,14 +29,20 @@ public class PlanktonConfiguration {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public PlanktonConfiguration(String composeFilePath, Consumer<String> workspaceMaker) {
+    public PlanktonConfiguration(String originalComposeFilePath, Consumer<String> workspaceMaker) {
+        logger.info("Loading PlanktonConfiguration");
         this.id = String.valueOf(Instant.now().getEpochSecond());
+        logger.info("id={}", id);
         this.directoryPath = PLANKTON_DIRECTORY_PATH + "/" + id;
+        logger.info("directoryPath={}", directoryPath);
         this.composeFilePath = directoryPath + "/compose.yaml";
+        logger.info("composeFilePath={}", this.composeFilePath);
         this.workspaceDirectoryPath = directoryPath + "/workspace";
+        logger.info("workspaceDirectoryPath={}", workspaceDirectoryPath);
         createDirectory();
-        copyComposeFile(composeFilePath, this.composeFilePath);
+        copyComposeFile(originalComposeFilePath, this.composeFilePath);
         createWorkspaceDirectory();
+        logger.info("Making workspace");
         workspaceMaker.accept(workspaceDirectoryPath);
     }
 
@@ -53,9 +61,9 @@ public class PlanktonConfiguration {
     }
 
     private void createWorkspaceDirectory() {
-        logger.info("Creating workspace directory: {}", directoryPath);
+        logger.info("Creating workspace directory: {}", workspaceDirectoryPath);
         BashScript script = new BashScript("create_workspace_directory");
-        script.command("mkdir -p " + directoryPath);
+        script.command("mkdir -p " + workspaceDirectoryPath);
         script.runSuccessfully();
     }
 }
