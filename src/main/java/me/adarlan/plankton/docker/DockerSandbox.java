@@ -18,14 +18,14 @@ public class DockerSandbox implements DockerDaemon {
     private final String dockerHostSocketAddress;
     private final String id;
 
-    private boolean fromHost;
-    private String runnerContainerId;
+    private final boolean runningFromHost;
+    private final String runningFromContainerId;
 
     private final String containerName;
     private final String networkName;
 
-    private final String dockerHostWorkspaceDirectoryPath;
     private final String workspaceDirectoryPath;
+    private final String underlyingWorkspaceDirectoryPath;
 
     private final String socketAddress;
     private final String socketIp;
@@ -35,53 +35,39 @@ public class DockerSandbox implements DockerDaemon {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public DockerSandbox(DockerSandboxConfiguration configuration) {
+
         logger.info("Loading DockerSandbox");
+
+        this.runningFromHost = configuration.runningFromHost();
+        this.runningFromContainerId = configuration.runningFromContainerId();
+        this.dockerHostSocketAddress = configuration.dockerHostSocketAddress();
         this.id = configuration.id();
-        logger.info("id={}", id);
-        this.dockerHostSocketAddress = configuration.dockerHostConfiguration().socketAddress();
-        logger.info("dockerHostSocketAddress={}", dockerHostSocketAddress);
-        initializeFromHostFlagAndRunnerContainerId();
         this.containerName = id + "_sandbox";
-        logger.info("containerName={}", containerName);
-        if (fromHost) {
-            networkName = null;
-            socketIp = "127.0.0.1";
+        if (runningFromHost) {
+            this.networkName = null;
+            this.socketIp = "127.0.0.1";
         } else {
-            networkName = id + "_sandbox";
-            socketIp = containerName;
+            this.networkName = id + "_sandbox";
+            this.socketIp = containerName;
         }
         this.socketAddress = "tcp://" + socketIp + ":2375";
-        logger.info("socketAddress={}", socketAddress);
         this.workspaceDirectoryPath = configuration.workspaceDirectoryPath();
+        this.underlyingWorkspaceDirectoryPath = configuration.underlyingWorkspaceDirectoryPath();
+
+        logger.info("id={}", id);
+        logger.info("dockerHostSocketAddress={}", dockerHostSocketAddress);
+        logger.info("containerName={}", containerName);
+        logger.info("socketAddress={}", socketAddress);
         logger.info("workspaceDirectoryPath={}", workspaceDirectoryPath);
-        this.dockerHostWorkspaceDirectoryPath = configuration.dockerHostConfiguration().workspaceDirectoryPath();
-        logger.info("dockerHostWorkspaceDirectoryPath={}", dockerHostWorkspaceDirectoryPath);
+        logger.info("dockerHostWorkspaceDirectoryPath={}", underlyingWorkspaceDirectoryPath);
+
         this.getReady = new Thread(this::getReady);
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
         getReady.start();
     }
 
-    private void initializeFromHostFlagAndRunnerContainerId() {
-        // TODO isso deveria ser parte de DockerHost... ou DockerRunnerConfiguration???
-        logger.info("Initializing mode");
-        List<String> scriptOutput = new ArrayList<>();
-        BashScript script = new BashScript("get_sandbox_container_id");
-        script.command("cat /proc/self/cgroup | grep docker | head -n 1 | cut -d/ -f3");
-        script.forEachOutput(scriptOutput::add);
-        script.runSuccessfully();
-        if (scriptOutput.isEmpty()) {
-            this.fromHost = true;
-            this.runnerContainerId = null;
-            logger.info("Running Plankton directly from Docker host");
-        } else {
-            this.fromHost = false;
-            this.runnerContainerId = scriptOutput.stream().collect(Collectors.joining());
-            logger.info("Running Plankton from within a Docker container: {}", runnerContainerId);
-        }
-    }
-
     private void getReady() {
-        if (!fromHost) {
+        if (!runningFromHost) {
             createBridgeNetwork();
             connectBridgeNetwork();
             inspectBridgeNetwork();
@@ -106,7 +92,7 @@ public class DockerSandbox implements DockerDaemon {
     private void connectBridgeNetwork() {
         logger.info("Connecting sandbox bridge network");
         BashScript script = createDockerHostScript("connect_sandbox_network");
-        script.command("docker network connect " + networkName + " " + runnerContainerId);
+        script.command("docker network connect " + networkName + " " + runningFromContainerId);
         script.runSuccessfully();
     }
 
@@ -125,8 +111,8 @@ public class DockerSandbox implements DockerDaemon {
         containerOptionList.add("--name " + containerName);
         containerOptionList.add("--tty");
         containerOptionList.add("--rm");
-        containerOptionList.add("-v " + dockerHostWorkspaceDirectoryPath + ":" + workspaceDirectoryPath);
-        if (fromHost) {
+        containerOptionList.add("-v " + underlyingWorkspaceDirectoryPath + ":" + workspaceDirectoryPath);
+        if (runningFromHost) {
             containerOptionList.add("-p 2375:2375");
         } else {
             containerOptionList.add("--network " + networkName);
@@ -222,8 +208,8 @@ public class DockerSandbox implements DockerDaemon {
         getReady.interrupt();
         BashScript script = createDockerHostScript("stop_sandbox_container");
         script.command("docker stop " + containerName);
-        if (fromHost) {
-            script.command("docker network disconnect " + networkName + " " + runnerContainerId);
+        if (!runningFromHost) {
+            script.command("docker network disconnect " + networkName + " " + runningFromContainerId);
             script.command("docker network rm " + networkName);
         }
         script.runSuccessfully();

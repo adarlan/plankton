@@ -4,7 +4,13 @@ public interface DockerSandboxConfiguration {
 
     String id();
 
-    DockerHostConfiguration dockerHostConfiguration();
+    String dockerHostSocketAddress();
+
+    String underlyingWorkspaceDirectoryPath();
 
     String workspaceDirectoryPath();
+
+    boolean runningFromHost();
+
+    String runningFromContainerId();
 }
