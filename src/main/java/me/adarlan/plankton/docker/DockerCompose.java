@@ -13,10 +13,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lombok.ToString;
 import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.compose.Compose;
 import me.adarlan.plankton.compose.ComposeDocument;
 
+@ToString(of = { "dockerDaemon", "composeDocument" })
 public class DockerCompose implements Compose {
 
     private final DockerDaemon dockerDaemon;
@@ -33,24 +35,31 @@ public class DockerCompose implements Compose {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public DockerCompose(DockerComposeConfiguration configuration) {
+        logger.info("Loading DockerCompose");
         this.dockerDaemon = configuration.dockerDaemon();
+        logger.info("dockerDaemon={}", dockerDaemon);
         this.composeDocument = configuration.composeDocument();
+        logger.info("composeDocument={}", composeDocument);
         this.metadataDirectoryPath = configuration.metadataDirectoryPath();
-        this.initializeOptions();
+        logger.info("metadataDirectoryPath={}", metadataDirectoryPath);
+        initializeOptions();
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
     private void initializeOptions() {
+        logger.info("Initializing options");
         List<String> list = new ArrayList<>();
         list.add("--no-ansi");
         list.add("--project-name " + composeDocument.getProjectName());
         list.add("--file " + composeDocument.getFilePath());
         list.add("--project-directory " + composeDocument.getProjectDirectory());
-        options = list.stream().collect(Collectors.joining(" "));
+        this.options = list.stream().collect(Collectors.joining(" "));
+        logger.info("options={}", options);
     }
 
     @Override
     public boolean buildImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
+        logger.info("Building image: {}", serviceName);
         final BashScript script = createScript("buildImage_" + serviceName);
         final String buildOptions = "";
         script.command(BASE_COMMAND + " " + options + " build " + buildOptions + " " + serviceName);
@@ -68,6 +77,7 @@ public class DockerCompose implements Compose {
 
     @Override
     public boolean pullImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
+        logger.info("Pulling image: {}", serviceName);
         final BashScript script = createScript("pullImage_" + serviceName);
         script.command(BASE_COMMAND + " " + options + " pull " + serviceName);
         script.forEachOutput(forEachOutput);
@@ -84,6 +94,7 @@ public class DockerCompose implements Compose {
     }
 
     private void createNetwork() {
+        logger.info("Creating default network");
         BashScript script = createScript("createNetwork");
         String networkName = composeDocument.getProjectName() + "_default";
         script.command("docker network create --attachable " + networkName);
@@ -99,6 +110,7 @@ public class DockerCompose implements Compose {
                 networkCreated = true;
             }
         }
+        logger.info("Creating containers: {}; Scale: {}", serviceName, serviceScale);
         final BashScript script = createScript("createContainers_" + serviceName);
         final String upOptions = "--no-start --scale " + serviceName + "=" + serviceScale;
         script.command(BASE_COMMAND + " " + options + " up " + upOptions + " " + serviceName);
@@ -119,19 +131,20 @@ public class DockerCompose implements Compose {
 
     @Override
     public void startContainer(String containerName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
+        logger.info("Starting container: {}", containerName);
         final BashScript script = createScript("runContainer_" + containerName);
         script.command("docker container start --attach " + containerName);
         script.forEachOutput(forEachOutput);
         script.forEachError(forEachError);
-        if (shutdown) {
-            return;
+        synchronized (runningContainers) {
+            runningContainers.add(containerName);
         }
-        runningContainers.add(containerName);
         script.run();
     }
 
     @Override
     public DockerContainerState getContainerState(String containerName) {
+        logger.info("Getting container state: {}", containerName);
         final List<String> scriptOutput = new ArrayList<>();
         final BashScript script = createScript("getContainerState_" + containerName);
         String d = metadataDirectoryPath + "/containers";
@@ -144,10 +157,12 @@ public class DockerCompose implements Compose {
         script.forEachOutput(scriptOutput::add);
         script.runSuccessfully();
         final String json = scriptOutput.stream().collect(Collectors.joining());
-        logger.debug("{}: {}", containerName, json);
+        logger.debug("Container state JSON ({}): {}", containerName, json);
         DockerContainerState containerState = parseContainerStateJson(json);
         if (containerState.exited()) {
-            runningContainers.remove(containerName);
+            synchronized (runningContainers) {
+                runningContainers.remove(containerName);
+            }
         }
         return containerState;
     }
@@ -162,7 +177,7 @@ public class DockerCompose implements Compose {
 
     @Override
     public void stopContainer(String containerName) {
-        logger.info("DockerCompose stop container: {}", containerName);
+        logger.info("Stopping container: {}", containerName);
         BashScript script = createScript("stopContainer_" + containerName);
         script.command("docker container stop " + containerName);
         script.run();
@@ -170,11 +185,17 @@ public class DockerCompose implements Compose {
 
     @Override
     public boolean killContainer(String containerName) {
-        logger.info("DockerCompose kill container: {}", containerName);
+        logger.info("Killing container: {}", containerName);
         BashScript script = createScript("killContainer_" + containerName);
         script.command("docker container kill " + containerName);
         script.run();
-        return script.getExitCode() == 0;
+        int exitCode = script.getExitCode();
+        if (exitCode == 0) {
+            synchronized (runningContainers) {
+                runningContainers.remove(containerName);
+            }
+        }
+        return exitCode == 0;
     }
 
     private BashScript createScript(String name) {
@@ -188,13 +209,7 @@ public class DockerCompose implements Compose {
         return composeDocument;
     }
 
-    private boolean shutdown = false;
-
     private void shutdown() {
-        if (shutdown) {
-            return;
-        }
-        shutdown = true;
         runningContainers.forEach(this::killContainer);
     }
 }
