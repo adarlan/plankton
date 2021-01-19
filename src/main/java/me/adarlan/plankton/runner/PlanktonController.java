@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 import me.adarlan.plankton.workflow.Pipeline;
 
 @RestController
-// @ConditionalOnProperty("plankton.web.enable")
 @CrossOrigin(origins = "*")
 @RequestMapping("/api")
 public class PlanktonController {

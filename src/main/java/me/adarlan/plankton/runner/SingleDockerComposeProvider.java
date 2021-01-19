@@ -1,7 +1,6 @@
 package me.adarlan.plankton.runner;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
@@ -12,11 +11,10 @@ import me.adarlan.plankton.docker.DockerComposeConfiguration;
 import me.adarlan.plankton.docker.DockerDaemon;
 
 @Component
-@ConditionalOnExpression("'${plankton.runner.mode}'=='single-pipeline' && ${plankton.docker:false}")
 public class SingleDockerComposeProvider {
 
     @Autowired
-    private PlanktonConfiguration planktonConfiguration;
+    private PlanktonSetup planktonSetup;
 
     @Autowired
     private DockerDaemon dockerDaemon;
@@ -39,8 +37,8 @@ public class SingleDockerComposeProvider {
             }
 
             @Override
-            public String metadataDirectoryPath() {
-                return planktonConfiguration.getDirectoryPath() + "/" + "docker";
+            public String containerStateDirectoryPath() {
+                return planktonSetup.getContainerStateDirectoryPath();
             }
         });
     }

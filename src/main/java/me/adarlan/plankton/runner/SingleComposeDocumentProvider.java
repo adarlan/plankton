@@ -1,7 +1,6 @@
 package me.adarlan.plankton.runner;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
@@ -9,11 +8,10 @@ import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.compose.ComposeDocumentConfiguration;
 
 @Component
-@ConditionalOnExpression("'${plankton.runner.mode}'=='single-pipeline'")
 public class SingleComposeDocumentProvider {
 
     @Autowired
-    private PlanktonConfiguration planktonConfiguration;
+    private PlanktonSetup planktonSetup;
 
     @Bean
     public ComposeDocument composeDocument() {
@@ -21,17 +19,17 @@ public class SingleComposeDocumentProvider {
 
             @Override
             public String projectName() {
-                return planktonConfiguration.getId();
+                return planktonSetup.getPipelineId();
             }
 
             @Override
             public String filePath() {
-                return planktonConfiguration.getComposeFilePath();
+                return planktonSetup.getComposeFilePath();
             }
 
             @Override
             public String projectDirectory() {
-                return planktonConfiguration.getWorkspaceDirectoryPath();
+                return planktonSetup.getWorkspaceDirectoryPath();
             }
         });
     }
