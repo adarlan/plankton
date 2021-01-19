@@ -13,33 +13,51 @@ buildJar () {
         mvn install
 }
 
-buildImages () {
+buildImage () {
     docker build -t adarlan/plankton .
-    docker build -t adarlan/plankton:sandbox -f sandbox.Dockerfile .
+}
+
+buildSandbox () {
+    docker build -t adarlan/plankton:sandbox -f sandbox/Dockerfile sandbox
+}
+
+buildSandboxStuffed () {
+    # TODO /etc/docker/daemon.json ADD -> "default-runtime": "sysbox-runc"
+    # docker build -t adarlan/plankton:sandbox-stuffed \
+    #     --build-arg "BUILT_IN_IMAGES=alpine docker" \
+    #     -f sandbox/Dockerfile sandbox
+    # TODO /etc/docker/daemon.json REMOVE -> "default-runtime"
 }
 
 pushImages () {
     docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
     docker push adarlan/plankton
     docker push adarlan/plankton:sandbox
+    # TODO docker push adarlan/plankton:sandbox-stuffed
 }
 
 if [ "$1" = "" ]; then
     set -exu
     buildJar && echo
-    buildImages
+    buildImage && echo
+    buildSandbox && echo
+    buildSandboxStuffed
 
-elif [ "$1" = "jar" ]; then
+elif [ "$1" = "runner" ]; then
     set -exu
-    buildJar
+    buildJar && echo
+    buildImage
 
-elif [ "$1" = "images" ]; then
+elif [ "$1" = "sandbox" ]; then
     set -exu
-    buildImages
+    buildSandbox && echo
+    buildSandboxStuffed
 
 elif [ "$1" = "--push" ]; then
     set -exu
     buildJar && echo
-    buildImages && echo
+    buildImage && echo
+    buildSandbox && echo
+    buildSandboxStuffed && echo
     pushImages
 fi
