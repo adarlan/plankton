@@ -11,7 +11,12 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +26,50 @@ import lombok.ToString;
 
 @ToString(of = "name")
 public class BashScript {
+
+    private static int count = 0;
+
+    public static void run(String command) throws BashScriptFailedException {
+        BashScript script = new BashScript("bash_script_" + ++count);
+        script.command(command);
+        script.run();
+        int exitCode = script.getExitCode();
+        if (exitCode != 0) {
+            throw new BashScriptFailedException("Bash script returned a non-zero code: " + exitCode);
+        }
+    }
+
+    public static String runAndGetOutputString(String command) throws BashScriptFailedException {
+        List<String> output = new ArrayList<>();
+        BashScript script = new BashScript("bash_script_" + ++count);
+        script.command(command);
+        script.forEachOutput(output::add);
+        script.run();
+        int exitCode = script.getExitCode();
+        if (exitCode != 0) {
+            throw new BashScriptFailedException("Bash script returned a non-zero code: " + exitCode);
+        }
+        return output.stream().collect(Collectors.joining());
+    }
+
+    public static <T> T runAndGetOutputJson(String command, Class<T> class1) throws BashScriptFailedException {
+        String json = runAndGetOutputString(command);
+        try {
+            return new ObjectMapper().readValue(json, class1);
+        } catch (JsonProcessingException e) {
+            throw new BashScriptException("Unable to parse JSON", e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> runAndGetOutputJsonObject(String command) throws BashScriptFailedException {
+        return runAndGetOutputJson(command, Map.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<Object> runAndGetOutputJsonArray(String command) throws BashScriptFailedException {
+        return runAndGetOutputJson(command, List.class);
+    }
 
     @Getter
     private String name;
@@ -102,7 +151,7 @@ public class BashScript {
     public void runSuccessfully() {
         run();
         if (exitCode != 0) {
-            throw new BashScriptFailedException(this, "Returned a non-zero code: " + exitCode);
+            throw new BashScriptException(this, "Returned a non-zero code: " + exitCode);
         }
     }
 
