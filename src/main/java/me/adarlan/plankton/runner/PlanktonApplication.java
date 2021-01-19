@@ -1,4 +1,4 @@
-package me.adarlan.plankton.spring;
+package me.adarlan.plankton.runner;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

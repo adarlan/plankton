@@ -1,4 +1,4 @@
-package me.adarlan.plankton.spring;
+package me.adarlan.plankton.runner;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
