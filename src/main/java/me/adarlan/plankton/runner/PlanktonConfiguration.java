@@ -1,67 +1,40 @@
 package me.adarlan.plankton.runner;
 
-import java.time.Instant;
-import java.util.function.Consumer;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import lombok.Data;
 import lombok.Getter;
-import me.adarlan.plankton.bash.BashScript;
 
+// @Data
+// @Configuration
+// @ConfigurationProperties(prefix = "plankton")
+@Getter
+@Component
 public class PlanktonConfiguration {
 
-    private static final String PLANKTON_DIRECTORY_PATH = "/home/adarlan/.plankton";
+    // TODO private String runnerMode;
+    // TODO private boolean dockerEnabled;
+    // TODO private String dockerSandboxImage;
+    // TODO private String dockerSandboxCache;
 
-    @Getter
-    private final String id;
+    @Value("${plankton.metadata.directory}")
+    private String metadataDirectory;
 
-    @Getter
-    private final String directoryPath;
+    @Value("${plankton.metadata.directory.underlying}")
+    private String metadataDirectoryUnderlying;
 
-    @Getter
-    private final String composeFilePath;
+    @Value("${plankton.compose.file}")
+    private String composeFile;
 
-    @Getter
-    private final String workspaceDirectoryPath;
+    @Value("${plankton.project.directory}")
+    private String projectDirectory;
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    @Value("${plankton.docker.host}")
+    private String dockerHost;
 
-    public PlanktonConfiguration(String originalComposeFilePath, Consumer<String> workspaceMaker) {
-        logger.info("Loading PlanktonConfiguration");
-        this.id = String.valueOf(Instant.now().getEpochSecond());
-        logger.info("id={}", id);
-        this.directoryPath = PLANKTON_DIRECTORY_PATH + "/" + id;
-        logger.info("directoryPath={}", directoryPath);
-        this.composeFilePath = directoryPath + "/compose.yaml";
-        logger.info("composeFilePath={}", this.composeFilePath);
-        this.workspaceDirectoryPath = directoryPath + "/workspace";
-        logger.info("workspaceDirectoryPath={}", workspaceDirectoryPath);
-        createDirectory();
-        copyComposeFile(originalComposeFilePath, this.composeFilePath);
-        createWorkspaceDirectory();
-        logger.info("Making workspace");
-        workspaceMaker.accept(workspaceDirectoryPath);
-    }
-
-    private void createDirectory() {
-        logger.info("Creating pipeline directory: {}", directoryPath);
-        BashScript script = new BashScript("create_pipeline_directory");
-        script.command("mkdir -p " + directoryPath);
-        script.runSuccessfully();
-    }
-
-    private void copyComposeFile(String fromPath, String toPath) {
-        logger.info("Copying Compose file from {} to {}", fromPath, toPath);
-        BashScript script = new BashScript("copy_compose_file");
-        script.command("cp " + fromPath + " " + toPath);
-        script.runSuccessfully();
-    }
-
-    private void createWorkspaceDirectory() {
-        logger.info("Creating workspace directory: {}", workspaceDirectoryPath);
-        BashScript script = new BashScript("create_workspace_directory");
-        script.command("mkdir -p " + workspaceDirectoryPath);
-        script.runSuccessfully();
-    }
+    @Value("${plankton.docker.sandbox.enabled}")
+    private boolean dockerSandboxEnabled;
 }
