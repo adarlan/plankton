@@ -14,7 +14,7 @@ import me.adarlan.plankton.docker.DockerSandbox;
 import me.adarlan.plankton.docker.DockerSandboxConfiguration;
 
 @Component
-@ConditionalOnExpression("'${plankton.runner.mode}'=='single-pipeline' and '${plankton.docker}'==true")
+@ConditionalOnExpression("'${plankton.runner.mode}'=='single-pipeline' && ${plankton.docker:false}")
 public class SingleDockerDaemonProvider {
 
     @Value("${plankton.docker.sandbox}")

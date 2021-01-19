@@ -13,7 +13,7 @@ import me.adarlan.plankton.docker.DockerComposeConfiguration;
 import me.adarlan.plankton.docker.DockerDaemon;
 
 @Component
-@ConditionalOnExpression("'${plankton.runner.mode}'=='single-pipeline' and '${plankton.docker}'==true")
+@ConditionalOnExpression("'${plankton.runner.mode}'=='single-pipeline' && ${plankton.docker:false}")
 public class SingleDockerComposeProvider {
 
     @Autowired
