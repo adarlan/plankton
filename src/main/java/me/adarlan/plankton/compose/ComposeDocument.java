@@ -15,8 +15,10 @@ import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import lombok.Getter;
+import lombok.ToString;
 import me.adarlan.plankton.bash.BashScript;
 
+@ToString(of = { "projectName", "filePath", "projectDirectory" })
 public class ComposeDocument {
 
     @Getter
@@ -35,31 +37,37 @@ public class ComposeDocument {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public ComposeDocument(ComposeDocumentConfiguration configuration) {
+        logger.info("Loading ComposeDocument");
         this.projectName = configuration.projectName();
+        logger.info("projectName={}", projectName);
         this.projectDirectory = configuration.projectDirectory();
+        logger.info("projectDirectory={}", projectDirectory);
         this.filePath = configuration.filePath();
-        this.initializeFile();
-        this.initializeDocumentMap();
+        logger.info("filePath={}", filePath);
+        configureFile();
+        initializeDocumentMap();
     }
 
-    private void initializeFile() {
-        logger.info("Initializing Compose file");
+    private void configureFile() {
+        logger.info("Configuring file");
         BashScript script = new BashScript("initialize_file");
-        script.command("docker-compose --file " + filePath + " config > " + filePath);
+        script.command("mv " + filePath + " " + filePath + ".original.yaml");
+        script.command("docker-compose --file " + filePath + ".original.yaml config > " + filePath);
         script.command("cat " + filePath);
         script.runSuccessfully();
     }
 
     @SuppressWarnings("unchecked")
     private void initializeDocumentMap() {
-        logger.info("Initializing Compose document map");
+        logger.info("Initializing document map");
         try (FileInputStream fileInputStream = new FileInputStream(filePath);) {
             final Yaml yaml = new Yaml();
             documentMap = yaml.load(fileInputStream);
         } catch (IOException e) {
             throw new ComposeDocumentException("Unable to initialize Compose document map", e);
         }
-        servicesMap = (Map<String, Object>) documentMap.get("services");
+        this.servicesMap = (Map<String, Object>) documentMap.get("services");
+        logger.info("servicesMap={}", servicesMap);
         servicesMap.keySet().forEach(serviceNames::add);
     }
 

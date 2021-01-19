@@ -5,9 +5,11 @@ import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import me.adarlan.plankton.compose.ContainerState;
 
 @NoArgsConstructor
+@ToString
 public class DockerContainerState implements ContainerState {
 
     @JsonProperty("Status")

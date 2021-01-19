@@ -17,7 +17,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.Getter;
+import lombok.ToString;
 
+@ToString(of = "name")
 public class BashScript {
 
     @Getter
@@ -75,8 +77,8 @@ public class BashScript {
     }
 
     public BashScript run() {
-        variables.forEach(variable -> logger.debug("{}: {}", name, variable));
-        commands.forEach(command -> logger.debug("{}: {}", name, command));
+        variables.forEach(variable -> logger.debug("{}: +{}", name, variable));
+        commands.forEach(command -> logger.debug("{}: +{}", name, command));
         commands.addAll(0, Arrays.asList("#!/bin/bash", "set -e"));
         ProcessBuilder processBuilder = createProcessBuilder();
         process = startProcessBuilder(processBuilder);
@@ -179,7 +181,7 @@ public class BashScript {
                         if (forEachOutput != null) {
                             forEachOutput.accept(line);
                         } else {
-                            logger.info("{} >> {}", name, line);
+                            logger.info("{}: {}", name, line);
                         }
                     }
                 }
@@ -199,7 +201,7 @@ public class BashScript {
                         if (forEachError != null) {
                             forEachError.accept(line);
                         } else {
-                            logger.error("{} >> {}", name, line);
+                            logger.error("{}: {}", name, line);
                         }
                     }
                 }
