@@ -68,23 +68,35 @@ docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.s
 
 ## Argument Reference
 
-Define arguments to configure Plankton when running it through command line.
+Arguments to configure Plankton.
 
-### Plankton config
+Example:
+
+```shell
+docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host adarlan/plankton --plankton.compose.file=cicd.compose.yaml --plankton.docker.sandbox=true
+```
+
+### Running a single pipeline
 
 | Argument | Description |
 | -------- | ----------- |
 | `--plankton.compose.file` | The path of the Compose file which contains the pipeline configuration. Defaults to `plankton.compose.yaml`. |
-| `--plankton.workspace` | Defaults to `.`. |
-| `--plankton.metadata` | Defaults to `~/.plankton`. |
+| `--plankton.project.directory` | Defaults to `.` (current directory). |
 
-> **Note**: When running Plankton inside a container (using the `docker run` command, for example), these paths are related to the container file system, not to the host file system.
+> **Note**: Plankton runs within a container, so these paths are related to the container file system, not to the host file system. Be aware of this when mapping paths between them.
 
-### Docker config
+### Running multiple pipelines
+
+| Argument | Description |
+| -------- | ----------- |
+| `--plankton.queue.url` | Each time the runner hit this URL, it expects a JSON on the format: `{"git_url": "...", "git_ref": "main"}`. |
+
+### Docker configuration
 
 | Argument | Description |
 | -------- | ----------- |
 | `--plankton.docker.host` | Defaults to `unix:///var/run/docker.sock` |
+| `--plankton.docker.sandbox` | Boolean. Defaults to `false`. To enable this option, [Sysbox Container Runtime](https://github.com/nestybox/sysbox) is required. |
 
 ## Unsupported Compose Attributes
 
