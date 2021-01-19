@@ -5,7 +5,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
-import me.adarlan.plankton.PlanktonConfiguration;
 import me.adarlan.plankton.compose.Compose;
 import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.docker.DockerCompose;

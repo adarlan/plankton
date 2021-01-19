@@ -1,4 +1,4 @@
-package me.adarlan.plankton;
+package me.adarlan.plankton.runner;
 
 import java.time.Instant;
 import java.util.function.Consumer;
@@ -7,10 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.Getter;
-import lombok.ToString;
 import me.adarlan.plankton.bash.BashScript;
 
-@ToString(of = { "id", "directoryPath", "composeFilePath" })
 public class PlanktonConfiguration {
 
     private static final String PLANKTON_DIRECTORY_PATH = "/home/adarlan/.plankton";
