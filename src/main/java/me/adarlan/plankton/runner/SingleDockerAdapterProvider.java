@@ -6,12 +6,12 @@ import org.springframework.stereotype.Component;
 
 import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ComposeDocument;
-import me.adarlan.plankton.docker.DockerCompose;
+import me.adarlan.plankton.docker.DockerAdapter;
 import me.adarlan.plankton.docker.DockerComposeConfiguration;
 import me.adarlan.plankton.docker.DockerDaemon;
 
 @Component
-public class SingleDockerComposeAdapterProvider {
+public class SingleDockerAdapterProvider {
 
     @Autowired
     private PlanktonSetup planktonSetup;
@@ -24,7 +24,7 @@ public class SingleDockerComposeAdapterProvider {
 
     @Bean
     public ComposeAdapter composeAdapter() {
-        return new DockerCompose(new DockerComposeConfiguration() {
+        return new DockerAdapter(new DockerComposeConfiguration() {
 
             @Override
             public DockerDaemon dockerDaemon() {

@@ -19,7 +19,7 @@ import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ComposeDocument;
 
 @ToString(of = { "dockerDaemon", "composeDocument" })
-public class DockerCompose implements ComposeAdapter {
+public class DockerAdapter implements ComposeAdapter {
 
     private final DockerDaemon dockerDaemon;
     private final ComposeDocument composeDocument;
@@ -34,7 +34,7 @@ public class DockerCompose implements ComposeAdapter {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public DockerCompose(DockerComposeConfiguration configuration) {
+    public DockerAdapter(DockerComposeConfiguration configuration) {
         logger.info("Loading DockerCompose");
         this.dockerDaemon = configuration.dockerDaemon();
         logger.info("dockerDaemon={}", dockerDaemon);
