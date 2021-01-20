@@ -65,7 +65,7 @@ public class Pipeline {
         jobs.forEach(this::initializeExternalPorts);
         jobs.forEach(this::initializeJobDependencies);
         jobs.forEach(this::initializeJobStatus);
-        jobs.forEach(this::initializeJobStage);
+        jobs.forEach(this::initializeJobDependencyLevel);
         this.initializeInstanceNamesAndBiggestName();
         this.initializeColors();
     }
@@ -234,14 +234,14 @@ public class Pipeline {
         }
     }
 
-    private void initializeJobStage(Job job) {
-        logger.info("{}Initializing {}.stage", LOADING, job.name);
-        stageOf(job, new HashSet<>());
-        logger.info("{}{}.stage={}", LOADING, job.name, job.stage);
+    private void initializeJobDependencyLevel(Job job) {
+        logger.info("{}Initializing {}.dependencyLevel", LOADING, job.name);
+        dependencyLevelOf(job, new HashSet<>());
+        logger.info("{}{}.dependencyLevel={}", LOADING, job.name, job.dependencyLevel);
     }
 
-    private int stageOf(Job job, Set<Job> knownDependents) {
-        if (job.stage == null) {
+    private int dependencyLevelOf(Job job, Set<Job> knownDependents) {
+        if (job.dependencyLevel == null) {
             knownDependents.add(job);
             int maxDepth = -1;
             for (JobDependency dependency : job.dependencies) {
@@ -249,13 +249,13 @@ public class Pipeline {
                 if (knownDependents.contains(requiredJob)) {
                     throw new JobDependencyLoopException();
                 }
-                int d = stageOf(requiredJob, knownDependents);
+                int d = dependencyLevelOf(requiredJob, knownDependents);
                 if (d > maxDepth)
                     maxDepth = d;
             }
-            job.stage = maxDepth + 1;
+            job.dependencyLevel = maxDepth + 1;
         }
-        return job.stage;
+        return job.dependencyLevel;
     }
 
     public void run() throws InterruptedException {

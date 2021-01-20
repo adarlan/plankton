@@ -18,7 +18,7 @@ import lombok.ToString;
 import me.adarlan.plankton.compose.ComposeAdapter;
 
 @EqualsAndHashCode(of = { "pipeline", "name" })
-@ToString(of = { "name", "stage", "scale" })
+@ToString(of = { "name", "scale", "dependencyLevel" })
 public class Job {
 
     final Pipeline pipeline;
@@ -29,6 +29,7 @@ public class Job {
     Boolean expressionResult;
 
     final Set<JobDependency> dependencies = new HashSet<>();
+    Integer dependencyLevel;
 
     Integer scale;
     final List<JobInstance> instances = new ArrayList<>();
@@ -36,7 +37,6 @@ public class Job {
     private Instant initialInstant = null;
     private Instant finalInstant = null;
     private Duration duration = null;
-
     Duration timeoutLimit;
 
     private Thread createContainers = null;
@@ -44,8 +44,6 @@ public class Job {
     private boolean hasStartedContainersCreation = false;
 
     private boolean startedInstances = false;
-
-    Integer stage;
 
     String color;
     String prefix;
