@@ -4,10 +4,6 @@ import java.util.function.Consumer;
 
 public interface ComposeAdapter {
 
-    // boolean buildImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError);
-
-    // boolean pullImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError);
-
     boolean createContainers(String serviceName, int serviceScale, Consumer<String> forEachOutput,
             Consumer<String> forEachError);
 
