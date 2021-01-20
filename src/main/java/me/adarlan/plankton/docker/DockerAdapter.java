@@ -128,7 +128,7 @@ public class DockerAdapter implements ComposeAdapter {
 
     @Override
     public DockerContainerState getContainerState(String containerName) {
-        logger.info("Getting container state: {}", containerName);
+        logger.debug("Getting container state: {}", containerName);
         final List<String> scriptOutput = new ArrayList<>();
         final BashScript script = createScript("getContainerState_" + containerName);
         String f = containerStateDirectoryPath + "/" + containerName;
