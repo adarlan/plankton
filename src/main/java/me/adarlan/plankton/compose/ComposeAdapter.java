@@ -12,6 +12,4 @@ public interface ComposeAdapter {
     ContainerState getContainerState(String containerName);
 
     void stopContainer(String containerName);
-
-    boolean killContainer(String containerName);
 }

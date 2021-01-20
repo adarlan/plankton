@@ -165,28 +165,21 @@ public class DockerAdapter implements ComposeAdapter {
         script.run();
     }
 
-    @Override
-    public boolean killContainer(String containerName) {
-        logger.info("Killing container: {}", containerName);
-        BashScript script = createScript("killContainer_" + containerName);
-        script.command("docker container kill " + containerName);
-        script.run();
-        int exitCode = script.getExitCode();
-        if (exitCode == 0) {
-            synchronized (runningContainers) {
-                runningContainers.remove(containerName);
-            }
-        }
-        return exitCode == 0;
-    }
-
     private BashScript createScript(String name) {
         BashScript script = new BashScript(name);
         script.env("DOCKER_HOST=" + dockerDaemon.getSocketAddress());
         return script;
     }
 
+    private void killContainer(String containerName) {
+        logger.info("Killing container: {}", containerName);
+        BashScript script = createScript("killContainer_" + containerName);
+        script.command("docker container kill " + containerName);
+        script.run();
+    }
+
     private void shutdown() {
         runningContainers.forEach(this::killContainer);
+        runningContainers.forEach(this::getContainerState);
     }
 }
