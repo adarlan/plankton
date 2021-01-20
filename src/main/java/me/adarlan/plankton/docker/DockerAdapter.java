@@ -34,8 +34,8 @@ public class DockerAdapter implements ComposeAdapter {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public DockerAdapter(DockerComposeConfiguration configuration) {
-        logger.info("Loading DockerCompose");
+    public DockerAdapter(DockerAdapterConfiguration configuration) {
+        logger.info("Loading DockerAdapter");
         this.dockerDaemon = configuration.dockerDaemon();
         logger.info("dockerDaemon={}", dockerDaemon);
         this.composeDocument = configuration.composeDocument();
@@ -169,7 +169,7 @@ public class DockerAdapter implements ComposeAdapter {
         try {
             return new ObjectMapper().readValue(json, DockerContainerState.class);
         } catch (JsonProcessingException e) {
-            throw new DockerComposeException("Unable to parse container state JSON", e);
+            throw new DockerAdapterException("Unable to parse container state JSON", e);
         }
     }
 

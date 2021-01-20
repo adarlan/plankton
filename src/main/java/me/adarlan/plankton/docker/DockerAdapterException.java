@@ -1,10 +1,10 @@
 package me.adarlan.plankton.docker;
 
-public class DockerComposeException extends RuntimeException {
+public class DockerAdapterException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    DockerComposeException(String msg, Throwable e) {
+    DockerAdapterException(String msg, Throwable e) {
         super(msg, e);
     }
 }
