@@ -1,16 +1,10 @@
 package me.adarlan.plankton.runner;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
-import lombok.Data;
 import lombok.Getter;
 
-// @Data
-// @Configuration
-// @ConfigurationProperties(prefix = "plankton")
 @Getter
 @Component
 public class PlanktonConfiguration {
