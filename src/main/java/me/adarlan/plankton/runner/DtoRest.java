@@ -3,21 +3,28 @@ package me.adarlan.plankton.runner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import me.adarlan.plankton.dto.DtoService;
+import me.adarlan.plankton.dto.PipelineDto;
 import me.adarlan.plankton.pipeline.Pipeline;
 
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping("/api")
-public class PlanktonController {
+public class DtoRest {
 
     @Autowired
     private Pipeline pipeline;
 
-    @GetMapping("/pipeline-id")
-    public String getPipelineId() {
-        return pipeline.getId();
+    private DtoService dtoService = new DtoService();
+
+    @GetMapping("/pipeline")
+    public PipelineDto pipline() {
+        return dtoService.dtoOf(pipeline);
+    }
+
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello";
     }
 }
