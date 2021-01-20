@@ -4,8 +4,6 @@ import java.util.function.Consumer;
 
 public interface ComposeAdapter {
 
-    ComposeDocument getDocument();
-
     boolean buildImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError);
 
     boolean pullImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError);

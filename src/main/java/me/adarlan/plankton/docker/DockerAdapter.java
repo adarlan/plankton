@@ -207,11 +207,6 @@ public class DockerAdapter implements ComposeAdapter {
         return script;
     }
 
-    @Override
-    public ComposeDocument getDocument() {
-        return composeDocument;
-    }
-
     private void shutdown() {
         runningContainers.forEach(this::killContainer);
     }
