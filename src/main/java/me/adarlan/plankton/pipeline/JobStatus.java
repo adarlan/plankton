@@ -1,6 +1,6 @@
 package me.adarlan.plankton.pipeline;
 
-public enum ServiceStatus {
+public enum JobStatus {
     DISABLED, WAITING, BLOCKED, RUNNING, FAILED, SUCCEEDED;
 
     public boolean isDisabled() {

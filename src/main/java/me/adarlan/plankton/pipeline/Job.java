@@ -19,19 +19,19 @@ import me.adarlan.plankton.compose.ComposeAdapter;
 
 @EqualsAndHashCode(of = { "pipeline", "name" })
 @ToString(of = "name")
-public class Service {
+public class Job {
 
     final Pipeline pipeline;
     final String name;
-    ServiceStatus status;
+    JobStatus status;
 
     String expression;
     Boolean expressionResult;
 
-    final Set<ServiceDependency> dependencies = new HashSet<>();
+    final Set<JobDependency> dependencies = new HashSet<>();
 
     Integer scale;
-    final List<ServiceInstance> instances = new ArrayList<>();
+    final List<JobInstance> instances = new ArrayList<>();
 
     private Instant initialInstant = null;
     private Instant finalInstant = null;
@@ -58,7 +58,7 @@ public class Service {
 
     private final List<String> logs = new ArrayList<>();
 
-    Service(Pipeline pipeline, String name) {
+    Job(Pipeline pipeline, String name) {
         this.pipeline = pipeline;
         this.composeAdapter = pipeline.composeAdapter;
         this.name = name;
@@ -101,7 +101,7 @@ public class Service {
     private void checkDependenciesAndSetRunningOrBlocked() {
         boolean passed = true;
         boolean blocked = false;
-        for (final ServiceDependency dependency : dependencies) {
+        for (final JobDependency dependency : dependencies) {
             if (!dependency.isSatisfied()) {
                 passed = false;
             }
@@ -134,7 +134,7 @@ public class Service {
     }
 
     private void startInstances() {
-        instances.forEach(ServiceInstance::start);
+        instances.forEach(JobInstance::start);
         startedInstances = true;
     }
 
@@ -142,7 +142,7 @@ public class Service {
         boolean succeeded = true;
         boolean failed = false;
         int failedNumber = 0;
-        for (ServiceInstance instance : instances) {
+        for (JobInstance instance : instances) {
             instance.refresh();
             if (instance.hasEnded()) {
                 Integer exitCode = instance.getExitCode();
@@ -174,26 +174,26 @@ public class Service {
         Duration d = getDuration();
         if (d.compareTo(timeoutLimit) > 0) {
             logger.error(INFO_PLACEHOLDER, prefix, "Time limit has been reached");
-            instances.forEach(ServiceInstance::stop);
+            instances.forEach(JobInstance::stop);
         }
     }
 
     private void setBlocked() {
-        status = ServiceStatus.BLOCKED;
+        status = JobStatus.BLOCKED;
         String m = Colors.BRIGHT_RED + status + Colors.ANSI_RESET;
         logger.error(INFO_PLACEHOLDER_2, prefix, m);
     }
 
     private void setRunning() {
         initialInstant = Instant.now();
-        status = ServiceStatus.RUNNING;
+        status = JobStatus.RUNNING;
         String m = Colors.BRIGHT_GREEN + status + Colors.ANSI_RESET;
         logger.info(INFO_PLACEHOLDER_2, prefix, m);
     }
 
     private void setFailed(String message) {
         finalInstant = Instant.now();
-        status = ServiceStatus.FAILED;
+        status = JobStatus.FAILED;
         String m = Colors.BRIGHT_RED + status + Colors.ANSI_RESET + Colors.BRIGHT_BLACK + " -> " + Colors.ANSI_RESET
                 + Colors.RED + message + Colors.ANSI_RESET;
         logger.error(INFO_PLACEHOLDER_2, prefix, m);
@@ -201,7 +201,7 @@ public class Service {
 
     private void setSucceeded() {
         finalInstant = Instant.now();
-        status = ServiceStatus.SUCCEEDED;
+        status = JobStatus.SUCCEEDED;
         String m = Colors.BRIGHT_GREEN + status + Colors.ANSI_RESET;
         logger.info(INFO_PLACEHOLDER_2, prefix, m);
     }
@@ -228,11 +228,11 @@ public class Service {
         return Collections.unmodifiableList(logs);
     }
 
-    public List<ServiceInstance> getInstances() {
+    public List<JobInstance> getInstances() {
         return Collections.unmodifiableList(instances);
     }
 
-    public Set<ServiceDependency> getDependencies() {
+    public Set<JobDependency> getDependencies() {
         return Collections.unmodifiableSet(dependencies);
     }
 
@@ -244,7 +244,7 @@ public class Service {
         return name;
     }
 
-    public ServiceStatus getStatus() {
+    public JobStatus getStatus() {
         return status;
     }
 
@@ -273,10 +273,10 @@ public class Service {
     }
 
     public boolean isEnabled() {
-        return status != ServiceStatus.DISABLED;
+        return status != JobStatus.DISABLED;
     }
 
     public boolean isWaitingOrRunning() {
-        return status == ServiceStatus.WAITING || status == ServiceStatus.RUNNING;
+        return status == JobStatus.WAITING || status == JobStatus.RUNNING;
     }
 }

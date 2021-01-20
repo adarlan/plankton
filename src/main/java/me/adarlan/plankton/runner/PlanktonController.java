@@ -20,28 +20,4 @@ public class PlanktonController {
     public String getPipelineId() {
         return pipeline.getId();
     }
-
-    // @GetMapping("/services")
-    // public List<Service> getServices() {
-    // }
-
-    // @GetMapping("/services")
-    // public List<Service> getServices() {
-    // }
-
-    // @GetMapping("/services/{name}")
-    // public Service getServiceByName(@PathVariable String name) {
-    // }
-
-    // @GetMapping("/services/{name}/cancel")
-    // public Service cancelService(@PathVariable String name) {
-    // Service service = pipeline.getServiceByName(name);
-    // serviceScheduler.cancel(service);
-    // while (true) {
-    // if (service.finalStatus != null) {
-    // return service.getData();
-    // }
-    // }
-    // }
-
 }

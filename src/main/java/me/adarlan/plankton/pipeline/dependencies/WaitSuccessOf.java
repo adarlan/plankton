@@ -1,35 +1,42 @@
 package me.adarlan.plankton.pipeline.dependencies;
 
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.ToString;
-import me.adarlan.plankton.pipeline.Service;
-import me.adarlan.plankton.pipeline.ServiceDependency;
-import me.adarlan.plankton.pipeline.ServiceStatus;
+import me.adarlan.plankton.pipeline.Job;
+import me.adarlan.plankton.pipeline.JobDependency;
+import me.adarlan.plankton.pipeline.JobStatus;
 
 @EqualsAndHashCode
 @ToString
-public class WaitSuccessOf implements ServiceDependency {
+public class WaitSuccessOf implements JobDependency {
 
-    @Getter
-    Service parentService;
+    Job parentJob;
 
-    @Getter
-    Service requiredService;
+    Job requiredJob;
 
-    public WaitSuccessOf(Service parentService, Service requiredService) {
-        this.parentService = parentService;
-        this.requiredService = requiredService;
+    public WaitSuccessOf(Job parentJob, Job requiredJob) {
+        this.parentJob = parentJob;
+        this.requiredJob = requiredJob;
     }
 
     @Override
     public boolean isSatisfied() {
-        return requiredService.getStatus().isSucceeded();
+        return requiredJob.getStatus().isSucceeded();
     }
 
     @Override
     public boolean isBlocked() {
-        ServiceStatus status = requiredService.getStatus();
+        JobStatus status = requiredJob.getStatus();
         return !(status.isWaiting() || status.isRunning() || status.isSucceeded());
+    }
+
+    @Override
+    public Job getParentJob() {
+        return parentJob;
+    }
+
+    @Override
+    public Job getRequiredJob() {
+        return requiredJob;
     }
 }

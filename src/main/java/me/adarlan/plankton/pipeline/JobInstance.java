@@ -16,11 +16,11 @@ import lombok.ToString;
 import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ContainerState;
 
-@EqualsAndHashCode(of = { "parentService", "number" })
+@EqualsAndHashCode(of = { "parentJob", "number" })
 @ToString(of = "containerName")
-public class ServiceInstance {
+public class JobInstance {
 
-    final Service parentService;
+    final Job parentJob;
     final Integer number;
     private final String containerName;
 
@@ -48,11 +48,11 @@ public class ServiceInstance {
     String name;
     String prefix;
 
-    ServiceInstance(Service parentService, int number) {
-        this.parentService = parentService;
+    JobInstance(Job parentJob, int number) {
+        this.parentJob = parentJob;
         this.number = number;
-        this.containerName = parentService.pipeline.getId() + "_" + parentService.getName() + "_" + number;
-        this.composeAdapter = parentService.pipeline.composeAdapter;
+        this.containerName = parentJob.pipeline.getId() + "_" + parentJob.getName() + "_" + number;
+        this.composeAdapter = parentJob.pipeline.composeAdapter;
     }
 
     private void logOutput(String message) {
@@ -148,8 +148,8 @@ public class ServiceInstance {
         return ended;
     }
 
-    public Service getParentService() {
-        return parentService;
+    public Job getParentJob() {
+        return parentJob;
     }
 
     public Integer getNumber() {

@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.ToString;
 import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.compose.ComposeAdapter;
@@ -35,169 +34,169 @@ public class Pipeline {
     @Getter
     private final String id;
 
-    private final Set<Service> services = new HashSet<>();
-    private final Map<String, Service> servicesByName = new HashMap<>();
-    private final Map<Service, Map<String, String>> labelsByServiceAndName = new HashMap<>();
-    private final Map<Integer, Service> externalPorts = new HashMap<>();
+    private final Set<Job> jobs = new HashSet<>();
+    private final Map<String, Job> jobsByName = new HashMap<>();
+    private final Map<Job, Map<String, String>> labelsByJobAndName = new HashMap<>();
+    private final Map<Integer, Job> externalPorts = new HashMap<>();
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    Integer biggestServiceNameLength;
+    Integer biggestJobNameLength;
 
     public Pipeline(PipelineConfiguration configuration) {
         logger.trace("Instantiate pipeline...");
         this.composeAdapter = configuration.composeAdapter();
         this.composeDocument = configuration.composeDocument();
         this.id = composeDocument.getProjectName();
-        instantiateServices();
-        services.forEach(this::initializeServiceLabels);
-        services.forEach(this::initializeServiceExpression);
-        services.forEach(this::initializeServiceScaleAndInstances);
-        services.forEach(this::initializeServiceTimeout);
-        services.forEach(this::initializeExternalPorts);
-        services.forEach(this::initializeServiceDependencies);
-        services.forEach(this::initializeServiceStatus);
+        instantiateJobs();
+        jobs.forEach(this::initializeJobLabels);
+        jobs.forEach(this::initializeJobExpression);
+        jobs.forEach(this::initializeJobScaleAndInstances);
+        jobs.forEach(this::initializeJobTimeout);
+        jobs.forEach(this::initializeExternalPorts);
+        jobs.forEach(this::initializeJobDependencies);
+        jobs.forEach(this::initializeJobStatus);
         this.initializeInstanceNamesAndBiggestName();
         this.initializeColors();
         logger.info("Pipeline id: {}", id);
         logger.trace("Instantiate pipeline... (done)");
     }
 
-    private void instantiateServices() {
-        logger.trace("Instantiate services...");
-        composeDocument.getServiceNames().forEach(serviceName -> {
-            logger.trace("Instantiate service: {}", serviceName);
-            Service service = new Service(this, serviceName);
-            this.services.add(service);
-            this.servicesByName.put(serviceName, service);
-            logger.trace("Instantiate service: {} (done)", serviceName);
+    private void instantiateJobs() {
+        logger.trace("Instantiate jobs...");
+        composeDocument.getServiceNames().forEach(name -> {
+            logger.trace("Instantiate job: {}", name);
+            Job job = new Job(this, name);
+            this.jobs.add(job);
+            this.jobsByName.put(name, job);
+            logger.trace("Instantiate jobs: {} (done)", name);
         });
-        logger.trace("Instantiate services... (done)");
+        logger.trace("Instantiate jobs... (done)");
     }
 
-    private void initializeServiceLabels(Service service) {
-        logger.trace("initializeServiceLabels: {}", service.name);
-        Map<String, String> labelsByName = composeDocument.getServiceLabelsMap(service.name);
-        labelsByServiceAndName.put(service, labelsByName);
+    private void initializeJobLabels(Job job) {
+        logger.trace("initializeJobLabels: {}", job.name);
+        Map<String, String> labelsByName = composeDocument.getServiceLabelsMap(job.name);
+        labelsByJobAndName.put(job, labelsByName);
     }
 
-    private void initializeServiceExpression(Service service) {
-        logger.trace("initializeServiceExpression: {}", service.name);
-        Map<String, String> labelsByName = labelsByServiceAndName.get(service);
+    private void initializeJobExpression(Job job) {
+        logger.trace("initializeJobExpression: {}", job.name);
+        Map<String, String> labelsByName = labelsByJobAndName.get(job);
         String labelName = "plankton.enable.if";
         if (labelsByName.containsKey(labelName)) {
-            service.expression = labelsByName.get(labelName);
+            job.expression = labelsByName.get(labelName);
         }
     }
 
-    private void initializeServiceScaleAndInstances(Service service) {
-        logger.trace("initializeServiceScaleAndInstances: {}", service.name);
+    private void initializeJobScaleAndInstances(Job job) {
+        logger.trace("initializeJobScaleAndInstances: {}", job.name);
 
         int scale = 1;
         // TODO read from compose document
 
-        service.scale = scale;
+        job.scale = scale;
         for (int instanceNumber = 1; instanceNumber <= scale; instanceNumber++) {
-            ServiceInstance instance = new ServiceInstance(service, instanceNumber);
-            service.instances.add(instance);
+            JobInstance instance = new JobInstance(job, instanceNumber);
+            job.instances.add(instance);
         }
     }
 
-    private void initializeServiceTimeout(Service service) {
-        logger.trace("initializeServiceTimeout: {}", service.name);
-        Map<String, String> labelsByName = labelsByServiceAndName.get(service);
+    private void initializeJobTimeout(Job job) {
+        logger.trace("initializeJobTimeout: {}", job.name);
+        Map<String, String> labelsByName = labelsByJobAndName.get(job);
         String labelName = "plankton.timeout";
         if (labelsByName.containsKey(labelName)) {
             String labelValue = labelsByName.get(labelName);
-            service.timeoutLimit = Duration.of(Long.parseLong(labelValue), ChronoUnit.MINUTES);
+            job.timeoutLimit = Duration.of(Long.parseLong(labelValue), ChronoUnit.MINUTES);
         } else {
-            service.timeoutLimit = Duration.of(1L, ChronoUnit.MINUTES);
+            job.timeoutLimit = Duration.of(1L, ChronoUnit.MINUTES);
         }
     }
 
-    private void initializeExternalPorts(Service service) {
-        logger.trace("initializeExternalPorts: {}", service.name);
-        List<Map<String, Object>> ports = composeDocument.getServicePorts(service.name);
+    private void initializeExternalPorts(Job job) {
+        logger.trace("initializeExternalPorts: {}", job.name);
+        List<Map<String, Object>> ports = composeDocument.getServicePorts(job.name);
         ports.forEach(p -> {
             Integer externalPort = (Integer) p.get("published"); // TODO what if published is null?
-            externalPorts.put(externalPort, service);
+            externalPorts.put(externalPort, job);
         });
     }
 
-    private void initializeServiceDependencies(Service service) {
-        logger.trace("initializeServiceDependencies: {}", service.name);
-        Map<String, String> labelsByName = labelsByServiceAndName.get(service);
+    private void initializeJobDependencies(Job job) {
+        logger.trace("initializeJobDependencies: {}", job.name);
+        Map<String, String> labelsByName = labelsByJobAndName.get(job);
         labelsByName.forEach((labelName, labelValue) -> {
 
             if (Utils.stringMatchesRegex(labelName, "^plankton\\.wait\\.success\\.of$")) {
-                String requiredServiceName = labelValue;
-                Service requiredService = this.getServiceByName(requiredServiceName);
-                WaitSuccessOf dependency = new WaitSuccessOf(service, requiredService);
-                service.dependencies.add(dependency);
+                String requiredJobName = labelValue;
+                Job requiredJob = this.getJobByName(requiredJobName);
+                WaitSuccessOf dependency = new WaitSuccessOf(job, requiredJob);
+                job.dependencies.add(dependency);
             }
 
             if (Utils.stringMatchesRegex(labelName, "^plankton\\.wait\\.failure\\.of$")) {
-                String requiredServiceName = labelValue;
-                Service requiredService = this.getServiceByName(requiredServiceName);
-                WaitFailureOf dependency = new WaitFailureOf(service, requiredService);
-                service.dependencies.add(dependency);
+                String requiredJobName = labelValue;
+                Job requiredJob = this.getJobByName(requiredJobName);
+                WaitFailureOf dependency = new WaitFailureOf(job, requiredJob);
+                job.dependencies.add(dependency);
             }
 
             else if (Utils.stringMatchesRegex(labelName, "^plankton\\.wait\\.ports$")) {
                 Integer port = Integer.parseInt(labelValue);
-                Service requiredService = externalPorts.get(port);
-                WaitPort dependency = new WaitPort(service, requiredService, port);
-                service.dependencies.add(dependency);
+                Job requiredJob = externalPorts.get(port);
+                WaitPort dependency = new WaitPort(job, requiredJob, port);
+                job.dependencies.add(dependency);
             }
         });
     }
 
-    private void initializeServiceStatus(Service service) {
-        logger.trace("initializeServiceStatus: {}", service.name);
-        if (service.expression != null) {
-            evaluateExpression(service);
-            if (service.expressionResult) {
-                service.status = ServiceStatus.WAITING;
-                logger.info("{} -> Enabled by expression: {}", service.name, service.expression);
+    private void initializeJobStatus(Job job) {
+        logger.trace("initializeJobStatus: {}", job.name);
+        if (job.expression != null) {
+            evaluateExpression(job);
+            if (job.expressionResult) {
+                job.status = JobStatus.WAITING;
+                logger.info("{} -> Enabled by expression: {}", job.name, job.expression);
             } else {
-                service.status = ServiceStatus.DISABLED;
-                logger.info("{} -> Disabled by expression: {}", service.name, service.expression);
+                job.status = JobStatus.DISABLED;
+                logger.info("{} -> Disabled by expression: {}", job.name, job.expression);
             }
         } else {
-            service.status = ServiceStatus.WAITING;
+            job.status = JobStatus.WAITING;
         }
     }
 
-    private void evaluateExpression(Service service) {
-        logger.trace("evaluateExpression: {}", service.name);
+    private void evaluateExpression(Job job) {
+        logger.trace("evaluateExpression: {}", job.name);
 
-        final String scriptName = "evaluateExpression_" + service.name;
+        final String scriptName = "evaluateExpression_" + job.name;
         BashScript script = new BashScript(scriptName);
-        script.command(service.expression);
+        script.command(job.expression);
         script.run();
         // TODO do it inside a sandbox container to prevent script injection
         // TODO it needs timeout
         // TODO add variables
 
         if (script.getExitCode() == 0) {
-            service.expressionResult = true;
+            job.expressionResult = true;
         } else {
-            service.expressionResult = false;
+            job.expressionResult = false;
         }
     }
 
     private void initializeInstanceNamesAndBiggestName() {
         logger.trace("initializeInstanceNamesAndBiggestName");
-        biggestServiceNameLength = 0;
-        for (Service service : getEnabledServices()) {
-            for (ServiceInstance instance : service.instances) {
-                if (service.getScale() == 1) {
-                    instance.name = service.name;
+        biggestJobNameLength = 0;
+        for (Job job : getEnabledJobs()) {
+            for (JobInstance instance : job.instances) {
+                if (job.getScale() == 1) {
+                    instance.name = job.name;
                 } else {
-                    instance.name = service.name + "_" + instance.number;
+                    instance.name = job.name + "_" + instance.number;
                 }
                 int len = instance.name.length();
-                if (len > biggestServiceNameLength) {
-                    biggestServiceNameLength = len;
+                if (len > biggestJobNameLength) {
+                    biggestJobNameLength = len;
                 }
             }
         }
@@ -212,13 +211,13 @@ public class Pipeline {
         list.add(Colors.BRIGHT_CYAN);
         list.add(Colors.BRIGHT_PURPLE);
         // list.add(Colors.BRIGHT_RED);
-        int serviceIndex = 0;
-        for (Service service : getEnabledServices()) {
-            int colorIndex = serviceIndex % list.size();
-            service.color = list.get(colorIndex);
-            serviceIndex++;
-            service.prefix = Utils.prefixOf(service);
-            for (ServiceInstance instance : service.instances) {
+        int jobIndex = 0;
+        for (Job job : getEnabledJobs()) {
+            int colorIndex = jobIndex % list.size();
+            job.color = list.get(colorIndex);
+            jobIndex++;
+            job.prefix = Utils.prefixOf(job);
+            for (JobInstance instance : job.instances) {
                 instance.prefix = Utils.prefixOf(instance);
             }
         }
@@ -229,9 +228,9 @@ public class Pipeline {
         boolean done = false;
         while (!done) {
             done = true;
-            for (Service service : getWaitingOrRunningServices()) {
-                service.refresh();
-                if (service.isWaitingOrRunning()) {
+            for (Job job : getWaitingOrRunningJobs()) {
+                job.refresh();
+                if (job.isWaitingOrRunning()) {
                     done = false;
                 }
             }
@@ -240,22 +239,21 @@ public class Pipeline {
         logger.info("Pipeline finished");
     }
 
-    public Set<Service> getServices() {
-        return Collections.unmodifiableSet(services);
+    public Set<Job> getJobs() {
+        return Collections.unmodifiableSet(jobs);
     }
 
-    public Service getServiceByName(@NonNull String serviceName) {
-        if (!servicesByName.containsKey(serviceName))
-            throw new ServiceNotFoundException(serviceName);
-        return servicesByName.get(serviceName);
+    public Job getJobByName(String jobName) {
+        if (!jobsByName.containsKey(jobName))
+            throw new JobNotFoundException(jobName);
+        return jobsByName.get(jobName);
     }
 
-    public Set<Service> getEnabledServices() {
-        return Collections.unmodifiableSet(services.stream().filter(Service::isEnabled).collect(Collectors.toSet()));
+    public Set<Job> getEnabledJobs() {
+        return Collections.unmodifiableSet(jobs.stream().filter(Job::isEnabled).collect(Collectors.toSet()));
     }
 
-    public Set<Service> getWaitingOrRunningServices() {
-        return Collections
-                .unmodifiableSet(services.stream().filter(Service::isWaitingOrRunning).collect(Collectors.toSet()));
+    public Set<Job> getWaitingOrRunningJobs() {
+        return Collections.unmodifiableSet(jobs.stream().filter(Job::isWaitingOrRunning).collect(Collectors.toSet()));
     }
 }

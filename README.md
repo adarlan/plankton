@@ -2,12 +2,12 @@
 
 Plankton is a Container-Native CI/CD tool based on [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
 
-Labels can be used to define pipeline rules, such as the order in which pipeline services are run, expressions to enable or disable services, among other rules.
+Labels can be used to define pipeline rules, such as the order in which pipeline jobs are run, expressions to enable or disable jobs, among other rules.
 See the [Label Reference](#label-reference) section of this document.
 
 ## Getting Started
 
-Follow this example to create a simple pipeline composed by 3 services:
+Follow this example to create a simple pipeline composed by 3 jobs:
 `test`, `build` and `deploy`.
 
 ### Create a `plankton.compose.yaml` file with the following content
@@ -54,11 +54,11 @@ docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.s
 
 | Label | Description |
 | ----- | ----------- |
-| `plankton.timeout` | Timeout for the service execution. |
-| `plankton.enable.if` | Bash conditional expression to determine when a service should be enabled. All services are enabled by default. |
-| `plankton.wait.success.of` | A list of services that this service must wait for success. |
-| `plankton.wait.failure.of` | A list of services that this service must wait for failure. |
-| `plankton.wait.ports` | A list of published ports the service must wait for. |
+| `plankton.timeout` | Timeout for the job execution. |
+| `plankton.enable.if` | Bash conditional expression to determine when a job should be enabled. All jobs are enabled by default. |
+| `plankton.wait.success.of` | A list of jobs that this job must wait for success. |
+| `plankton.wait.failure.of` | A list of jobs that this job must wait for failure. |
+| `plankton.wait.ports` | A list of published ports the job must wait for. |
 
 ## Variable Reference
 

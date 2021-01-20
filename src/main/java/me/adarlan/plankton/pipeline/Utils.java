@@ -14,15 +14,15 @@ class Utils {
         return matcher.matches();
     }
 
-    static String prefixOf(Service service) {
-        Pipeline pipeline = service.pipeline;
-        return prefix(service.color, service.name, pipeline.biggestServiceNameLength, " ", "-", "--| ");
+    static String prefixOf(Job job) {
+        Pipeline pipeline = job.pipeline;
+        return prefix(job.color, job.name, pipeline.biggestJobNameLength, " ", "-", "--| ");
     }
 
-    static String prefixOf(ServiceInstance instance) {
-        Service service = instance.parentService;
-        Pipeline pipeline = service.pipeline;
-        return prefix(service.color, instance.name, pipeline.biggestServiceNameLength, " ", "-", "--| ");
+    static String prefixOf(JobInstance instance) {
+        Job job = instance.parentJob;
+        Pipeline pipeline = job.pipeline;
+        return prefix(job.color, instance.name, pipeline.biggestJobNameLength, " ", "-", "--| ");
     }
 
     private static String prefix(String color, String name, int biggestNameLength, String startWith, String fillWith,
