@@ -44,10 +44,10 @@ public class Pipeline {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     Integer biggestServiceNameLength;
 
-    public Pipeline(ComposeAdapter composeAdapter) {
+    public Pipeline(PipelineConfiguration configuration) {
         logger.trace("Instantiate pipeline...");
-        this.composeAdapter = composeAdapter;
-        this.composeDocument = composeAdapter.getDocument();
+        this.composeAdapter = configuration.composeAdapter();
+        this.composeDocument = configuration.composeDocument();
         this.id = composeDocument.getProjectName();
         instantiateServices();
         services.forEach(this::initializeServiceLabels);

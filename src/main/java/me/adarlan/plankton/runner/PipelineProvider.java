@@ -5,16 +5,32 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 import me.adarlan.plankton.compose.ComposeAdapter;
+import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.workflow.Pipeline;
+import me.adarlan.plankton.workflow.PipelineConfiguration;
 
 @Component
 public class PipelineProvider {
+
+    @Autowired
+    private ComposeDocument composeDocument;
 
     @Autowired
     private ComposeAdapter composeAdapter;
 
     @Bean
     public Pipeline pipeline() {
-        return new Pipeline(composeAdapter);
+        return new Pipeline(new PipelineConfiguration() {
+
+            @Override
+            public ComposeDocument composeDocument() {
+                return composeDocument;
+            }
+
+            @Override
+            public ComposeAdapter composeAdapter() {
+                return composeAdapter;
+            }
+        });
     }
 }
