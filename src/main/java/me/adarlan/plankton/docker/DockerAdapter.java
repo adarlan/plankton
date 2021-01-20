@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,6 +27,8 @@ public class DockerAdapter implements ComposeAdapter {
     private final ComposeDocument composeDocument;
     private final String containerStateDirectoryPath;
 
+    private final String projectName;
+
     private static final String BASE_COMMAND = "docker-compose";
     private String options;
 
@@ -42,6 +46,7 @@ public class DockerAdapter implements ComposeAdapter {
         this.dockerDaemon = configuration.dockerDaemon();
         this.composeDocument = configuration.composeDocument();
         this.containerStateDirectoryPath = configuration.containerStateDirectoryPath();
+        this.projectName = composeDocument.getProjectName();
 
         logger.info("{}dockerDaemon={}", LOADING, dockerDaemon);
         logger.info("{}composeDocument={}", LOADING, composeDocument);
@@ -60,42 +65,6 @@ public class DockerAdapter implements ComposeAdapter {
         list.add("--project-directory " + composeDocument.getProjectDirectory());
         this.options = list.stream().collect(Collectors.joining(" "));
         logger.info("{}options={}", LOADING, options);
-    }
-
-    @Override
-    public boolean buildImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
-        logger.info("Building image: {}", serviceName);
-        final BashScript script = createScript("buildImage_" + serviceName);
-        final String buildOptions = "";
-        script.command(BASE_COMMAND + " " + options + " build " + buildOptions + " " + serviceName);
-        script.forEachOutput(forEachOutput);
-        script.forEachError(message -> {
-            String m = message.trim();
-            if (!m.equals("Building " + serviceName)) {
-                // TODO test if it is the first message?
-                forEachError.accept(message);
-            }
-        });
-        script.run();
-        return script.getExitCode() == 0;
-    }
-
-    @Override
-    public boolean pullImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
-        logger.info("Pulling image: {}", serviceName);
-        final BashScript script = createScript("pullImage_" + serviceName);
-        script.command(BASE_COMMAND + " " + options + " pull " + serviceName);
-        script.forEachOutput(forEachOutput);
-        script.forEachError(message -> {
-            String m = message.trim();
-            if (m.startsWith("Pulling " + serviceName + " ...")) {
-                forEachOutput.accept(message);
-            } else {
-                forEachError.accept(message);
-            }
-        });
-        script.run();
-        return script.getExitCode() == 0;
     }
 
     private void createNetwork() {
@@ -121,10 +90,13 @@ public class DockerAdapter implements ComposeAdapter {
         script.command(BASE_COMMAND + " " + options + " up " + upOptions + " " + serviceName);
         script.forEachOutput(forEachOutput);
         script.forEachError(message -> {
-            String m = message.trim();
-            if (m.equals("Creating " + composeDocument.getProjectName() + "_" + serviceName + "_1 ...")
-                    || m.equals("Creating " + composeDocument.getProjectName() + "_" + serviceName + "_1 ... done")) {
-                // TODO replace _1 by instance numbers
+            String msg = message.trim();
+            if (msg.startsWith("Pulling " + serviceName + " ...") || msg.equals("Building " + serviceName)
+                    || msg.equals("Image for service " + serviceName
+                            + " was built because it did not already exist. To rebuild this image you must use `docker-compose build` or `docker-compose up --build`.")
+                    || matches(msg, "Pulling " + serviceName + " \\(.+\\)\\.\\.\\.")
+                    || matches(msg, "Creating " + projectName + "_" + serviceName + "_\\d+ \\.\\.\\.")
+                    || matches(msg, "Creating " + projectName + "_" + serviceName + "_\\d+ \\.\\.\\. done")) {
                 forEachOutput.accept(message);
             } else {
                 forEachError.accept(message);
@@ -132,6 +104,12 @@ public class DockerAdapter implements ComposeAdapter {
         });
         script.run();
         return script.getExitCode() == 0;
+    }
+
+    private static boolean matches(String string, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(string);
+        return matcher.matches();
     }
 
     @Override

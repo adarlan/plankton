@@ -4,13 +4,12 @@ import java.util.function.Consumer;
 
 public interface ComposeAdapter {
 
-    boolean buildImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError);
+    // boolean buildImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError);
 
-    boolean pullImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError);
+    // boolean pullImage(String serviceName, Consumer<String> forEachOutput, Consumer<String> forEachError);
 
     boolean createContainers(String serviceName, int serviceScale, Consumer<String> forEachOutput,
             Consumer<String> forEachError);
-    // TODO remove serviceScale
 
     void startContainer(String containerName, Consumer<String> forEachOutput, Consumer<String> forEachError);
 
