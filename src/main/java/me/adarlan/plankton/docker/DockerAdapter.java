@@ -179,7 +179,12 @@ public class DockerAdapter implements ComposeAdapter {
     }
 
     private void shutdown() {
-        runningContainers.forEach(this::killContainer);
-        runningContainers.forEach(this::getContainerState);
+        synchronized (this) {
+            Set<String> containersToKill = new HashSet<>(runningContainers);
+            containersToKill.forEach(containerName -> new Thread(() -> {
+                killContainer(containerName);
+                getContainerState(containerName);
+            }).start());
+        }
     }
 }
