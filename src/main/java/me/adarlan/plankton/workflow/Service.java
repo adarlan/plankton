@@ -15,7 +15,7 @@ import org.slf4j.MarkerFactory;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import me.adarlan.plankton.compose.Compose;
+import me.adarlan.plankton.compose.ComposeAdapter;
 
 @EqualsAndHashCode(of = { "pipeline", "name" })
 @ToString(of = "name")
@@ -56,13 +56,13 @@ public class Service {
     private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
     private static final String LOG_PLACEHOLDER = "{}{}";
 
-    final Compose compose;
+    final ComposeAdapter composeAdapter;
 
     private final List<String> logs = new ArrayList<>();
 
     Service(Pipeline pipeline, String name) {
         this.pipeline = pipeline;
-        this.compose = pipeline.compose;
+        this.composeAdapter = pipeline.composeAdapter;
         this.name = name;
     }
 
@@ -123,7 +123,7 @@ public class Service {
             buildImage = new Thread(() -> {
                 Service service = Service.this;
                 logger.info(INFO_PLACEHOLDER, prefix, "Building image");
-                if (compose.buildImage(name, service::logOutput, service::logError)) {
+                if (composeAdapter.buildImage(name, service::logOutput, service::logError)) {
                     imageBuilt = true;
                 } else {
                     setFailed("Failed when building image");
@@ -143,7 +143,7 @@ public class Service {
             pullImage = new Thread(() -> {
                 Service service = Service.this;
                 logger.info(INFO_PLACEHOLDER, prefix, "Pulling image");
-                if (compose.pullImage(name, service::logOutput, service::logError)) {
+                if (composeAdapter.pullImage(name, service::logOutput, service::logError)) {
                     imagePulled = true;
                 } else {
                     setFailed("Failed when pulling image");
@@ -161,7 +161,7 @@ public class Service {
     private void createContainers() {
         String info = "Creating container" + (scale > 1 ? "s" : "");
         logger.info(INFO_PLACEHOLDER, prefix, info);
-        if (!compose.createContainers(name, scale, this::logOutput, this::logError)) {
+        if (!composeAdapter.createContainers(name, scale, this::logOutput, this::logError)) {
             String error = "Failed when creating container" + (scale > 1 ? "s" : "");
             setFailed(error);
         }

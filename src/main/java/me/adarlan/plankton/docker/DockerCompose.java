@@ -15,11 +15,11 @@ import org.slf4j.LoggerFactory;
 
 import lombok.ToString;
 import me.adarlan.plankton.bash.BashScript;
-import me.adarlan.plankton.compose.Compose;
+import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ComposeDocument;
 
 @ToString(of = { "dockerDaemon", "composeDocument" })
-public class DockerCompose implements Compose {
+public class DockerCompose implements ComposeAdapter {
 
     private final DockerDaemon dockerDaemon;
     private final ComposeDocument composeDocument;

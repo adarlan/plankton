@@ -2,7 +2,7 @@ package me.adarlan.plankton.compose;
 
 import java.util.function.Consumer;
 
-public interface Compose {
+public interface ComposeAdapter {
 
     ComposeDocument getDocument();
 

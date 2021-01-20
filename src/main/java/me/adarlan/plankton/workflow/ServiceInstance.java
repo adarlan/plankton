@@ -13,7 +13,7 @@ import org.slf4j.MarkerFactory;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import me.adarlan.plankton.compose.Compose;
+import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ContainerState;
 
 @EqualsAndHashCode(of = { "parentService", "number" })
@@ -38,7 +38,7 @@ public class ServiceInstance {
 
     private Thread runContainerThread = null;
 
-    private final Compose compose;
+    private final ComposeAdapter composeAdapter;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
@@ -52,7 +52,7 @@ public class ServiceInstance {
         this.parentService = parentService;
         this.number = number;
         this.containerName = parentService.pipeline.getId() + "_" + parentService.getName() + "_" + number;
-        this.compose = parentService.pipeline.compose;
+        this.composeAdapter = parentService.pipeline.composeAdapter;
     }
 
     private void logOutput(String message) {
@@ -72,7 +72,7 @@ public class ServiceInstance {
     void start() {
         runContainerThread = new Thread(() -> {
             logger.info(INFO_PLACEHOLDER, prefix, "Starting container");
-            compose.startContainer(containerName, this::logOutput, this::logError);
+            composeAdapter.startContainer(containerName, this::logOutput, this::logError);
         });
         runContainerThread.start();
         this.started = true;
@@ -81,14 +81,14 @@ public class ServiceInstance {
     void stop() {
         synchronized (this) {
             logger.info(INFO_PLACEHOLDER, prefix, "Stopping container");
-            compose.stopContainer(containerName);
+            composeAdapter.stopContainer(containerName);
         }
     }
 
     void refresh() {
         synchronized (this) {
             if (started && !ended) {
-                ContainerState containerState = compose.getContainerState(containerName);
+                ContainerState containerState = composeAdapter.getContainerState(containerName);
                 refresh(containerState);
             }
         }

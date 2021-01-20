@@ -23,7 +23,7 @@ import me.adarlan.plankton.workflow.dependencies.WaitFailureOf;
 import me.adarlan.plankton.workflow.dependencies.WaitPort;
 import me.adarlan.plankton.workflow.dependencies.WaitSuccessOf;
 import me.adarlan.plankton.bash.BashScript;
-import me.adarlan.plankton.compose.Compose;
+import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ComposeDocument;
 
 @EqualsAndHashCode(of = "id")
@@ -31,7 +31,7 @@ import me.adarlan.plankton.compose.ComposeDocument;
 public class Pipeline {
 
     private final ComposeDocument composeDocument;
-    final Compose compose;
+    final ComposeAdapter composeAdapter;
 
     @Getter
     private final String id;
@@ -44,10 +44,10 @@ public class Pipeline {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     Integer biggestServiceNameLength;
 
-    public Pipeline(Compose compose) {
+    public Pipeline(ComposeAdapter composeAdapter) {
         logger.trace("Instantiate pipeline...");
-        this.compose = compose;
-        this.composeDocument = compose.getDocument();
+        this.composeAdapter = composeAdapter;
+        this.composeDocument = composeAdapter.getDocument();
         this.id = composeDocument.getProjectName();
         instantiateServices();
         services.forEach(this::initializeServiceLabels);
