@@ -71,7 +71,7 @@ public class Pipeline {
     }
 
     private void instantiateJobs() {
-        logger.info("{}Instantiating jobs", LOADING);
+        logger.trace("{}Instantiating jobs", LOADING);
         composeDocument.getServiceNames().forEach(name -> {
             Job job = new Job(this, name);
             this.jobs.add(job);
@@ -81,14 +81,14 @@ public class Pipeline {
     }
 
     private void initializeJobLabels(Job job) {
-        logger.info("{}Initializing {}.labels", LOADING, job.name);
+        logger.trace("{}Initializing {}.labels", LOADING, job.name);
         Map<String, String> labelsByName = composeDocument.getServiceLabelsMap(job.name);
         labelsByJobAndName.put(job, labelsByName);
         logger.info("{}{}.labels={}", LOADING, job.name, labelsByName);
     }
 
     private void initializeJobExpression(Job job) {
-        logger.info("{}Initializing {}.expression", LOADING, job.name);
+        logger.trace("{}Initializing {}.expression", LOADING, job.name);
         Map<String, String> labelsByName = labelsByJobAndName.get(job);
         String labelName = "plankton.enable.if";
         if (labelsByName.containsKey(labelName)) {
@@ -98,12 +98,12 @@ public class Pipeline {
     }
 
     private void initializeJobScaleAndInstances(Job job) {
-        logger.info("{}Initializing {}.scale", LOADING, job.name);
+        logger.trace("{}Initializing {}.scale", LOADING, job.name);
         int scale = 1; // TODO read from compose document
         job.scale = scale;
         logger.info("{}{}.scale={}", LOADING, job.name, job.scale);
 
-        logger.info("{}Initializing {}.instances", LOADING, job.name);
+        logger.trace("{}Initializing {}.instances", LOADING, job.name);
         for (int instanceNumber = 1; instanceNumber <= scale; instanceNumber++) {
             JobInstance instance = new JobInstance(job, instanceNumber);
             job.instances.add(instance);
@@ -112,7 +112,7 @@ public class Pipeline {
     }
 
     private void initializeJobTimeout(Job job) {
-        logger.info("{}Initializing {}.timeoutLimit", LOADING, job.name);
+        logger.trace("{}Initializing {}.timeoutLimit", LOADING, job.name);
         Map<String, String> labelsByName = labelsByJobAndName.computeIfAbsent(job, j -> new HashMap<>());
         String labelName = "plankton.timeout";
         if (labelsByName.containsKey(labelName)) {
@@ -133,7 +133,7 @@ public class Pipeline {
     }
 
     private void initializeJobDependencies(Job job) {
-        logger.info("{}Initializing {}.dependencies", LOADING, job.name);
+        logger.trace("{}Initializing {}.dependencies", LOADING, job.name);
         Map<String, String> labelsByName = labelsByJobAndName.get(job);
         labelsByName.forEach((labelName, labelValue) -> {
 
@@ -162,7 +162,7 @@ public class Pipeline {
     }
 
     private void initializeJobStatus(Job job) {
-        logger.info("{}Initializing {}.status", LOADING, job.name);
+        logger.trace("{}Initializing {}.status", LOADING, job.name);
         if (job.expression != null) {
             evaluateExpression(job);
             if (job.expressionResult) {
@@ -179,7 +179,7 @@ public class Pipeline {
     }
 
     private void evaluateExpression(Job job) {
-        logger.info("{}Evaluating {}.expression", LOADING, job.name);
+        logger.trace("{}Evaluating {}.expression", LOADING, job.name);
 
         final String scriptName = "evaluateExpression_" + job.name;
         BashScript script = new BashScript(scriptName);
@@ -235,7 +235,7 @@ public class Pipeline {
     }
 
     private void initializeJobDependencyLevel(Job job) {
-        logger.info("{}Initializing {}.dependencyLevel", LOADING, job.name);
+        logger.trace("{}Initializing {}.dependencyLevel", LOADING, job.name);
         dependencyLevelOf(job, new HashSet<>());
         logger.info("{}{}.dependencyLevel={}", LOADING, job.name, job.dependencyLevel);
     }
@@ -259,7 +259,7 @@ public class Pipeline {
     }
 
     public void run() throws InterruptedException {
-        logger.info("Running pipeline {}", id);
+        logger.info("Running {}", this);
         boolean done = false;
         while (!done) {
             done = true;
@@ -271,7 +271,7 @@ public class Pipeline {
             }
             Thread.sleep(1000);
         }
-        logger.info("Pipeline {} finished", id);
+        logger.info("Finished {}", this);
     }
 
     public Set<Job> getJobs() {
