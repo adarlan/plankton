@@ -30,13 +30,12 @@ public class DockerSandbox implements DockerDaemon {
     private final String socketAddress;
     private final String socketIp;
 
-    private final Thread getReady;
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final String LOADING = "Loading " + DockerSandbox.class.getSimpleName() + " ... ";
 
     public DockerSandbox(DockerSandboxConfiguration configuration) {
 
-        logger.info("Loading DockerSandbox");
+        logger.info(LOADING);
 
         this.runningFromHost = configuration.runningFromHost();
         this.runningFromContainerId = configuration.runningFromContainerId();
@@ -54,19 +53,13 @@ public class DockerSandbox implements DockerDaemon {
         this.workspaceDirectoryPath = configuration.workspaceDirectoryPath();
         this.underlyingWorkspaceDirectoryPath = configuration.underlyingWorkspaceDirectoryPath();
 
-        logger.info("id={}", id);
-        logger.info("dockerHostSocketAddress={}", dockerHostSocketAddress);
-        logger.info("containerName={}", containerName);
-        logger.info("socketAddress={}", socketAddress);
-        logger.info("workspaceDirectoryPath={}", workspaceDirectoryPath);
-        logger.info("dockerHostWorkspaceDirectoryPath={}", underlyingWorkspaceDirectoryPath);
+        logger.info("{}id={}", LOADING, id);
+        logger.info("{}dockerHostSocketAddress={}", LOADING, dockerHostSocketAddress);
+        logger.info("{}containerName={}", LOADING, containerName);
+        logger.info("{}socketAddress={}", LOADING, socketAddress);
+        logger.info("{}workspaceDirectoryPath={}", LOADING, workspaceDirectoryPath);
+        logger.info("{}dockerHostWorkspaceDirectoryPath={}", LOADING, underlyingWorkspaceDirectoryPath);
 
-        this.getReady = new Thread(this::getReady);
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
-        getReady.start();
-    }
-
-    private void getReady() {
         if (!runningFromHost) {
             createBridgeNetwork();
             connectBridgeNetwork();
@@ -80,31 +73,33 @@ public class DockerSandbox implements DockerDaemon {
             Thread.currentThread().interrupt();
             logger.error("Interrupted when waiting for sandbox container to be ready", e);
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
     private void createBridgeNetwork() {
-        logger.info("Creating sandbox bridge network");
+        logger.info("{}Creating sandbox bridge network", LOADING);
         BashScript script = createDockerHostScript("create_sandbox_network");
         script.command("docker network create --driver bridge --attachable " + networkName);
         script.runSuccessfully();
     }
 
     private void connectBridgeNetwork() {
-        logger.info("Connecting sandbox bridge network");
+        logger.info("{}Connecting sandbox bridge network", LOADING);
         BashScript script = createDockerHostScript("connect_sandbox_network");
         script.command("docker network connect " + networkName + " " + runningFromContainerId);
         script.runSuccessfully();
     }
 
     private void inspectBridgeNetwork() {
-        logger.info("Inspecting sandbox bridge network");
+        logger.info("{}Inspecting sandbox bridge network", LOADING);
         BashScript script = createDockerHostScript("inspect_sandbox_network");
         script.command("docker network inspect " + networkName);
         script.runSuccessfully();
     }
 
     private void createContainer() {
-        logger.info("Creating sandbox container");
+        logger.info("{}Creating sandbox container", LOADING);
 
         List<String> containerOptionList = new ArrayList<>();
         containerOptionList.add("--runtime sysbox-runc");
@@ -136,11 +131,11 @@ public class DockerSandbox implements DockerDaemon {
 
     private void startContainer() {
         new Thread(() -> {
-            logger.info("Starting sandbox container");
+            logger.info("{}Starting sandbox container", LOADING);
             BashScript script = createDockerHostScript("start_sandbox_container");
             script.command("docker container start --attach " + containerName);
-            script.forEachOutput(logger::info);
-            script.forEachError(logger::error);
+            script.forEachOutput(logger::info); // TODO add prefix
+            script.forEachError(logger::error); // TODO add prefix
             script.run();
             if (script.getExitCode() != 0) {
                 throw new DockerSandboxException(
@@ -156,19 +151,19 @@ public class DockerSandbox implements DockerDaemon {
             if (Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
             }
+            logger.info("{}Waiting for sandbox container to be ready", LOADING);
             if (!socketReady)
                 socketReady = socketIsReady();
             if (!daemonRunning)
                 daemonRunning = daemonIsRunning();
-            logger.info("Waiting for sandbox container to be ready");
             Thread.sleep(1000);
         }
-        logger.info("Sandbox container is ready");
+        logger.info("{}Sandbox container is ready", LOADING);
     }
 
     private boolean socketIsReady() {
         try (Socket s = new Socket(socketIp, 2375)) {
-            logger.info("Sandbox socket is ready");
+            logger.info("{}Sandbox socket is ready", LOADING);
             return true;
         } catch (IOException ex) {
             return false;
@@ -184,7 +179,7 @@ public class DockerSandbox implements DockerDaemon {
         });
         script.run();
         if (script.getExitCode() == 0) {
-            logger.info("Sandbox daemon is running");
+            logger.info("{}Sandbox daemon is running", LOADING);
             return true;
         } else {
             return false;
@@ -193,22 +188,11 @@ public class DockerSandbox implements DockerDaemon {
 
     @Override
     public String getSocketAddress() {
-        waitUntilSandboxIsReady();
         return socketAddress;
     }
 
-    private void waitUntilSandboxIsReady() {
-        try {
-            getReady.join();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            logger.error("Interrupted when waiting for sandbox to be ready", e);
-        }
-    }
-
     public void shutdown() {
-        logger.info("Shutting down sandbox");
-        getReady.interrupt();
+        logger.info("Shutdown {}", this);
         BashScript script = createDockerHostScript("stop_sandbox_container");
         script.command("docker stop " + containerName);
         if (!runningFromHost) {

@@ -11,11 +11,12 @@ public class DockerHost implements DockerDaemon {
     private final String socketAddress;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final String LOADING = "Loading " + DockerHost.class.getSimpleName() + " ... ";
 
     public DockerHost(DockerHostConfiguration configuration) {
-        logger.info("Loading DockerHost");
+        logger.info(LOADING);
         this.socketAddress = configuration.socketAddress();
-        logger.info("socketAddress={}", socketAddress);
+        logger.info("{}socketAddress={}", LOADING, socketAddress);
     }
 
     @Override

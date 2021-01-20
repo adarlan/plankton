@@ -35,32 +35,37 @@ public class ComposeDocument {
     private final Set<String> serviceNames = new HashSet<>();
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final String LOADING = "Loading " + ComposeDocument.class.getSimpleName() + " ... ";
 
     public ComposeDocument(ComposeDocumentConfiguration configuration) {
-        logger.info("Loading ComposeDocument");
+
+        logger.info(LOADING);
+
         this.projectName = configuration.projectName();
-        logger.info("projectName={}", projectName);
         this.projectDirectory = configuration.projectDirectory();
-        logger.info("projectDirectory={}", projectDirectory);
         this.filePath = configuration.filePath();
-        logger.info("filePath={}", filePath);
+
+        logger.info("{}projectName={}", LOADING, projectName);
+        logger.info("{}projectDirectory={}", LOADING, projectDirectory);
+        logger.info("{}filePath={}", LOADING, filePath);
+
         configureFile();
         initializeDocumentMap();
     }
 
     private void configureFile() {
-        logger.info("Configuring file");
+        logger.info("{}Configuring file", LOADING);
         BashScript script = new BashScript("initialize_file");
         script.command("mv " + filePath + " " + filePath + ".original.yaml");
         script.command("docker-compose --file " + filePath + ".original.yaml --project-directory " + projectDirectory
                 + " config > " + filePath);
-        script.command("cat " + filePath);
+        // script.command("cat " + filePath);
         script.runSuccessfully();
     }
 
     @SuppressWarnings("unchecked")
     private void initializeDocumentMap() {
-        logger.info("Initializing document map");
+        logger.trace("{}Initializing document map", LOADING);
         try (FileInputStream fileInputStream = new FileInputStream(filePath);) {
             final Yaml yaml = new Yaml();
             documentMap = yaml.load(fileInputStream);
@@ -68,7 +73,7 @@ public class ComposeDocument {
             throw new ComposeDocumentException("Unable to initialize Compose document map", e);
         }
         this.servicesMap = (Map<String, Object>) documentMap.get("services");
-        logger.info("servicesMap={}", servicesMap);
+        logger.info("{}servicesMap={}", LOADING, servicesMap);
         servicesMap.keySet().forEach(serviceNames::add);
     }
 

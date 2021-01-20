@@ -57,7 +57,7 @@ public class DockerAdapter implements ComposeAdapter {
     }
 
     private void initializeOptions() {
-        logger.info("{}Initializing options", LOADING);
+        logger.trace("{}Initializing options", LOADING);
         List<String> list = new ArrayList<>();
         list.add("--no-ansi");
         list.add("--project-name " + composeDocument.getProjectName());
@@ -68,7 +68,7 @@ public class DockerAdapter implements ComposeAdapter {
     }
 
     private void createNetwork() {
-        logger.info("Creating default network");
+        logger.debug("Creating default network");
         BashScript script = createScript("createNetwork");
         String networkName = composeDocument.getProjectName() + "_default";
         script.command("docker network create --attachable " + networkName);
@@ -84,7 +84,7 @@ public class DockerAdapter implements ComposeAdapter {
                 networkCreated = true;
             }
         }
-        logger.info("Creating containers: {}; Scale: {}", serviceName, serviceScale);
+        logger.debug("Creating containers: {}; Scale: {}", serviceName, serviceScale);
         final BashScript script = createScript("createContainers_" + serviceName);
         final String upOptions = "--no-start --scale " + serviceName + "=" + serviceScale;
         script.command(BASE_COMMAND + " " + options + " up " + upOptions + " " + serviceName);
@@ -115,7 +115,7 @@ public class DockerAdapter implements ComposeAdapter {
 
     @Override
     public void startContainer(String containerName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
-        logger.info("Starting container: {}", containerName);
+        logger.debug("Starting container: {}", containerName);
         final BashScript script = createScript("runContainer_" + containerName);
         script.command("docker container start --attach " + containerName);
         script.forEachOutput(forEachOutput);
@@ -159,7 +159,7 @@ public class DockerAdapter implements ComposeAdapter {
 
     @Override
     public void stopContainer(String containerName) {
-        logger.info("Stopping container: {}", containerName);
+        logger.debug("Stopping container: {}", containerName);
         BashScript script = createScript("stopContainer_" + containerName);
         script.command("docker container stop " + containerName);
         script.run();
@@ -172,7 +172,7 @@ public class DockerAdapter implements ComposeAdapter {
     }
 
     private void killContainer(String containerName) {
-        logger.info("Killing container: {}", containerName);
+        logger.error("Killing container: {}", containerName);
         BashScript script = createScript("killContainer_" + containerName);
         script.command("docker container kill " + containerName);
         script.run();

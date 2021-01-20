@@ -51,10 +51,11 @@ public class PlanktonSetup {
     private final String runningFromContainerId;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final String SETTING_UP = "Setting up Plankton ... ";
 
     public PlanktonSetup(@Autowired PlanktonConfiguration planktonConfiguration) {
 
-        logger.info("Setting up Plankton");
+        logger.info(SETTING_UP);
 
         this.dockerEnabled = true;
         this.dockerHostSocketAddress = planktonConfiguration.getDockerHost();
@@ -69,24 +70,24 @@ public class PlanktonSetup {
         this.containerStateDirectoryPath = pipelineDirectoryPath + "/" + "container-state";
 
         if (dockerEnabled) {
-            logger.info("dockerHostSocketAddress={}", dockerHostSocketAddress);
-            logger.info("dockerSandboxEnabled={}", dockerSandboxEnabled);
+            logger.info("{}dockerHostSocketAddress={}", SETTING_UP, dockerHostSocketAddress);
+            logger.info("{}dockerSandboxEnabled={}", SETTING_UP, dockerSandboxEnabled);
         }
-        logger.info("metadataDirectoryPath={}", metadataDirectoryPath);
-        logger.info("pipelineId={}", pipelineId);
-        logger.info("pipelineDirectoryPath={}", pipelineDirectoryPath);
-        logger.info("composeFilePath={}", composeFilePath);
-        logger.info("workspaceDirectoryPath={}", workspaceDirectoryPath);
-        logger.info("underlyingWorkspaceDirectoryPath={}", underlyingWorkspaceDirectoryPath);
-        logger.info("containerStateDirectoryPath={}", containerStateDirectoryPath);
+        logger.info("{}metadataDirectoryPath={}", SETTING_UP, metadataDirectoryPath);
+        logger.info("{}pipelineId={}", SETTING_UP, pipelineId);
+        logger.info("{}pipelineDirectoryPath={}", SETTING_UP, pipelineDirectoryPath);
+        logger.info("{}composeFilePath={}", SETTING_UP, composeFilePath);
+        logger.info("{}workspaceDirectoryPath={}", SETTING_UP, workspaceDirectoryPath);
+        logger.info("{}underlyingWorkspaceDirectoryPath={}", SETTING_UP, underlyingWorkspaceDirectoryPath);
+        logger.info("{}containerStateDirectoryPath={}", SETTING_UP, containerStateDirectoryPath);
 
         this.runningFromContainerId = runningFromContainerId();
         this.runningFromHost = runningFromContainerId.isBlank();
 
         if (runningFromHost) {
-            logger.info("Running Plankton directly from host");
+            logger.info("{}Running Plankton directly from host", SETTING_UP);
         } else {
-            logger.info("Running Plankton from within a container: {}", runningFromContainerId);
+            logger.info("{}Running Plankton from within a container: {}", SETTING_UP, runningFromContainerId);
         }
 
         createDirectory(metadataDirectoryPath);
@@ -106,7 +107,7 @@ public class PlanktonSetup {
     }
 
     private void createDirectory(String path) {
-        logger.info("Creating directory: {}", path);
+        logger.info("{}Creating directory: {}", SETTING_UP, path);
         try {
             BashScript.run("mkdir -p " + path);
         } catch (BashScriptFailedException e) {
@@ -115,7 +116,7 @@ public class PlanktonSetup {
     }
 
     private void copyComposeFileFrom(String fromPath) {
-        logger.info("Copying Compose file from {} to {}", fromPath, composeFilePath);
+        logger.info("{}Copying Compose file from {} to {}", SETTING_UP, fromPath, composeFilePath);
         try {
             BashScript.run("cp " + fromPath + " " + composeFilePath);
         } catch (BashScriptFailedException e) {
@@ -124,7 +125,7 @@ public class PlanktonSetup {
     }
 
     private void copyWorkspaceFrom(String fromPath) {
-        logger.info("Copying workspace files from {} to {}", fromPath, workspaceDirectoryPath);
+        logger.info("{}Copying workspace files from {} to {}", SETTING_UP, fromPath, workspaceDirectoryPath);
         try {
             BashScript.run("cp -R " + fromPath + "/. " + workspaceDirectoryPath + "/");
         } catch (BashScriptFailedException e) {
