@@ -7,7 +7,7 @@ import me.adarlan.plankton.pipeline.JobDependency;
 import me.adarlan.plankton.pipeline.JobStatus;
 
 @EqualsAndHashCode
-@ToString
+@ToString(of = "requiredJob")
 public class WaitSuccessOf implements JobDependency {
 
     Job parentJob;

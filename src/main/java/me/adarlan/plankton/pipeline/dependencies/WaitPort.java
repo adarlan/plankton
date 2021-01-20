@@ -10,7 +10,7 @@ import me.adarlan.plankton.pipeline.JobDependency;
 import me.adarlan.plankton.pipeline.JobStatus;
 
 @EqualsAndHashCode
-@ToString
+@ToString(of = "port")
 public class WaitPort implements JobDependency {
 
     Job parentJob;
