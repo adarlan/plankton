@@ -52,7 +52,8 @@ public class ComposeDocument {
         logger.info("Configuring file");
         BashScript script = new BashScript("initialize_file");
         script.command("mv " + filePath + " " + filePath + ".original.yaml");
-        script.command("docker-compose --file " + filePath + ".original.yaml config > " + filePath);
+        script.command("docker-compose --file " + filePath + ".original.yaml --project-directory " + projectDirectory
+                + " config > " + filePath);
         script.command("cat " + filePath);
         script.runSuccessfully();
     }
