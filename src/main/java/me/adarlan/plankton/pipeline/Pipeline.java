@@ -272,6 +272,7 @@ public class Pipeline {
             Thread.sleep(1000);
         }
         logger.info("Finished {}", this);
+        composeAdapter.disconnect();
     }
 
     public Set<Job> getJobs() {

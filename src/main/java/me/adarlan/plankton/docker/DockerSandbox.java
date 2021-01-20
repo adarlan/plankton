@@ -192,19 +192,25 @@ public class DockerSandbox implements DockerDaemon {
     }
 
     public void shutdown() {
-        logger.info("Shutdown {}", this);
-        BashScript script = createDockerHostScript("stop_sandbox_container");
-        script.command("docker stop " + containerName);
-        if (!runningFromHost) {
-            script.command("docker network disconnect " + networkName + " " + runningFromContainerId);
-            script.command("docker network rm " + networkName);
+        synchronized (this) {
+            BashScript script = createDockerHostScript("stop_sandbox_container");
+            script.command("docker stop " + containerName);
+            if (!runningFromHost) {
+                script.command("docker network disconnect " + networkName + " " + runningFromContainerId);
+                script.command("docker network rm " + networkName);
+            }
+            script.runSuccessfully();
         }
-        script.runSuccessfully();
     }
 
     private BashScript createDockerHostScript(String name) {
         BashScript script = new BashScript(name);
         script.env("DOCKER_HOST=" + dockerHostSocketAddress);
         return script;
+    }
+
+    @Override
+    public void disconnect() {
+        shutdown();
     }
 }

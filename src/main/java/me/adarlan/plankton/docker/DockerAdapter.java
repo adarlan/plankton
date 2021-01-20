@@ -187,4 +187,9 @@ public class DockerAdapter implements ComposeAdapter {
             }).start());
         }
     }
+
+    @Override
+    public void disconnect() {
+        dockerDaemon.disconnect();
+    }
 }
