@@ -21,13 +21,13 @@ buildSandbox () {
     docker build -t adarlan/plankton:sandbox -f sandbox/Dockerfile sandbox
 }
 
-buildSandboxStuffed () {
+# buildSandboxStuffed () {
     # TODO /etc/docker/daemon.json ADD -> "default-runtime": "sysbox-runc"
     # docker build -t adarlan/plankton:sandbox-stuffed \
     #     --build-arg "BUILT_IN_IMAGES=alpine docker" \
     #     -f sandbox/Dockerfile sandbox
     # TODO /etc/docker/daemon.json REMOVE -> "default-runtime"
-}
+# }
 
 pushImages () {
     docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
@@ -41,7 +41,7 @@ if [ "$1" = "" ]; then
     buildJar && echo
     buildImage && echo
     buildSandbox && echo
-    buildSandboxStuffed
+    # buildSandboxStuffed
 
 elif [ "$1" = "runner" ]; then
     set -exu
@@ -51,13 +51,13 @@ elif [ "$1" = "runner" ]; then
 elif [ "$1" = "sandbox" ]; then
     set -exu
     buildSandbox && echo
-    buildSandboxStuffed
+    # buildSandboxStuffed
 
 elif [ "$1" = "--push" ]; then
     set -exu
     buildJar && echo
     buildImage && echo
     buildSandbox && echo
-    buildSandboxStuffed && echo
+    # buildSandboxStuffed && echo
     pushImages
 fi
