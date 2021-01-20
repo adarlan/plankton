@@ -17,7 +17,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import me.adarlan.plankton.compose.ComposeAdapter;
 
-@EqualsAndHashCode(of = { "pipeline", "name" })
+@EqualsAndHashCode(of = { "pipeline", "name", "stage", "scale" })
 @ToString(of = "name")
 public class Job {
 
@@ -44,6 +44,8 @@ public class Job {
     private boolean hasStartedContainersCreation = false;
 
     private boolean startedInstances = false;
+
+    Integer stage;
 
     String color;
     String prefix;

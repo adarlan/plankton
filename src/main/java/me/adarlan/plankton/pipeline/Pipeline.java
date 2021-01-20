@@ -39,14 +39,24 @@ public class Pipeline {
     private final Map<Job, Map<String, String>> labelsByJobAndName = new HashMap<>();
     private final Map<Integer, Job> externalPorts = new HashMap<>();
 
+    private final List<List<Job>> stages = new ArrayList<>();
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
     Integer biggestJobNameLength;
+    private static final String LOADING = "Loading " + Pipeline.class.getSimpleName() + " ... ";
 
     public Pipeline(PipelineConfiguration configuration) {
-        logger.trace("Instantiate pipeline...");
+
+        logger.info(LOADING);
+
         this.composeAdapter = configuration.composeAdapter();
         this.composeDocument = configuration.composeDocument();
         this.id = composeDocument.getProjectName();
+
+        logger.info("{}id={}", LOADING, id);
+        logger.info("{}composeDocument={}", LOADING, composeDocument);
+        logger.info("{}composeAdapter={}", LOADING, composeAdapter);
+
         instantiateJobs();
         jobs.forEach(this::initializeJobLabels);
         jobs.forEach(this::initializeJobExpression);
@@ -55,55 +65,55 @@ public class Pipeline {
         jobs.forEach(this::initializeExternalPorts);
         jobs.forEach(this::initializeJobDependencies);
         jobs.forEach(this::initializeJobStatus);
+        jobs.forEach(this::initializeJobStage);
         this.initializeInstanceNamesAndBiggestName();
         this.initializeColors();
-        logger.info("Pipeline id: {}", id);
-        logger.trace("Instantiate pipeline... (done)");
     }
 
     private void instantiateJobs() {
-        logger.trace("Instantiate jobs...");
+        logger.info("{}Instantiating jobs", LOADING);
         composeDocument.getServiceNames().forEach(name -> {
-            logger.trace("Instantiate job: {}", name);
             Job job = new Job(this, name);
             this.jobs.add(job);
             this.jobsByName.put(name, job);
-            logger.trace("Instantiate jobs: {} (done)", name);
         });
-        logger.trace("Instantiate jobs... (done)");
+        logger.info("{}jobs={}", LOADING, jobs);
     }
 
     private void initializeJobLabels(Job job) {
-        logger.trace("initializeJobLabels: {}", job.name);
+        logger.info("{}Initializing {}.labels", LOADING, job.name);
         Map<String, String> labelsByName = composeDocument.getServiceLabelsMap(job.name);
         labelsByJobAndName.put(job, labelsByName);
+        logger.info("{}{}.labels={}", LOADING, job.name, labelsByName);
     }
 
     private void initializeJobExpression(Job job) {
-        logger.trace("initializeJobExpression: {}", job.name);
+        logger.info("{}Initializing {}.expression", LOADING, job.name);
         Map<String, String> labelsByName = labelsByJobAndName.get(job);
         String labelName = "plankton.enable.if";
         if (labelsByName.containsKey(labelName)) {
             job.expression = labelsByName.get(labelName);
         }
+        logger.info("{}{}.expression={}", LOADING, job.name, job.expression);
     }
 
     private void initializeJobScaleAndInstances(Job job) {
-        logger.trace("initializeJobScaleAndInstances: {}", job.name);
-
-        int scale = 1;
-        // TODO read from compose document
-
+        logger.info("{}Initializing {}.scale", LOADING, job.name);
+        int scale = 1; // TODO read from compose document
         job.scale = scale;
+        logger.info("{}{}.scale={}", LOADING, job.name, job.scale);
+
+        logger.info("{}Initializing {}.instances", LOADING, job.name);
         for (int instanceNumber = 1; instanceNumber <= scale; instanceNumber++) {
             JobInstance instance = new JobInstance(job, instanceNumber);
             job.instances.add(instance);
         }
+        logger.info("{}{}.instances={}", LOADING, job.name, job.instances);
     }
 
     private void initializeJobTimeout(Job job) {
-        logger.trace("initializeJobTimeout: {}", job.name);
-        Map<String, String> labelsByName = labelsByJobAndName.get(job);
+        logger.info("{}Initializing {}.timeoutLimit", LOADING, job.name);
+        Map<String, String> labelsByName = labelsByJobAndName.computeIfAbsent(job, j -> new HashMap<>());
         String labelName = "plankton.timeout";
         if (labelsByName.containsKey(labelName)) {
             String labelValue = labelsByName.get(labelName);
@@ -111,10 +121,10 @@ public class Pipeline {
         } else {
             job.timeoutLimit = Duration.of(1L, ChronoUnit.MINUTES);
         }
+        logger.info("{}{}.timeoutLimit={}", LOADING, job.name, job.timeoutLimit);
     }
 
     private void initializeExternalPorts(Job job) {
-        logger.trace("initializeExternalPorts: {}", job.name);
         List<Map<String, Object>> ports = composeDocument.getServicePorts(job.name);
         ports.forEach(p -> {
             Integer externalPort = (Integer) p.get("published"); // TODO what if published is null?
@@ -123,7 +133,7 @@ public class Pipeline {
     }
 
     private void initializeJobDependencies(Job job) {
-        logger.trace("initializeJobDependencies: {}", job.name);
+        logger.info("{}Initializing {}.dependencies", LOADING, job.name);
         Map<String, String> labelsByName = labelsByJobAndName.get(job);
         labelsByName.forEach((labelName, labelValue) -> {
 
@@ -148,26 +158,28 @@ public class Pipeline {
                 job.dependencies.add(dependency);
             }
         });
+        logger.info("{}{}.dependencies={}", LOADING, job.name, job.dependencies);
     }
 
     private void initializeJobStatus(Job job) {
-        logger.trace("initializeJobStatus: {}", job.name);
+        logger.info("{}Initializing {}.status", LOADING, job.name);
         if (job.expression != null) {
             evaluateExpression(job);
             if (job.expressionResult) {
                 job.status = JobStatus.WAITING;
-                logger.info("{} -> Enabled by expression: {}", job.name, job.expression);
+                // logger.info("{} -> Enabled by expression: {}", job.name, job.expression);
             } else {
                 job.status = JobStatus.DISABLED;
-                logger.info("{} -> Disabled by expression: {}", job.name, job.expression);
+                // logger.info("{} -> Disabled by expression: {}", job.name, job.expression);
             }
         } else {
             job.status = JobStatus.WAITING;
         }
+        logger.info("{}{}.status={}", LOADING, job.name, job.status);
     }
 
     private void evaluateExpression(Job job) {
-        logger.trace("evaluateExpression: {}", job.name);
+        logger.info("{}Evaluating {}.expression", LOADING, job.name);
 
         final String scriptName = "evaluateExpression_" + job.name;
         BashScript script = new BashScript(scriptName);
@@ -182,10 +194,10 @@ public class Pipeline {
         } else {
             job.expressionResult = false;
         }
+        logger.info("{}{}.expressionResult={}", LOADING, job.name, job.expressionResult);
     }
 
     private void initializeInstanceNamesAndBiggestName() {
-        logger.trace("initializeInstanceNamesAndBiggestName");
         biggestJobNameLength = 0;
         for (Job job : getEnabledJobs()) {
             for (JobInstance instance : job.instances) {
@@ -203,7 +215,6 @@ public class Pipeline {
     }
 
     private void initializeColors() {
-        logger.trace("initializeColors");
         List<String> list = new ArrayList<>();
         list.add(Colors.BRIGHT_BLUE);
         list.add(Colors.BRIGHT_YELLOW);
@@ -223,8 +234,32 @@ public class Pipeline {
         }
     }
 
+    private void initializeJobStage(Job job) {
+        logger.info("{}Initializing {}.stage", LOADING, job.name);
+        stageOf(job, new HashSet<>());
+        logger.info("{}{}.stage={}", LOADING, job.name, job.stage);
+    }
+
+    private int stageOf(Job job, Set<Job> knownDependents) {
+        if (job.stage == null) {
+            knownDependents.add(job);
+            int maxDepth = -1;
+            for (JobDependency dependency : job.dependencies) {
+                Job requiredJob = dependency.getRequiredJob();
+                if (knownDependents.contains(requiredJob)) {
+                    throw new JobDependencyLoopException();
+                }
+                int d = stageOf(requiredJob, knownDependents);
+                if (d > maxDepth)
+                    maxDepth = d;
+            }
+            job.stage = maxDepth + 1;
+        }
+        return job.stage;
+    }
+
     public void run() throws InterruptedException {
-        logger.info("Pipeline running");
+        logger.info("Running pipeline {}", id);
         boolean done = false;
         while (!done) {
             done = true;
@@ -236,7 +271,7 @@ public class Pipeline {
             }
             Thread.sleep(1000);
         }
-        logger.info("Pipeline finished");
+        logger.info("Pipeline {} finished", id);
     }
 
     public Set<Job> getJobs() {
