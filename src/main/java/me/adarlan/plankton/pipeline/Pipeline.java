@@ -40,8 +40,6 @@ public class Pipeline {
     private final Map<Job, Map<String, String>> labelsByJobAndName = new HashMap<>();
     private final Map<Integer, Job> externalPorts = new HashMap<>();
 
-    private final List<List<Job>> stages = new ArrayList<>();
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
     Integer biggestJobNameLength;
     private static final String LOADING = "Loading " + Pipeline.class.getSimpleName() + " ... ";
