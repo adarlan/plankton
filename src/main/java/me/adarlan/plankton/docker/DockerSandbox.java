@@ -179,6 +179,9 @@ public class DockerSandbox implements DockerDaemon {
         BashScript script = new BashScript("check_docker_daemon");
         script.env("DOCKER_HOST=" + socketAddress);
         script.command("docker ps");
+        script.forEachOutputAndError(msg -> {
+            /* do nothing */
+        });
         script.run();
         if (script.getExitCode() == 0) {
             logger.info("Sandbox daemon is running");
