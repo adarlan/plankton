@@ -17,8 +17,8 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import me.adarlan.plankton.compose.ComposeAdapter;
 
-@EqualsAndHashCode(of = { "pipeline", "name", "stage", "scale" })
-@ToString(of = "name")
+@EqualsAndHashCode(of = { "pipeline", "name" })
+@ToString(of = { "name", "stage", "scale" })
 public class Job {
 
     final Pipeline pipeline;
