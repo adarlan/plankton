@@ -39,11 +39,9 @@ public class Service {
 
     Duration timeoutLimit;
 
-    boolean needToBuild;
-    private Thread buildImage = null;
-    private Thread pullImage = null;
-    private boolean imageBuilt = false;
-    private boolean imagePulled = false;
+    private Thread createContainers = null;
+    private boolean hasCreatedContainers = false;
+    private boolean hasStartedContainersCreation = false;
 
     private boolean startedInstances = false;
 
@@ -82,20 +80,20 @@ public class Service {
 
     void refresh() {
         synchronized (this) {
-            if (status == ServiceStatus.WAITING) {
+            if (status.isWaiting()) {
                 checkDependenciesAndSetRunningOrBlocked();
             }
-            if (status == ServiceStatus.RUNNING) {
-                if (!startedInstances) {
-                    if (needToBuild) {
-                        buildImageAndCreateContainersAndStartInstances();
-                    } else {
-                        pullImageAndCreateContainersAndStartInstances();
-                    }
-                }
-                if (startedInstances) {
-                    checkInstancesAndSetSucceededOrFailed();
-                }
+            if (!status.isBlocked() && !hasStartedContainersCreation) {
+                startContainersCreation();
+            }
+            if (hasStartedContainersCreation && !hasCreatedContainers && createContainers.isInterrupted()) {
+                setFailed("Interrupted when creating container" + (scale > 1 ? "s" : ""));
+            }
+            if (status.isRunning() && hasCreatedContainers && !startedInstances) {
+                startInstances();
+            }
+            if (status.isRunning() && startedInstances) {
+                checkInstancesAndSetSucceededOrFailed();
             }
         }
     }
@@ -118,50 +116,18 @@ public class Service {
         }
     }
 
-    private void buildImageAndCreateContainersAndStartInstances() {
-        if (buildImage == null) {
-            buildImage = new Thread(() -> {
-                Service service = Service.this;
-                logger.info(INFO_PLACEHOLDER, prefix, "Building image");
-                if (composeAdapter.buildImage(name, service::logOutput, service::logError)) {
-                    imageBuilt = true;
-                } else {
-                    setFailed("Failed when building image");
-                }
-            });
-            buildImage.start();
-        } else if (imageBuilt) {
-            createContainers();
-            startInstances();
-        } else if (buildImage.isInterrupted()) {
-            setFailed("Interrupted when building image");
-        }
-    }
-
-    private void pullImageAndCreateContainersAndStartInstances() {
-        if (pullImage == null) {
-            pullImage = new Thread(() -> {
-                Service service = Service.this;
-                logger.info(INFO_PLACEHOLDER, prefix, "Pulling image");
-                if (composeAdapter.pullImage(name, service::logOutput, service::logError)) {
-                    imagePulled = true;
-                } else {
-                    setFailed("Failed when pulling image");
-                }
-            });
-            pullImage.start();
-        } else if (imagePulled) {
-            createContainers();
-            startInstances();
-        } else if (pullImage.isInterrupted()) {
-            setFailed("Interrupted when pulling image");
-        }
+    private void startContainersCreation() {
+        createContainers = new Thread(this::createContainers);
+        createContainers.start();
+        hasStartedContainersCreation = true;
     }
 
     private void createContainers() {
         String info = "Creating container" + (scale > 1 ? "s" : "");
         logger.info(INFO_PLACEHOLDER, prefix, info);
-        if (!composeAdapter.createContainers(name, scale, this::logOutput, this::logError)) {
+        if (composeAdapter.createContainers(name, scale, this::logOutput, this::logError)) {
+            hasCreatedContainers = true;
+        } else {
             String error = "Failed when creating container" + (scale > 1 ? "s" : "");
             setFailed(error);
         }

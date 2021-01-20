@@ -52,7 +52,6 @@ public class Pipeline {
         instantiateServices();
         services.forEach(this::initializeServiceLabels);
         services.forEach(this::initializeServiceExpression);
-        services.forEach(this::initializeNeedToBuild);
         services.forEach(this::initializeServiceScaleAndInstances);
         services.forEach(this::initializeServiceTimeout);
         services.forEach(this::initializeExternalPorts);
@@ -88,16 +87,6 @@ public class Pipeline {
         String labelName = "plankton.enable.if";
         if (labelsByName.containsKey(labelName)) {
             service.expression = labelsByName.get(labelName);
-        }
-    }
-
-    private void initializeNeedToBuild(Service service) {
-        logger.trace("initializeNeedToBuild: {}", service.name);
-        Map<String, Object> serviceConfigMap = composeDocument.getServiceMap(service.name);
-        if (serviceConfigMap.containsKey("build")) {
-            service.needToBuild = true;
-        } else {
-            service.needToBuild = false;
         }
     }
 
