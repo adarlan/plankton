@@ -108,7 +108,7 @@ public class PlanktonSetup {
     private void createDirectory(String path) {
         logger.info("Creating directory: {}", path);
         try {
-            BashScript.run("mkdir -p " + pipelineDirectoryPath);
+            BashScript.run("mkdir -p " + path);
         } catch (BashScriptFailedException e) {
             throw new PlanktonRunnerException("Unable to create directory", e);
         }
