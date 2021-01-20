@@ -91,12 +91,13 @@ public class DockerAdapter implements ComposeAdapter {
         script.forEachOutput(forEachOutput);
         script.forEachError(message -> {
             String msg = message.trim();
-            if (msg.startsWith("Pulling " + serviceName + " ...") || msg.equals("Building " + serviceName)
-                    || msg.equals("Image for service " + serviceName
-                            + " was built because it did not already exist. To rebuild this image you must use `docker-compose build` or `docker-compose up --build`.")
-                    || matches(msg, "Pulling " + serviceName + " \\(.+\\)\\.\\.\\.")
-                    || matches(msg, "Creating " + projectName + "_" + serviceName + "_\\d+ \\.\\.\\.")
+            if (msg.startsWith("Pulling " + serviceName + " ...") || msg.equals("Image for service " + serviceName
+                    + " was built because it did not already exist. To rebuild this image you must use `docker-compose build` or `docker-compose up --build`.")
                     || matches(msg, "Creating " + projectName + "_" + serviceName + "_\\d+ \\.\\.\\. done")) {
+                /* ignore */
+            } else if (msg.equals("Building " + serviceName)
+                    || matches(msg, "Pulling " + serviceName + " \\(.+\\)\\.\\.\\.")
+                    || matches(msg, "Creating " + projectName + "_" + serviceName + "_\\d+ \\.\\.\\.")) {
                 forEachOutput.accept(message);
             } else {
                 forEachError.accept(message);
