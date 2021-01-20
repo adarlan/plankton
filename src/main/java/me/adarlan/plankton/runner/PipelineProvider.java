@@ -8,7 +8,7 @@ import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.workflow.Pipeline;
 
 @Component
-public class SinglePipelineProvider {
+public class PipelineProvider {
 
     @Autowired
     private ComposeAdapter composeAdapter;

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import me.adarlan.plankton.workflow.Pipeline;
 
 @Component
-public class SinglePipelineRunner implements CommandLineRunner {
+public class PipelineRunner implements CommandLineRunner {
 
     @Autowired
     private Pipeline pipeline;

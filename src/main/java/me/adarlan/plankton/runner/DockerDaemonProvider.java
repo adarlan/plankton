@@ -10,7 +10,7 @@ import me.adarlan.plankton.docker.DockerSandbox;
 import me.adarlan.plankton.docker.DockerSandboxConfiguration;
 
 @Component
-public class SingleDockerDaemonProvider {
+public class DockerDaemonProvider {
 
     @Autowired
     private PlanktonSetup planktonSetup;

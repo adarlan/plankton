@@ -8,7 +8,7 @@ import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.compose.ComposeDocumentConfiguration;
 
 @Component
-public class SingleComposeDocumentProvider {
+public class ComposeDocumentProvider {
 
     @Autowired
     private PlanktonSetup planktonSetup;

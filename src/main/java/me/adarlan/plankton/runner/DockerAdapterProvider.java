@@ -11,7 +11,7 @@ import me.adarlan.plankton.docker.DockerAdapterConfiguration;
 import me.adarlan.plankton.docker.DockerDaemon;
 
 @Component
-public class SingleDockerAdapterProvider {
+public class DockerAdapterProvider {
 
     @Autowired
     private PlanktonSetup planktonSetup;
