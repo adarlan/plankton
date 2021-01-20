@@ -279,4 +279,8 @@ public class Job {
     public boolean isWaitingOrRunning() {
         return status == JobStatus.WAITING || status == JobStatus.RUNNING;
     }
+
+    public int dependencyLevel() {
+        return dependencyLevel;
+    }
 }
