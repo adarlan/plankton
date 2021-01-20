@@ -1,4 +1,4 @@
-package me.adarlan.plankton.workflow;
+package me.adarlan.plankton.pipeline;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -18,13 +18,12 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
-
-import me.adarlan.plankton.workflow.dependencies.WaitFailureOf;
-import me.adarlan.plankton.workflow.dependencies.WaitPort;
-import me.adarlan.plankton.workflow.dependencies.WaitSuccessOf;
 import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ComposeDocument;
+import me.adarlan.plankton.pipeline.dependencies.WaitFailureOf;
+import me.adarlan.plankton.pipeline.dependencies.WaitPort;
+import me.adarlan.plankton.pipeline.dependencies.WaitSuccessOf;
 
 @EqualsAndHashCode(of = "id")
 @ToString(of = "id")

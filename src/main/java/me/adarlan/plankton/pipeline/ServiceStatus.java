@@ -1,4 +1,4 @@
-package me.adarlan.plankton.workflow;
+package me.adarlan.plankton.pipeline;
 
 public enum ServiceStatus {
     DISABLED, WAITING, BLOCKED, RUNNING, FAILED, SUCCEEDED;

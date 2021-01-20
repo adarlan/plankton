@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 
 import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ComposeDocument;
-import me.adarlan.plankton.workflow.Pipeline;
-import me.adarlan.plankton.workflow.PipelineConfiguration;
+import me.adarlan.plankton.pipeline.Pipeline;
+import me.adarlan.plankton.pipeline.PipelineConfiguration;
 
 @Component
 public class PipelineProvider {
