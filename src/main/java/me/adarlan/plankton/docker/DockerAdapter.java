@@ -33,28 +33,33 @@ public class DockerAdapter implements ComposeAdapter {
     private final Set<String> runningContainers = new HashSet<>();
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final String LOADING = "Loading DockerAdapter ... ";
 
     public DockerAdapter(DockerAdapterConfiguration configuration) {
-        logger.info("Loading DockerAdapter");
+
+        logger.info(LOADING);
+
         this.dockerDaemon = configuration.dockerDaemon();
-        logger.info("dockerDaemon={}", dockerDaemon);
         this.composeDocument = configuration.composeDocument();
-        logger.info("composeDocument={}", composeDocument);
         this.containerStateDirectoryPath = configuration.containerStateDirectoryPath();
-        logger.info("metadataDirectoryPath={}", containerStateDirectoryPath);
+
+        logger.info("{}dockerDaemon={}", LOADING, dockerDaemon);
+        logger.info("{}composeDocument={}", LOADING, composeDocument);
+        logger.info("{}metadataDirectoryPath={}", LOADING, containerStateDirectoryPath);
+
         initializeOptions();
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
     private void initializeOptions() {
-        logger.info("Initializing options");
+        logger.info("{}Initializing options", LOADING);
         List<String> list = new ArrayList<>();
         list.add("--no-ansi");
         list.add("--project-name " + composeDocument.getProjectName());
         list.add("--file " + composeDocument.getFilePath());
         list.add("--project-directory " + composeDocument.getProjectDirectory());
         this.options = list.stream().collect(Collectors.joining(" "));
-        logger.info("options={}", options);
+        logger.info("{}options={}", LOADING, options);
     }
 
     @Override
