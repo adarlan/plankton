@@ -45,7 +45,7 @@ public class DockerAdapter implements ComposeAdapter {
 
         logger.info("{}dockerDaemon={}", LOADING, dockerDaemon);
         logger.info("{}composeDocument={}", LOADING, composeDocument);
-        logger.info("{}metadataDirectoryPath={}", LOADING, containerStateDirectoryPath);
+        logger.info("{}containerStateDirectoryPath={}", LOADING, containerStateDirectoryPath);
 
         initializeOptions();
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
