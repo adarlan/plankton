@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import lombok.ToString;
 import me.adarlan.plankton.bash.BashScript;
+import me.adarlan.plankton.bash.BashScriptFailedException;
 import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ComposeDocument;
 
@@ -69,10 +70,14 @@ public class DockerAdapter implements ComposeAdapter {
 
     private void createNetwork() {
         logger.debug("Creating default network");
-        BashScript script = createScript("createNetwork");
+        BashScript script = createScript();
         String networkName = composeDocument.getProjectName() + "_default";
         script.command("docker network create --attachable " + networkName);
-        script.runSuccessfully();
+        try {
+            script.run();
+        } catch (BashScriptFailedException e) {
+            throw new DockerAdapterException("Unable to create network", e);
+        }
     }
 
     @Override
@@ -85,7 +90,7 @@ public class DockerAdapter implements ComposeAdapter {
             }
         }
         logger.debug("Creating containers: {}; Scale: {}", serviceName, serviceScale);
-        final BashScript script = createScript("createContainers_" + serviceName);
+        final BashScript script = createScript();
         final String upOptions = "--no-start --scale " + serviceName + "=" + serviceScale;
         script.command(BASE_COMMAND + " " + options + " up " + upOptions + " " + serviceName);
         script.forEachOutput(forEachOutput);
@@ -103,8 +108,12 @@ public class DockerAdapter implements ComposeAdapter {
                 forEachError.accept(message);
             }
         });
-        script.run();
-        return script.getExitCode() == 0;
+        try {
+            script.run();
+            return true;
+        } catch (BashScriptFailedException e) {
+            return false;
+        }
     }
 
     private static boolean matches(String string, String regex) {
@@ -114,30 +123,39 @@ public class DockerAdapter implements ComposeAdapter {
     }
 
     @Override
-    public void startContainer(String containerName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
+    public boolean runContainer(String containerName, Consumer<String> forEachOutput, Consumer<String> forEachError) {
         logger.debug("Starting container: {}", containerName);
-        final BashScript script = createScript("runContainer_" + containerName);
+        final BashScript script = createScript();
         script.command("docker container start --attach " + containerName);
         script.forEachOutput(forEachOutput);
         script.forEachError(forEachError);
         synchronized (runningContainers) {
             runningContainers.add(containerName);
         }
-        script.run();
+        try {
+            script.run();
+            return true;
+        } catch (BashScriptFailedException e) {
+            return false;
+        }
     }
 
     @Override
     public DockerContainerState getContainerState(String containerName) {
         logger.debug("Getting container state: {}", containerName);
         final List<String> scriptOutput = new ArrayList<>();
-        final BashScript script = createScript("getContainerState_" + containerName);
+        final BashScript script = createScript();
         String f = containerStateDirectoryPath + "/" + containerName;
         script.command("docker container inspect " + containerName + " > " + f);
         script.command("cat " + f + " | jq --compact-output '.[] | .State'");
         script.command("STATUS=$(cat " + f + " | jq -r '.[] | .State.Status')");
         script.command("cat " + f + " > " + f + ".$STATUS");
         script.forEachOutput(scriptOutput::add);
-        script.runSuccessfully();
+        try {
+            script.run();
+        } catch (BashScriptFailedException e) {
+            throw new DockerAdapterException("Unable to get container state", e);
+        }
         final String json = scriptOutput.stream().collect(Collectors.joining());
         logger.debug("Container state JSON ({}): {}", containerName, json);
         DockerContainerState containerState = parseContainerStateJson(json);
@@ -158,24 +176,33 @@ public class DockerAdapter implements ComposeAdapter {
     }
 
     @Override
-    public void stopContainer(String containerName) {
+    public boolean stopContainer(String containerName) {
         logger.debug("Stopping container: {}", containerName);
-        BashScript script = createScript("stopContainer_" + containerName);
+        BashScript script = createScript();
         script.command("docker container stop " + containerName);
-        script.run();
+        try {
+            script.run();
+            return true;
+        } catch (BashScriptFailedException e) {
+            return false;
+        }
     }
 
-    private BashScript createScript(String name) {
-        BashScript script = new BashScript(name);
+    private BashScript createScript() {
+        BashScript script = new BashScript();
         script.env("DOCKER_HOST=" + dockerDaemon.getSocketAddress());
         return script;
     }
 
     private void killContainer(String containerName) {
         logger.error("Killing container: {}", containerName);
-        BashScript script = createScript("killContainer_" + containerName);
+        BashScript script = createScript();
         script.command("docker container kill " + containerName);
-        script.run();
+        try {
+            script.run();
+        } catch (BashScriptFailedException e) {
+            /* ignore */
+        }
     }
 
     private void shutdown() {

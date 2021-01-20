@@ -6,12 +6,15 @@ public interface ComposeAdapter {
 
     boolean createContainers(String serviceName, int serviceScale, Consumer<String> forEachOutput,
             Consumer<String> forEachError);
+    // TODO throws ContainersCreationFailedException
 
-    void startContainer(String containerName, Consumer<String> forEachOutput, Consumer<String> forEachError);
+    boolean runContainer(String containerName, Consumer<String> forEachOutput, Consumer<String> forEachError);
+    // TODO throws ContainerRunningFailedException
 
     ContainerState getContainerState(String containerName);
 
-    void stopContainer(String containerName);
+    boolean stopContainer(String containerName);
+    // TODO ContainerStoppingFailedException
 
     void disconnect();
 }

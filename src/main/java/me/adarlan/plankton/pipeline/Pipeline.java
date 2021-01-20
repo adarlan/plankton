@@ -18,6 +18,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import me.adarlan.plankton.bash.BashScript;
+import me.adarlan.plankton.bash.BashScriptFailedException;
 import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.pipeline.dependencies.WaitFailureOf;
@@ -179,19 +180,16 @@ public class Pipeline {
     }
 
     private void evaluateExpression(Job job) {
-        logger.trace("{}Evaluating {}.expression", LOADING, job.name);
-
-        final String scriptName = "evaluateExpression_" + job.name;
-        BashScript script = new BashScript(scriptName);
-        script.command(job.expression);
-        script.run();
         // TODO do it inside a sandbox container to prevent script injection
         // TODO it needs timeout
         // TODO add variables
-
-        if (script.getExitCode() == 0) {
+        logger.trace("{}Evaluating {}.expression", LOADING, job.name);
+        BashScript script = new BashScript();
+        script.command(job.expression);
+        try {
+            script.run();
             job.expressionResult = true;
-        } else {
+        } catch (BashScriptFailedException e) {
             job.expressionResult = false;
         }
         logger.info("{}{}.expressionResult={}", LOADING, job.name, job.expressionResult);

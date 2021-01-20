@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import lombok.ToString;
 import me.adarlan.plankton.bash.BashScript;
+import me.adarlan.plankton.bash.BashScriptFailedException;
 
 @ToString(of = { "id", "dockerHostSocketAddress", "socketAddress" })
 public class DockerSandbox implements DockerDaemon {
@@ -79,23 +80,35 @@ public class DockerSandbox implements DockerDaemon {
 
     private void createBridgeNetwork() {
         logger.info("{}Creating sandbox bridge network", LOADING);
-        BashScript script = createDockerHostScript("create_sandbox_network");
+        BashScript script = createDockerHostScript();
         script.command("docker network create --driver bridge --attachable " + networkName);
-        script.runSuccessfully();
+        try {
+            script.run();
+        } catch (BashScriptFailedException e) {
+            throw new DockerSandboxException("Unable to create sandbox bridge network", e);
+        }
     }
 
     private void connectBridgeNetwork() {
         logger.info("{}Connecting sandbox bridge network", LOADING);
-        BashScript script = createDockerHostScript("connect_sandbox_network");
+        BashScript script = createDockerHostScript();
         script.command("docker network connect " + networkName + " " + runningFromContainerId);
-        script.runSuccessfully();
+        try {
+            script.run();
+        } catch (BashScriptFailedException e) {
+            throw new DockerSandboxException("Unable to connect sandbox bridge network", e);
+        }
     }
 
     private void inspectBridgeNetwork() {
         logger.info("{}Inspecting sandbox bridge network", LOADING);
-        BashScript script = createDockerHostScript("inspect_sandbox_network");
+        BashScript script = createDockerHostScript();
         script.command("docker network inspect " + networkName);
-        script.runSuccessfully();
+        try {
+            script.run();
+        } catch (BashScriptFailedException e) {
+            throw new DockerSandboxException("Unable to inspect sandbox bridge network", e);
+        }
     }
 
     private void createContainer() {
@@ -120,26 +133,26 @@ public class DockerSandbox implements DockerDaemon {
         String containerOptions = containerOptionList.stream().collect(Collectors.joining(" "));
         String sandboxOptions = sandboxOptionList.stream().collect(Collectors.joining(" "));
 
-        BashScript script = createDockerHostScript("create_sandbox_container");
+        BashScript script = createDockerHostScript();
         script.command("docker container create " + containerOptions + " adarlan/plankton:sandbox " + sandboxOptions);
-        script.run();
-        if (script.getExitCode() != 0) {
-            throw new DockerSandboxException(
-                    "Unable to create sandbox container; Script exited with code: " + script.getExitCode());
+        try {
+            script.run();
+        } catch (BashScriptFailedException e) {
+            throw new DockerSandboxException("Unable to create sandbox container", e);
         }
     }
 
     private void startContainer() {
         new Thread(() -> {
             logger.info("{}Starting sandbox container", LOADING);
-            BashScript script = createDockerHostScript("start_sandbox_container");
+            BashScript script = createDockerHostScript();
             script.command("docker container start --attach " + containerName);
             script.forEachOutput(logger::info); // TODO add prefix
             script.forEachError(logger::error); // TODO add prefix
-            script.run();
-            if (script.getExitCode() != 0) {
-                throw new DockerSandboxException(
-                        "Sandbox container exited with a non-zero code: " + script.getExitCode());
+            try {
+                script.run();
+            } catch (BashScriptFailedException e) {
+                throw new DockerSandboxException("Sandbox container has failed", e);
             }
         }).start();
     }
@@ -171,17 +184,17 @@ public class DockerSandbox implements DockerDaemon {
     }
 
     private boolean daemonIsRunning() {
-        BashScript script = new BashScript("check_docker_daemon");
+        BashScript script = new BashScript();
         script.env("DOCKER_HOST=" + socketAddress);
         script.command("docker ps");
         script.forEachOutputAndError(msg -> {
             /* do nothing */
         });
-        script.run();
-        if (script.getExitCode() == 0) {
+        try {
+            script.run();
             logger.info("{}Sandbox daemon is running", LOADING);
             return true;
-        } else {
+        } catch (BashScriptFailedException e) {
             return false;
         }
     }
@@ -193,18 +206,22 @@ public class DockerSandbox implements DockerDaemon {
 
     public void shutdown() {
         synchronized (this) {
-            BashScript script = createDockerHostScript("stop_sandbox_container");
+            BashScript script = createDockerHostScript();
             script.command("docker stop " + containerName);
             if (!runningFromHost) {
                 script.command("docker network disconnect " + networkName + " " + runningFromContainerId);
                 script.command("docker network rm " + networkName);
             }
-            script.runSuccessfully();
+            try {
+                script.run();
+            } catch (BashScriptFailedException e) {
+                /* ignore */
+            }
         }
     }
 
-    private BashScript createDockerHostScript(String name) {
-        BashScript script = new BashScript(name);
+    private BashScript createDockerHostScript() {
+        BashScript script = new BashScript();
         script.env("DOCKER_HOST=" + dockerHostSocketAddress);
         return script;
     }

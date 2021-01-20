@@ -17,6 +17,7 @@ import org.yaml.snakeyaml.Yaml;
 import lombok.Getter;
 import lombok.ToString;
 import me.adarlan.plankton.bash.BashScript;
+import me.adarlan.plankton.bash.BashScriptFailedException;
 
 @ToString(of = { "projectName", "filePath", "projectDirectory" })
 public class ComposeDocument {
@@ -55,12 +56,15 @@ public class ComposeDocument {
 
     private void configureFile() {
         logger.info("{}Configuring file", LOADING);
-        BashScript script = new BashScript("initialize_file");
+        BashScript script = new BashScript();
         script.command("mv " + filePath + " " + filePath + ".original.yaml");
         script.command("docker-compose --file " + filePath + ".original.yaml --project-directory " + projectDirectory
                 + " config > " + filePath);
-        // script.command("cat " + filePath);
-        script.runSuccessfully();
+        try {
+            script.run();
+        } catch (BashScriptFailedException e) {
+            throw new ComposeDocumentException("Unable to configure file", e);
+        }
     }
 
     @SuppressWarnings("unchecked")

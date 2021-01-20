@@ -36,8 +36,6 @@ public class JobInstance {
 
     private Integer exitCode = null;
 
-    private Thread runContainerThread = null;
-
     private final ComposeAdapter composeAdapter;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -70,11 +68,10 @@ public class JobInstance {
     }
 
     void start() {
-        runContainerThread = new Thread(() -> {
+        new Thread(() -> {
             logger.info(INFO_PLACEHOLDER, prefix, "Starting container");
-            composeAdapter.startContainer(containerName, this::logOutput, this::logError);
-        });
-        runContainerThread.start();
+            composeAdapter.runContainer(containerName, this::logOutput, this::logError);
+        }).start();
         this.started = true;
     }
 

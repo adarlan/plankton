@@ -21,34 +21,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import lombok.Getter;
-import lombok.ToString;
-
-@ToString(of = "name")
 public class BashScript {
 
-    private static int count = 0;
-
     public static void run(String command) throws BashScriptFailedException {
-        BashScript script = new BashScript("bash_script_" + ++count);
+        BashScript script = new BashScript();
         script.command(command);
         script.run();
-        int exitCode = script.getExitCode();
-        if (exitCode != 0) {
-            throw new BashScriptFailedException("Bash script returned a non-zero code: " + exitCode);
-        }
     }
 
     public static String runAndGetOutputString(String command) throws BashScriptFailedException {
         List<String> output = new ArrayList<>();
-        BashScript script = new BashScript("bash_script_" + ++count);
+        BashScript script = new BashScript();
         script.command(command);
         script.forEachOutput(output::add);
         script.run();
-        int exitCode = script.getExitCode();
-        if (exitCode != 0) {
-            throw new BashScriptFailedException("Bash script returned a non-zero code: " + exitCode);
-        }
         return output.stream().collect(Collectors.joining());
     }
 
@@ -71,9 +57,6 @@ public class BashScript {
         return runAndGetOutputJson(command, List.class);
     }
 
-    @Getter
-    private String name;
-
     private List<String> variables = new ArrayList<>();
     private List<String> commands = new ArrayList<>();
 
@@ -84,9 +67,17 @@ public class BashScript {
     private Consumer<String> forEachError;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final String LOG_PREFIX = BashScript.class.getSimpleName() + ": ";
 
-    public BashScript(String name) {
-        this.name = name;
+    private static int count = 0;
+    private final int number;
+
+    public BashScript() {
+        super();
+        synchronized (BashScript.class) {
+            count++;
+        }
+        number = count;
     }
 
     public BashScript command(String command) {
@@ -125,9 +116,9 @@ public class BashScript {
         return this;
     }
 
-    public BashScript run() {
-        variables.forEach(variable -> logger.debug("{}: +{}", name, variable));
-        commands.forEach(command -> logger.debug("{}: +{}", name, command));
+    public void run() throws BashScriptFailedException {
+        variables.forEach(variable -> logger.debug("{}export {}", LOG_PREFIX, variable));
+        commands.forEach(command -> logger.debug("{}{}", LOG_PREFIX, command));
         commands.addAll(0, Arrays.asList("#!/bin/bash", "set -e"));
         ProcessBuilder processBuilder = createProcessBuilder();
         process = startProcessBuilder(processBuilder);
@@ -138,28 +129,20 @@ public class BashScript {
         exitCode = waitForProcess();
         joinOutputStreamThread(outputStreamThread);
         joinErrorStreamThread(errorStreamThread);
-        return this;
+        if (exitCode != 0) {
+            throw new BashScriptFailedException(exitCode);
+        }
     }
 
     public int getExitCode() {
-        if (exitCode == null) {
-            throw new BashScriptException(this, "Unable to get exit code; The script was not run");
-        }
         return exitCode;
-    }
-
-    public void runSuccessfully() {
-        run();
-        if (exitCode != 0) {
-            throw new BashScriptException(this, "Returned a non-zero code: " + exitCode);
-        }
     }
 
     private int waitForProcess() {
         try {
             return process.waitFor();
         } catch (InterruptedException e) {
-            BashScriptException exception = new BashScriptException(this, "Unable to wait for process", e);
+            BashScriptException exception = new BashScriptException("Unable to wait for process", e);
             Thread.currentThread().interrupt();
             throw exception;
         }
@@ -169,7 +152,7 @@ public class BashScript {
         try {
             outputStreamThread.join();
         } catch (InterruptedException e) {
-            BashScriptException exception = new BashScriptException(this, "Unable join output stream thread", e);
+            BashScriptException exception = new BashScriptException("Unable join output stream thread", e);
             Thread.currentThread().interrupt();
             throw exception;
         }
@@ -179,7 +162,7 @@ public class BashScript {
         try {
             errorStreamThread.join();
         } catch (InterruptedException e) {
-            BashScriptException exception = new BashScriptException(this, "Unable join error stream thread", e);
+            BashScriptException exception = new BashScriptException("Unable join error stream thread", e);
             Thread.currentThread().interrupt();
             throw exception;
         }
@@ -200,7 +183,7 @@ public class BashScript {
             });
             return processBuilder;
         } catch (final IOException e) {
-            throw new BashScriptException(this, "Unable to create process builder", e);
+            throw new BashScriptException("Unable to create process builder", e);
         }
     }
 
@@ -208,15 +191,15 @@ public class BashScript {
         try {
             return processBuilder.start();
         } catch (IOException e) {
-            throw new BashScriptException(this, "Unable to start process builder", e);
+            throw new BashScriptException("Unable to start process builder", e);
         }
     }
 
     private File createTempFile() {
         try {
-            return File.createTempFile(name, null);
+            return File.createTempFile(BashScript.class.getSimpleName(), String.valueOf(number));
         } catch (final IOException e) {
-            throw new BashScriptException(this, "Unable to create temp file", e);
+            throw new BashScriptException("Unable to create temp file", e);
         }
     }
 
@@ -230,12 +213,12 @@ public class BashScript {
                         if (forEachOutput != null) {
                             forEachOutput.accept(line);
                         } else {
-                            logger.info("{}: {}", name, line);
+                            logger.debug("{}{}", LOG_PREFIX, line);
                         }
                     }
                 }
             } catch (IOException e) {
-                throw new BashScriptException(this, "Unable to follow output stream", e);
+                throw new BashScriptException("Unable to follow output stream", e);
             }
         });
     }
@@ -250,12 +233,12 @@ public class BashScript {
                         if (forEachError != null) {
                             forEachError.accept(line);
                         } else {
-                            logger.error("{}: {}", name, line);
+                            logger.error("{}{}", LOG_PREFIX, line);
                         }
                     }
                 }
             } catch (IOException e) {
-                throw new BashScriptException(this, "Unable to follow error stream", e);
+                throw new BashScriptException("Unable to follow error stream", e);
             }
         });
     }
