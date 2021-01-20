@@ -160,7 +160,7 @@ public class DockerSandbox implements DockerDaemon {
                 socketReady = socketIsReady();
             if (!daemonRunning)
                 daemonRunning = daemonIsRunning();
-            logger.debug("Waiting for sandbox container to be ready");
+            logger.info("Waiting for sandbox container to be ready");
             Thread.sleep(1000);
         }
         logger.info("Sandbox container is ready");
