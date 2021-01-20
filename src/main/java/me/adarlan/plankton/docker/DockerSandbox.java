@@ -33,6 +33,7 @@ public class DockerSandbox implements DockerDaemon {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final String LOADING = "Loading " + DockerSandbox.class.getSimpleName() + " ... ";
+    private static final String CONTAINER_LOG_PLACEHOLDER = DockerSandbox.class.getSimpleName() + ": {}";
 
     public DockerSandbox(DockerSandboxConfiguration configuration) {
 
@@ -147,8 +148,8 @@ public class DockerSandbox implements DockerDaemon {
             logger.info("{}Starting sandbox container", LOADING);
             BashScript script = createDockerHostScript();
             script.command("docker container start --attach " + containerName);
-            script.forEachOutput(logger::info); // TODO add prefix
-            script.forEachError(logger::error); // TODO add prefix
+            script.forEachOutput(message -> logger.info(CONTAINER_LOG_PLACEHOLDER, message));
+            script.forEachError(message -> logger.error(CONTAINER_LOG_PLACEHOLDER, message));
             try {
                 script.run();
             } catch (BashScriptFailedException e) {
