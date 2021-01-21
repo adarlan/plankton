@@ -2,9 +2,7 @@ package me.adarlan.plankton.pipeline;
 
 public interface JobDependency {
 
-    Job getParentJob();
-
-    Job getRequiredJob();
+    Job job();
 
     boolean isSatisfied();
 

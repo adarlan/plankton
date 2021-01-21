@@ -241,7 +241,7 @@ public class Pipeline {
             knownDependents.add(job);
             int maxDepth = -1;
             for (JobDependency dependency : job.dependencies) {
-                Job requiredJob = dependency.getRequiredJob();
+                Job requiredJob = dependency.job();
                 if (knownDependents.contains(requiredJob)) {
                     throw new JobDependencyLoopException();
                 }

@@ -31,12 +31,7 @@ public class WaitSuccessOf implements JobDependency {
     }
 
     @Override
-    public Job getParentJob() {
-        return parentJob;
-    }
-
-    @Override
-    public Job getRequiredJob() {
+    public Job job() {
         return requiredJob;
     }
 }
