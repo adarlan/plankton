@@ -47,7 +47,7 @@ public class DockerAdapter implements ComposeAdapter {
         this.dockerDaemon = configuration.dockerDaemon();
         this.composeDocument = configuration.composeDocument();
         this.containerStateDirectoryPath = configuration.containerStateDirectoryPath();
-        this.projectName = composeDocument.getProjectName();
+        this.projectName = composeDocument.projectName();
 
         logger.info("{}dockerDaemon={}", LOADING, dockerDaemon);
         logger.info("{}composeDocument={}", LOADING, composeDocument);
@@ -61,9 +61,9 @@ public class DockerAdapter implements ComposeAdapter {
         logger.trace("{}Initializing options", LOADING);
         List<String> list = new ArrayList<>();
         list.add("--no-ansi");
-        list.add("--project-name " + composeDocument.getProjectName());
-        list.add("--file " + composeDocument.getFilePath());
-        list.add("--project-directory " + composeDocument.getProjectDirectory());
+        list.add("--project-name " + composeDocument.projectName());
+        list.add("--file " + composeDocument.filePath());
+        list.add("--project-directory " + composeDocument.projectDirectory());
         this.options = list.stream().collect(Collectors.joining(" "));
         logger.info("{}options={}", LOADING, options);
     }
@@ -71,7 +71,7 @@ public class DockerAdapter implements ComposeAdapter {
     private void createNetwork() {
         logger.debug("Creating default network");
         BashScript script = createScript();
-        String networkName = composeDocument.getProjectName() + "_default";
+        String networkName = composeDocument.projectName() + "_default";
         script.command("docker network create --attachable " + networkName);
         try {
             script.run();

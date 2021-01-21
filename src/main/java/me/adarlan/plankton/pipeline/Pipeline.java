@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.ToString;
 import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.bash.BashScriptFailedException;
@@ -49,7 +48,7 @@ public class Pipeline {
 
         this.composeAdapter = configuration.composeAdapter();
         this.composeDocument = configuration.composeDocument();
-        this.id = composeDocument.getProjectName();
+        this.id = composeDocument.projectName();
 
         logger.info("{}id={}", LOADING, id);
         logger.info("{}composeDocument={}", LOADING, composeDocument);
@@ -70,7 +69,7 @@ public class Pipeline {
 
     private void instantiateJobs() {
         logger.trace("{}Instantiating jobs", LOADING);
-        composeDocument.getServiceNames().forEach(name -> {
+        composeDocument.serviceNames().forEach(name -> {
             Job job = new Job(this, name);
             this.jobs.add(job);
             this.jobsByName.put(name, job);
@@ -80,7 +79,7 @@ public class Pipeline {
 
     private void initializeJobLabels(Job job) {
         logger.trace("{}Initializing {}.labels", LOADING, job.name);
-        Map<String, String> labelsByName = composeDocument.getServiceLabelsMap(job.name);
+        Map<String, String> labelsByName = composeDocument.labelsMapOf(job.name);
         labelsByJobAndName.put(job, labelsByName);
         logger.info("{}{}.labels={}", LOADING, job.name, labelsByName);
     }
@@ -123,7 +122,7 @@ public class Pipeline {
     }
 
     private void initializeExternalPorts(Job job) {
-        List<Map<String, Object>> ports = composeDocument.getServicePorts(job.name);
+        List<Map<String, Object>> ports = composeDocument.servicePortsOf(job.name);
         ports.forEach(p -> {
             Integer externalPort = (Integer) p.get("published"); // TODO what if published is null?
             externalPorts.put(externalPort, job);

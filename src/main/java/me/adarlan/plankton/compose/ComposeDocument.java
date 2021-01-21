@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import lombok.Getter;
 import lombok.ToString;
 import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.bash.BashScriptFailedException;
@@ -22,13 +21,8 @@ import me.adarlan.plankton.bash.BashScriptFailedException;
 @ToString(of = { "projectName", "filePath", "projectDirectory" })
 public class ComposeDocument {
 
-    @Getter
     private final String projectName;
-
-    @Getter
     private final String filePath;
-
-    @Getter
     private final String projectDirectory;
 
     private Map<String, Object> documentMap;
@@ -81,32 +75,44 @@ public class ComposeDocument {
         servicesMap.keySet().forEach(serviceNames::add);
     }
 
-    public Map<String, Object> getDocumentMap() {
+    public String projectName() {
+        return projectName;
+    }
+
+    public String filePath() {
+        return filePath;
+    }
+
+    public String projectDirectory() {
+        return projectDirectory;
+    }
+
+    public Map<String, Object> documentMap() {
         return Collections.unmodifiableMap(documentMap);
     }
 
-    public Map<String, Object> getServicesMap() {
+    public Map<String, Object> servicesMap() {
         return Collections.unmodifiableMap(servicesMap);
     }
 
-    public Set<String> getServiceNames() {
+    public Set<String> serviceNames() {
         return Collections.unmodifiableSet(serviceNames);
     }
 
     @SuppressWarnings("unchecked")
-    public Map<String, Object> getServiceMap(String serviceName) {
+    public Map<String, Object> serviceMapOf(String serviceName) {
         Map<String, Object> serviceMap = (Map<String, Object>) servicesMap.get(serviceName);
         return Collections.unmodifiableMap(serviceMap);
     }
 
     @SuppressWarnings("unchecked")
-    public Map<String, String> getServiceLabelsMap(String serviceName) {
+    public Map<String, String> labelsMapOf(String serviceName) {
         Map<String, Object> serviceMap = (Map<String, Object>) servicesMap.get(serviceName);
         return (Map<String, String>) serviceMap.computeIfAbsent("labels", k -> new HashMap<>());
     }
 
     @SuppressWarnings("unchecked")
-    public List<Map<String, Object>> getServicePorts(String serviceName) {
+    public List<Map<String, Object>> servicePortsOf(String serviceName) {
         Map<String, Object> serviceMap = (Map<String, Object>) servicesMap.get(serviceName);
         return (List<Map<String, Object>>) serviceMap.computeIfAbsent("ports", k -> new ArrayList<>());
         // TODO the 'published' key is optional
