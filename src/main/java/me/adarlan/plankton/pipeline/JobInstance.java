@@ -49,7 +49,7 @@ public class JobInstance {
     JobInstance(Job parentJob, int number) {
         this.parentJob = parentJob;
         this.number = number;
-        this.containerName = parentJob.pipeline.getId() + "_" + parentJob.name() + "_" + number;
+        this.containerName = parentJob.pipeline.id() + "_" + parentJob.name() + "_" + number;
         this.composeAdapter = parentJob.pipeline.composeAdapter;
     }
 

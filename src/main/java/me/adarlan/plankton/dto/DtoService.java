@@ -13,7 +13,7 @@ public class DtoService {
 
     public PipelineDto dtoOf(Pipeline pipeline) {
         PipelineDto pipelineDto = new PipelineDto();
-        pipelineDto.id = pipeline.getId();
+        pipelineDto.id = pipeline.id();
         pipeline.jobs().forEach(job -> {
             int stageIndex = job.dependencyLevel();
             for (int i = pipelineDto.stages.size(); i <= stageIndex; i++) {

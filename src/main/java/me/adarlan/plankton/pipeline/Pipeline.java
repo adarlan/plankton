@@ -32,7 +32,6 @@ public class Pipeline {
     private final ComposeDocument composeDocument;
     final ComposeAdapter composeAdapter;
 
-    @Getter
     private final String id;
 
     private final Set<Job> jobs = new HashSet<>();
@@ -269,6 +268,10 @@ public class Pipeline {
         }
         logger.info("Finished {}", this);
         composeAdapter.disconnect();
+    }
+
+    public String id() {
+        return id;
     }
 
     public Set<Job> jobs() {
