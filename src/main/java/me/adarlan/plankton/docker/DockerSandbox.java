@@ -201,7 +201,7 @@ public class DockerSandbox implements DockerDaemon {
     }
 
     @Override
-    public String getSocketAddress() {
+    public String socketAddress() {
         return socketAddress;
     }
 

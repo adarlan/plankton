@@ -14,7 +14,7 @@ public class DtoService {
     public PipelineDto dtoOf(Pipeline pipeline) {
         PipelineDto pipelineDto = new PipelineDto();
         pipelineDto.id = pipeline.getId();
-        pipeline.getJobs().forEach(job -> {
+        pipeline.jobs().forEach(job -> {
             int stageIndex = job.dependencyLevel();
             for (int i = pipelineDto.stages.size(); i <= stageIndex; i++) {
                 pipelineDto.stages.add(new StageDto());
@@ -28,9 +28,9 @@ public class DtoService {
 
     public JobDto dtoOf(Job job) {
         JobDto jobDto = new JobDto();
-        jobDto.name = job.getName();
-        jobDto.status = job.getStatus().toString().toLowerCase();
-        job.getDependencies().forEach(dependency -> {
+        jobDto.name = job.name();
+        jobDto.status = job.status().toString().toLowerCase();
+        job.dependencies().forEach(dependency -> {
             DependencyDto dependencyDto = new DependencyDto();
             dependencyDto.description = dependency.toString();
             jobDto.dependencies.add(dependencyDto);

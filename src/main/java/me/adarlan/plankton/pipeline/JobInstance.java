@@ -28,7 +28,7 @@ public class JobInstance {
 
     private boolean started = false;
     private boolean running = false;
-    private boolean ended = false;
+    private boolean exited = false;
 
     private Instant initialInstant = null;
     private Instant finalInstant = null;
@@ -49,7 +49,7 @@ public class JobInstance {
     JobInstance(Job parentJob, int number) {
         this.parentJob = parentJob;
         this.number = number;
-        this.containerName = parentJob.pipeline.getId() + "_" + parentJob.getName() + "_" + number;
+        this.containerName = parentJob.pipeline.getId() + "_" + parentJob.name() + "_" + number;
         this.composeAdapter = parentJob.pipeline.composeAdapter;
     }
 
@@ -84,7 +84,7 @@ public class JobInstance {
 
     void refresh() {
         synchronized (this) {
-            if (started && !ended) {
+            if (started && !exited) {
                 ContainerState containerState = composeAdapter.getContainerState(containerName);
                 refresh(containerState);
             }
@@ -99,7 +99,7 @@ public class JobInstance {
             }
         } else if (containerState.exited()) {
             running = false;
-            ended = true;
+            exited = true;
             if (initialInstant == null) {
                 initialInstant = containerState.initialInstant();
             }
@@ -114,7 +114,7 @@ public class JobInstance {
         }
     }
 
-    public Duration getDuration() {
+    public Duration duration() {
         if (duration == null) {
             if (initialInstant != null && finalInstant != null) {
                 duration = Duration.between(initialInstant, finalInstant);
@@ -129,7 +129,7 @@ public class JobInstance {
         }
     }
 
-    public List<String> getLogs() {
+    public List<String> logs() {
         return Collections.unmodifiableList(logs);
     }
 
@@ -141,31 +141,31 @@ public class JobInstance {
         return running;
     }
 
-    public boolean hasEnded() {
-        return ended;
+    public boolean hasExited() {
+        return exited;
     }
 
-    public Job getParentJob() {
+    public Job job() {
         return parentJob;
     }
 
-    public Integer getNumber() {
+    public Integer number() {
         return number;
     }
 
-    public String getContainerName() {
+    public String containerName() {
         return containerName;
     }
 
-    public Instant getInitialInstant() {
+    public Instant initialInstant() {
         return initialInstant;
     }
 
-    public Instant getFinalInstant() {
+    public Instant finalInstant() {
         return finalInstant;
     }
 
-    public Integer getExitCode() {
+    public Integer exitCode() {
         return exitCode;
     }
 }

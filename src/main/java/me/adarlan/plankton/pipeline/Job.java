@@ -144,8 +144,8 @@ public class Job {
         int failedNumber = 0;
         for (JobInstance instance : instances) {
             instance.refresh();
-            if (instance.hasEnded()) {
-                Integer exitCode = instance.getExitCode();
+            if (instance.hasExited()) {
+                Integer exitCode = instance.exitCode();
                 if (exitCode == null || !exitCode.equals(0)) {
                     failed = true;
                     failedNumber++;
@@ -171,7 +171,7 @@ public class Job {
     }
 
     private void checkTimeout() {
-        Duration d = getDuration();
+        Duration d = duration();
         if (d.compareTo(timeoutLimit) > 0) {
             logger.error(INFO_PLACEHOLDER, prefix, "Time limit has been reached");
             instances.forEach(JobInstance::stop);
@@ -206,7 +206,7 @@ public class Job {
         logger.info(INFO_PLACEHOLDER_2, prefix, m);
     }
 
-    public Duration getDuration() {
+    public Duration duration() {
         if (duration == null) {
             if (status.isDisabled() || status.isBlocked()) {
                 duration = Duration.ZERO;
@@ -224,51 +224,51 @@ public class Job {
         }
     }
 
-    public List<String> getLogs() {
+    public List<String> logs() {
         return Collections.unmodifiableList(logs);
     }
 
-    public List<JobInstance> getInstances() {
+    public List<JobInstance> instances() {
         return Collections.unmodifiableList(instances);
     }
 
-    public Set<JobDependency> getDependencies() {
+    public Set<JobDependency> dependencies() {
         return Collections.unmodifiableSet(dependencies);
     }
 
-    public Pipeline getPipeline() {
+    public Pipeline pipeline() {
         return pipeline;
     }
 
-    public String getName() {
+    public String name() {
         return name;
     }
 
-    public JobStatus getStatus() {
+    public JobStatus status() {
         return status;
     }
 
-    public String getExpression() {
+    public String expression() {
         return expression;
     }
 
-    public Boolean getExpressionResult() {
+    public Boolean expressionResult() {
         return expressionResult;
     }
 
-    public Integer getScale() {
+    public Integer scale() {
         return scale;
     }
 
-    public Instant getInitialInstant() {
+    public Instant initialInstant() {
         return initialInstant;
     }
 
-    public Duration getTimeoutLimit() {
+    public Duration timeoutLimit() {
         return timeoutLimit;
     }
 
-    public Instant getFinalInstant() {
+    public Instant finalInstant() {
         return finalInstant;
     }
 

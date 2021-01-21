@@ -31,7 +31,7 @@ public class WaitPort implements JobDependency {
 
     @Override
     public boolean isSatisfied() {
-        if (requiredJob.getStatus().isRunning()) {
+        if (requiredJob.status().isRunning()) {
             try (Socket s = new Socket("localhost", port)) {
                 return true;
             } catch (IOException ex) {
@@ -44,7 +44,7 @@ public class WaitPort implements JobDependency {
 
     @Override
     public boolean isBlocked() {
-        JobStatus status = requiredJob.getStatus();
+        JobStatus status = requiredJob.status();
         return !(status.isWaiting() || status.isRunning());
     }
 

@@ -20,7 +20,7 @@ public class DockerHost implements DockerDaemon {
     }
 
     @Override
-    public String getSocketAddress() {
+    public String socketAddress() {
         return socketAddress;
     }
 

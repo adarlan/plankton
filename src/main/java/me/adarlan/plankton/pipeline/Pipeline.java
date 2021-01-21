@@ -195,9 +195,9 @@ public class Pipeline {
 
     private void initializeInstanceNamesAndBiggestName() {
         biggestJobNameLength = 0;
-        for (Job job : getEnabledJobs()) {
+        for (Job job : enabledJobs()) {
             for (JobInstance instance : job.instances) {
-                if (job.getScale() == 1) {
+                if (job.scale() == 1) {
                     instance.name = job.name;
                 } else {
                     instance.name = job.name + "_" + instance.number;
@@ -219,7 +219,7 @@ public class Pipeline {
         list.add(Colors.BRIGHT_PURPLE);
         // list.add(Colors.BRIGHT_RED);
         int jobIndex = 0;
-        for (Job job : getEnabledJobs()) {
+        for (Job job : enabledJobs()) {
             int colorIndex = jobIndex % list.size();
             job.color = list.get(colorIndex);
             jobIndex++;
@@ -259,7 +259,7 @@ public class Pipeline {
         boolean done = false;
         while (!done) {
             done = true;
-            for (Job job : getWaitingOrRunningJobs()) {
+            for (Job job : waitingOrRunningJobs()) {
                 job.refresh();
                 if (job.isWaitingOrRunning()) {
                     done = false;
@@ -271,7 +271,7 @@ public class Pipeline {
         composeAdapter.disconnect();
     }
 
-    public Set<Job> getJobs() {
+    public Set<Job> jobs() {
         return Collections.unmodifiableSet(jobs);
     }
 
@@ -281,11 +281,11 @@ public class Pipeline {
         return jobsByName.get(jobName);
     }
 
-    public Set<Job> getEnabledJobs() {
+    public Set<Job> enabledJobs() {
         return Collections.unmodifiableSet(jobs.stream().filter(Job::isEnabled).collect(Collectors.toSet()));
     }
 
-    public Set<Job> getWaitingOrRunningJobs() {
+    public Set<Job> waitingOrRunningJobs() {
         return Collections.unmodifiableSet(jobs.stream().filter(Job::isWaitingOrRunning).collect(Collectors.toSet()));
     }
 }

@@ -190,7 +190,7 @@ public class DockerAdapter implements ComposeAdapter {
 
     private BashScript createScript() {
         BashScript script = new BashScript();
-        script.env("DOCKER_HOST=" + dockerDaemon.getSocketAddress());
+        script.env("DOCKER_HOST=" + dockerDaemon.socketAddress());
         return script;
     }
 

@@ -21,12 +21,12 @@ public class WaitFailureOf implements JobDependency {
 
     @Override
     public boolean isSatisfied() {
-        return requiredJob.getStatus().isFailed();
+        return requiredJob.status().isFailed();
     }
 
     @Override
     public boolean isBlocked() {
-        JobStatus status = requiredJob.getStatus();
+        JobStatus status = requiredJob.status();
         return !(status.isWaiting() || status.isRunning() || status.isFailed());
     }
 
