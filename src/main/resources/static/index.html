@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="jquery-3.5.1.min.js"></script>
     <title>Plankton</title>
     <style>
         body {
@@ -72,7 +72,7 @@
             background-color: coral;
         }
 
-        .job.finished {
+        .job.succeeded {
             background-color: mediumaquamarine;
         }
 
@@ -93,17 +93,17 @@
             border-radius: 8pt;
         }
 
-        .job-rules {}
+        .job-dependencies {}
 
-        .rule {
+        .dependency {
             display: table-row;
         }
 
-        .rule-description {
+        .dependency-description {
             display: table-cell;
         }
 
-        .rule-status {
+        .dependency-status {
             display: table-cell;
         }
     </style>
@@ -119,53 +119,48 @@
     </div>
 
     <script>
-        const apiUrl = "http://localhost:1329/api"
-
-        let jobs;
-        let stages;
+        const pipelineUrl = "http://localhost:1329/pipeline"
+        let pipeline;
+        let pipid = "";
         let firstTime = true;
 
         refresh();
         setInterval(refresh, 1000);
 
         async function refresh() {
-            const response = await fetch(apiUrl + "/jobs");
-            jobs = await response.json();
-            console.log(jobs);
-            loadStages();
-            if (firstTime) {
-                console.log("firstTime");
+            const response = await fetch(pipelineUrl);
+            pipeline = await response.json();
+            console.log(pipeline);
+            if (pipid != pipeline.id) {
+                console.log("first time");
                 drawFirstTime();
-                firstTime = false;
-            }
-            else {
-                console.log("not firstTime"); drawUpdate();
-            }
-        }
-
-        function loadStages() {
-            stages = [];
-            for (let jobIndex in jobs) {
-                let job = jobs[jobIndex];
-                for (i = stages.length; i <= job.dependencyLevel; i++) {
-                    stages.push({ jobs: [] });
-                }
-                let stage = stages[job.dependencyLevel];
-                stage.jobs.push(job);
+                pipid = pipeline.id;
+            } else {
+                console.log("not first time");
+                drawUpdate();
             }
         }
 
         function drawFirstTime() {
 
             let stages_div = $("#stages");
+            stages_div.empty();
 
-            for (let stageIndex in stages) {
-                let stage = stages[stageIndex];
+            console.log("pipeline.stages", pipeline.stages);
+            for (let stageIndex in pipeline.stages) {
+                console.log("stageIndex", stageIndex);
+
+                let stage = pipeline.stages[stageIndex];
+                console.log("stage", stage);
 
                 let stage_div = $("<div></div>").addClass("stage").appendTo(stages_div);
 
+                console.log("stage.jobs", stage.jobs);
                 for (let jobIndex in stage.jobs) {
+                    console.log("jobIndex", jobIndex);
+
                     let job = stage.jobs[jobIndex];
+                    console.log("job", job);
 
                     let job_div = $("<div></div>").attr("id", "job_" + job.name).addClass("job").addClass(job.status).appendTo(stage_div);
 
@@ -173,26 +168,29 @@
                     let job_name = $("<div></div>").addClass("job-name").text(job.name).appendTo(job_header);
                     let job_status = $("<div></div>").addClass("job-status").text(job.status).appendTo(job_header);
 
-                    let job_rules = $("<div></div>").addClass("job-rules").appendTo(job_div);
+                    let job_dependencies = $("<div></div>").addClass("job-dependencies").appendTo(job_div);
 
-                    for (let ruleIndex in job.rules) {
-                        let rule = job.rules[ruleIndex];
+                    for (let dependencyIndex in job.dependencies) {
+                        let dependency = job.dependencies[dependencyIndex];
 
-                        let rule_div = $("<div></div>").addClass("rule").appendTo(job_rules);
-                        let rule_description = $("<div></div>").addClass("rule-description").text(rule.name + "=" + rule.value).appendTo(rule_div);
-                        let rule_status = $("<div></div>").addClass("rule-status").text(rule.status).appendTo(rule_div);
+                        let dependency_div = $("<div></div>").addClass("dependency").appendTo(job_dependencies);
+                        let dependency_description = $("<div></div>").addClass("dependency-description").text(dependency.description).appendTo(dependency_div);
+                        // let dependency_description = $("<div></div>").addClass("dependency-description").text(dependency.name + "=" + dependency.value).appendTo(dependency_div);
+                        // let dependency_status = $("<div></div>").addClass("dependency-status").text(dependency.status).appendTo(dependency_div);
                     }
                 }
             }
         }
 
         function drawUpdate() {
-            for (let jobIndex in jobs) {
-                let job = jobs[jobIndex];
+            for (let stageIndex in pipeline.stages) {
+                let stage = pipeline.stages[stageIndex];
+                for (let jobIndex in stage.jobs) {
+                    let job = stage.jobs[jobIndex];
 
-                let job_div = $("#job_" + job.name).removeClass().addClass("job").addClass(job.status);
-                let job_status = job_div.children(".job-status").text(job.status);
-                // TODO update rule-status
+                    let job_div = $("#job_" + job.name).removeClass().addClass("job").addClass(job.status);
+                    let job_status = job_div.children(".job-header").children(".job-status").text(job.status);
+                }
             }
         }
 
