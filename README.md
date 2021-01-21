@@ -46,9 +46,9 @@ docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.s
 
 ![Pipeline page](screenshots/pipeline-page.png)
 
-### See more [examples](examples)
+<!-- ### See more [examples](examples) -->
 
-> TODO add more screenshots
+<!-- > TODO add more screenshots -->
 
 ## Label Reference
 
