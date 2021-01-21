@@ -9,11 +9,6 @@ import lombok.Getter;
 @Component
 public class PlanktonConfiguration {
 
-    // TODO private String runnerMode;
-    // TODO private boolean dockerEnabled;
-    // TODO private String dockerSandboxImage;
-    // TODO private String dockerSandboxCache;
-
     @Value("${plankton.metadata.directory}")
     private String metadataDirectory;
 
