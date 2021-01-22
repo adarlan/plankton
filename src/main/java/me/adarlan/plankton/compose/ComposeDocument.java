@@ -1,7 +1,5 @@
 package me.adarlan.plankton.compose;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,11 +10,11 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
 
 import lombok.ToString;
 import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.bash.BashScriptFailedException;
+import me.adarlan.plankton.yaml.YamlUtils;
 
 @ToString(of = { "projectName", "filePath", "projectDirectory" })
 public class ComposeDocument {
@@ -29,7 +27,9 @@ public class ComposeDocument {
     private Map<String, Object> servicesMap;
     private final Set<String> serviceNames = new HashSet<>();
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Set<ComposeService> services = new HashSet<>();
+
+    private static final Logger logger = LoggerFactory.getLogger(ComposeDocument.class);
     private static final String LOADING = "Loading " + ComposeDocument.class.getSimpleName() + " ... ";
 
     public ComposeDocument(ComposeDocumentConfiguration configuration) {
@@ -45,7 +45,14 @@ public class ComposeDocument {
         logger.info("{}filePath={}", LOADING, filePath);
 
         configureFile();
-        initializeDocumentMap();
+
+        readFile();
+        logger.debug("{}documentMap={}", LOADING, documentMap);
+
+        validateTopLevelKeys();
+        initializeServicesMap();
+        initializeServiceNames();
+        initializeServices();
     }
 
     private void configureFile() {
@@ -61,18 +68,41 @@ public class ComposeDocument {
         }
     }
 
+    private void expandVariables() {
+        // TODO expandVariables instead of configureFile
+    }
+
+    private void readFile() {
+        logger.trace("{}Reading file", LOADING);
+        documentMap = YamlUtils.loadFromFilePath(filePath);
+    }
+
+    private void validateTopLevelKeys() {
+        Set<String> keys = new HashSet<>(documentMap.keySet());
+        keys.forEach(key -> {
+            if (!key.equals("services")) {
+                logger.warn("{}Ignoring: {}", LOADING, key);
+            }
+        });
+    }
+
     @SuppressWarnings("unchecked")
-    private void initializeDocumentMap() {
-        logger.trace("{}Initializing document map", LOADING);
-        try (FileInputStream fileInputStream = new FileInputStream(filePath);) {
-            final Yaml yaml = new Yaml();
-            documentMap = yaml.load(fileInputStream);
-        } catch (IOException e) {
-            throw new ComposeDocumentException("Unable to initialize Compose document map", e);
-        }
+    private void initializeServicesMap() {
         this.servicesMap = (Map<String, Object>) documentMap.get("services");
-        logger.info("{}servicesMap={}", LOADING, servicesMap);
+        logger.debug("{}servicesMap={}", LOADING, servicesMap);
+    }
+
+    private void initializeServiceNames() {
         servicesMap.keySet().forEach(serviceNames::add);
+        logger.debug("{}serviceNames={}", LOADING, serviceNames);
+    }
+
+    private void validateServiceNames() {
+        // TODO validateServiceNames
+    }
+
+    private void initializeServices() {
+        servicesMap.forEach((key, object) -> services.add(new ComposeService(key, object)));
     }
 
     public String projectName() {
