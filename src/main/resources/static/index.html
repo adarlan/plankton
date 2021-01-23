@@ -168,16 +168,16 @@
                     let job_name = $("<div></div>").addClass("job-name").text(job.name).appendTo(job_header);
                     let job_status = $("<div></div>").addClass("job-status").text(job.status).appendTo(job_header);
 
-                    let job_dependencies = $("<div></div>").addClass("job-dependencies").appendTo(job_div);
+                    // let job_dependencies = $("<div></div>").addClass("job-dependencies").appendTo(job_div);
 
-                    for (let dependencyIndex in job.dependencies) {
-                        let dependency = job.dependencies[dependencyIndex];
+                    // for (let dependencyIndex in job.dependencies) {
+                    //     let dependency = job.dependencies[dependencyIndex];
 
-                        let dependency_div = $("<div></div>").addClass("dependency").appendTo(job_dependencies);
-                        let dependency_description = $("<div></div>").addClass("dependency-description").text(dependency.description).appendTo(dependency_div);
-                        // let dependency_description = $("<div></div>").addClass("dependency-description").text(dependency.name + "=" + dependency.value).appendTo(dependency_div);
-                        // let dependency_status = $("<div></div>").addClass("dependency-status").text(dependency.status).appendTo(dependency_div);
-                    }
+                    //     let dependency_div = $("<div></div>").addClass("dependency").appendTo(job_dependencies);
+                    //     let dependency_description = $("<div></div>").addClass("dependency-description").text(dependency.description).appendTo(dependency_div);
+                    //     // let dependency_description = $("<div></div>").addClass("dependency-description").text(dependency.name + "=" + dependency.value).appendTo(dependency_div);
+                    //     // let dependency_status = $("<div></div>").addClass("dependency-status").text(dependency.status).appendTo(dependency_div);
+                    // }
                 }
             }
         }
