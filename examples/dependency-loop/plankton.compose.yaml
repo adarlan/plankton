@@ -1,0 +1,13 @@
+services:
+
+  water:
+    image: alpine
+    command: echo Water...
+    depends_on:
+      - fire
+
+  fire:
+    image: alpine
+    command: echo Fire...
+    depends_on:
+      - water
