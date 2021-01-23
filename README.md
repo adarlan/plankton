@@ -7,7 +7,7 @@ Plankton is a Container-Native CI/CD tool based on [The Compose Specification](h
 Follow this example to create a simple pipeline composed by 3 services:
 `test`, `build` and `deploy`.
 
-### Create a `plankton.compose.yaml` file with the following content
+Create a `plankton.compose.yaml` file with the following content:
 
 ```yaml
 services:
@@ -20,27 +20,25 @@ services:
     image: alpine
     command: echo Building...
     depends_on:
-      test:
-        condition: service_succeeded
+      - test
 
   deploy:
     image: alpine
     command: echo Deploying...
     depends_on:
-      build:
-        condition: service_succeeded
+      - build
 ```
 
-### Run the pipeline using the `docker run` command
+Run the pipeline using the `docker run` command:
 
 ```shell
 docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.sock adarlan/plankton
 ```
 
-### See the pipeline logs
+See the pipeline logs:
 
 ![Pipeline logs](screenshots/pipeline-logs.png)
 
-### View the pipeline in your browser: [http://localhost:1329](http://localhost:1329)
+View the pipeline in your browser: [http://localhost:1329](http://localhost:1329)
 
 ![Pipeline page](screenshots/pipeline-page.png)
