@@ -42,9 +42,6 @@ public class PlanktonSetup {
     private final String underlyingWorkspaceDirectoryPath;
 
     @Getter
-    private final String containerStateDirectoryPath;
-
-    @Getter
     private final boolean runningFromHost;
 
     @Getter
@@ -67,7 +64,6 @@ public class PlanktonSetup {
         this.workspaceDirectoryPath = pipelineDirectoryPath + "/" + "workspace";
         this.underlyingWorkspaceDirectoryPath = planktonConfiguration.getMetadataDirectoryUnderlying() + "/"
                 + pipelineId + "/" + "workspace";
-        this.containerStateDirectoryPath = pipelineDirectoryPath + "/" + "container-state";
 
         if (dockerEnabled) {
             logger.info("{}dockerHostSocketAddress={}", SETTING_UP, dockerHostSocketAddress);
@@ -79,7 +75,6 @@ public class PlanktonSetup {
         logger.info("{}composeFilePath={}", SETTING_UP, composeFilePath);
         logger.info("{}workspaceDirectoryPath={}", SETTING_UP, workspaceDirectoryPath);
         logger.info("{}underlyingWorkspaceDirectoryPath={}", SETTING_UP, underlyingWorkspaceDirectoryPath);
-        logger.info("{}containerStateDirectoryPath={}", SETTING_UP, containerStateDirectoryPath);
 
         this.runningFromContainerId = runningFromContainerId();
         this.runningFromHost = runningFromContainerId.isBlank();
@@ -93,7 +88,6 @@ public class PlanktonSetup {
         createDirectory(metadataDirectoryPath);
         createDirectory(pipelineDirectoryPath);
         createDirectory(workspaceDirectoryPath);
-        createDirectory(containerStateDirectoryPath);
         copyComposeFileFrom(planktonConfiguration.getComposeFile());
         copyWorkspaceFrom(planktonConfiguration.getProjectDirectory());
     }

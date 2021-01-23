@@ -14,6 +14,6 @@ public class PipelineRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        pipeline.run();
+        pipeline.start();
     }
 }

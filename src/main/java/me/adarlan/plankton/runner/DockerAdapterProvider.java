@@ -35,11 +35,6 @@ public class DockerAdapterProvider {
             public ComposeDocument composeDocument() {
                 return composeDocument;
             }
-
-            @Override
-            public String containerStateDirectoryPath() {
-                return planktonSetup.getContainerStateDirectoryPath();
-            }
         });
     }
 }
