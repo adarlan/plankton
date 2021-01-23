@@ -30,20 +30,11 @@ public class DtoService {
         JobDto jobDto = new JobDto();
         jobDto.name = job.name();
         jobDto.status = job.status().toString().toLowerCase();
-        job.dependencies().forEach(dependency -> {
-            DependencyDto dependencyDto = new DependencyDto();
-            dependencyDto.description = dependency.toString();
-            jobDto.dependencies.add(dependencyDto);
-        });
-        sortDependenciesByName(jobDto);
+        job.dependencyMap().forEach((j, c) -> jobDto.dependencies.put(j.name(), c.toString().toLowerCase()));
         return jobDto;
     }
 
     private void sortJobsByName(StageDto stageDto) {
         Collections.sort(stageDto.jobs, (arg0, arg1) -> arg0.name.compareTo(arg1.name));
-    }
-
-    private void sortDependenciesByName(JobDto jobDto) {
-        Collections.sort(jobDto.dependencies, (arg0, arg1) -> arg0.description.compareTo(arg1.description));
     }
 }
