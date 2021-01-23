@@ -20,7 +20,7 @@ class Utils {
     }
 
     static String prefixOf(JobInstance instance) {
-        Job job = instance.parentJob;
+        Job job = instance.job;
         Pipeline pipeline = job.pipeline;
         return prefix(job.color, instance.name, pipeline.biggestJobNameLength, " ", "-", "--| ");
     }

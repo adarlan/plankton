@@ -4,18 +4,18 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import me.adarlan.plankton.compose.ComposeAdapter;
+import me.adarlan.plankton.compose.ComposeDocument;
+import me.adarlan.plankton.compose.ComposeService;
 
 @EqualsAndHashCode(of = { "pipeline", "name" })
 @ToString(of = { "name" })
@@ -23,119 +23,146 @@ public class Job {
 
     final Pipeline pipeline;
     final String name;
+
+    final ComposeDocument compose;
+    final ComposeAdapter composeAdapter;
+    final ComposeService service;
+
     JobStatus status;
 
-    String expression;
-    Boolean expressionResult;
-
-    final Set<JobDependency> dependencies = new HashSet<>();
+    final Map<Job, JobDependencyCondition> dependencyMap = new HashMap<>();
     Integer dependencyLevel;
 
     Integer scale;
     final List<JobInstance> instances = new ArrayList<>();
 
+    private boolean allInstancesExitedZero = false;
+    private boolean anyInstanceExitedZero = false;
+
+    private boolean allInstancesExitedNonZero = false;
+    private boolean anyInstanceExitedNonZero = false;
+
     private Instant initialInstant = null;
     private Instant finalInstant = null;
     private Duration duration = null;
-    Duration timeoutLimit;
-
-    private Thread createContainers = null;
-    private boolean hasCreatedContainers = false;
-    private boolean hasStartedContainersCreation = false;
-
-    private boolean startedInstances = false;
+    private Thread timeoutCountdown = null;
 
     String color;
     String prefix;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private static final String INFO_PLACEHOLDER = "{}" + Colors.BRIGHT_WHITE + "{}" + Colors.ANSI_RESET;
-    private static final String INFO_PLACEHOLDER_2 = "{}{}";
 
-    private static final Marker LOG_MARKER = MarkerFactory.getMarker("LOG");
-    private static final String LOG_PLACEHOLDER = "{}{}";
-
-    final ComposeAdapter composeAdapter;
-
-    private final List<String> logs = new ArrayList<>();
-
-    Job(Pipeline pipeline, String name) {
+    Job(Pipeline pipeline, ComposeService service) {
         this.pipeline = pipeline;
+        this.compose = pipeline.composeDocument;
         this.composeAdapter = pipeline.composeAdapter;
-        this.name = name;
+        this.service = service;
+        this.name = service.name();
     }
 
-    private void logOutput(String message) {
-        synchronized (logs) {
-            logs.add(message);
-        }
-        logger.info(LOG_MARKER, LOG_PLACEHOLDER, prefix, message);
+    private boolean dependenciesSatisfied = false;
+    private boolean dependenciesBlocked = false;
+
+    void start() {
+        logger.info("{} -> Starting", this);
+        Thread thread = new Thread(() -> {
+            if (!dependencyMap.isEmpty()) {
+                logger.info("{} -> Waiting for dependencies", this);
+                waitForDependencies();
+                if (dependenciesSatisfied) {
+                    logger.info("{} -> All dependencies satisfied", this);
+                } else {
+                    logger.info("{} -> Blocked by dependencies", this);
+                    status = JobStatus.BLOCKED;
+                    pipeline.refresh();
+                    return;
+                }
+            }
+            logger.info("{} -> Running", this);
+            status = JobStatus.RUNNING;
+            startTimer();
+            createContainers();
+            startInstances();
+        });
+        thread.setUncaughtExceptionHandler((t, e) -> {
+            logger.error("{} -> Uncaught exception", this, e);
+            throw new PipelineException("Uncaught exception", e);
+            // status = JobStatus.FAILED;
+            // stopTimer();
+            // pipeline.refresh();
+        });
+        thread.start();
     }
 
-    private void logError(String message) {
-        synchronized (logs) {
-            logs.add(message);
-        }
-        logger.error(LOG_MARKER, LOG_PLACEHOLDER, prefix, message);
-    }
-
-    void refresh() {
-        synchronized (this) {
-            if (status.isWaiting()) {
-                checkDependenciesAndSetRunningOrBlocked();
-            }
-            if (!status.isBlocked() && !hasStartedContainersCreation) {
-                startContainersCreation();
-            }
-            if (hasStartedContainersCreation && !hasCreatedContainers && createContainers.isInterrupted()) {
-                setFailed("Interrupted when creating container" + (scale > 1 ? "s" : ""));
-            }
-            if (status.isRunning() && hasCreatedContainers && !startedInstances) {
-                startInstances();
-            }
-            if (status.isRunning() && startedInstances) {
-                checkInstancesAndSetSucceededOrFailed();
+    private void waitForDependencies() {
+        while (!(dependenciesSatisfied || dependenciesBlocked)) {
+            checkDependencies();
+            if (dependenciesSatisfied || dependenciesBlocked) {
+                return;
+            } else {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    logger.error("{} -> Interrupted when waiting for dependencies", this, e);
+                    return;
+                }
             }
         }
     }
 
-    private void checkDependenciesAndSetRunningOrBlocked() {
-        boolean passed = true;
-        boolean blocked = false;
-        for (final JobDependency dependency : dependencies) {
-            if (!dependency.isSatisfied()) {
-                passed = false;
+    private void checkDependencies() {
+        dependenciesSatisfied = true;
+        dependenciesBlocked = false;
+        dependencyMap.forEach((dependsOnJob, condition) -> {
+            if (!condition.isSatisfiedFor(dependsOnJob)) {
+                dependenciesSatisfied = false;
             }
-            if (dependency.isBlocked()) {
-                blocked = true;
+            if (condition.isBlockedFor(dependsOnJob)) {
+                dependenciesBlocked = true;
             }
-        }
-        if (passed) {
-            setRunning();
-        } else if (blocked) {
-            setBlocked();
-        }
+        });
     }
 
-    private void startContainersCreation() {
-        createContainers = new Thread(this::createContainers);
-        createContainers.start();
-        hasStartedContainersCreation = true;
+    private void startTimer() {
+        initialInstant = Instant.now();
+        logger.info("{} -> initialInstant={}", this, initialInstant);
+        logger.info("{} -> Starting timeout countdown", Job.this);
+        timeoutCountdown = new Thread(() -> {
+            try {
+                Thread.sleep(pipeline.timeoutLimitForJobs.toMillis());
+                logger.error("{} -> Timeout limit has been reached", Job.this);
+                Job.this.stop();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.info("{} -> Timeout countdown has been stopped", Job.this);
+            }
+        });
+        timeoutCountdown.start();
+    }
+
+    private void stopTimer() {
+        if (initialInstant != null) {
+            finalInstant = Instant.now();
+            duration = Duration.between(initialInstant, finalInstant);
+        }
+        if (timeoutCountdown != null) {
+            logger.info("{} -> Stopping timeout countdown", Job.this);
+            timeoutCountdown.interrupt();
+        }
     }
 
     private void createContainers() {
-        String info = "Creating container" + (scale > 1 ? "s" : "");
-        logger.info(INFO_PLACEHOLDER, prefix, info);
-        if (composeAdapter.createContainers(name, scale, this::logOutput, this::logError)) {
-            hasCreatedContainers = true;
-        } else {
-            String error = "Failed when creating container" + (scale > 1 ? "s" : "");
-            setFailed(error);
-        }
+        composeAdapter.createContainers(service);
     }
 
     private void startInstances() {
         instances.forEach(JobInstance::start);
-        startedInstances = true;
+    }
+
+    void refresh() {
+        synchronized (this) {
+            checkInstancesAndSetSucceededOrFailed();
+        }
     }
 
     private void checkInstancesAndSetSucceededOrFailed() {
@@ -143,10 +170,11 @@ public class Job {
         boolean failed = false;
         int failedNumber = 0;
         for (JobInstance instance : instances) {
-            instance.refresh();
-            if (instance.hasExited()) {
-                Integer exitCode = instance.exitCode();
-                if (exitCode == null || !exitCode.equals(0)) {
+            if (instance.exited()) {
+                if (instance.exitCode() == 0) {
+                    anyInstanceExitedZero = true;
+                } else {
+                    anyInstanceExitedNonZero = true;
                     failed = true;
                     failedNumber++;
                     succeeded = false;
@@ -156,84 +184,47 @@ public class Job {
             }
         }
         if (succeeded) {
-            setSucceeded();
+            logger.info("{} -> Succeeded", this);
+            status = JobStatus.SUCCEEDED;
+            allInstancesExitedZero = true;
+            stopTimer();
+            pipeline.refresh();
         } else if (failed) {
             if (scale == 1) {
-                setFailed("Container returned a non-zero code");
+                logger.info("{} -> Failed: the container returned a non-zero code", this);
             } else if (failedNumber > 1) {
-                setFailed(failedNumber + " containers returned a non-zero code");
+                logger.info("{} -> Failed: {} containers returned a non-zero code", this, failedNumber);
             } else {
-                setFailed("A container returned a non-zero code");
+                logger.info("{} -> Failed: a container returned a non-zero code", this);
             }
-        } else {
-            checkTimeout();
+            status = JobStatus.FAILED;
+            allInstancesExitedNonZero = true;
+            stopTimer();
+            pipeline.refresh();
         }
     }
 
-    private void checkTimeout() {
-        Duration d = duration();
-        if (d.compareTo(timeoutLimit) > 0) {
-            logger.error(INFO_PLACEHOLDER, prefix, "Time limit has been reached");
-            instances.forEach(JobInstance::stop);
-        }
-    }
-
-    private void setBlocked() {
-        status = JobStatus.BLOCKED;
-        String m = Colors.BRIGHT_RED + status + Colors.ANSI_RESET;
-        logger.error(INFO_PLACEHOLDER_2, prefix, m);
-    }
-
-    private void setRunning() {
-        initialInstant = Instant.now();
-        status = JobStatus.RUNNING;
-        String m = Colors.BRIGHT_GREEN + status + Colors.ANSI_RESET;
-        logger.info(INFO_PLACEHOLDER_2, prefix, m);
-    }
-
-    private void setFailed(String message) {
-        finalInstant = Instant.now();
-        status = JobStatus.FAILED;
-        String m = Colors.BRIGHT_RED + status + Colors.ANSI_RESET + Colors.BRIGHT_BLACK + " -> " + Colors.ANSI_RESET
-                + Colors.RED + message + Colors.ANSI_RESET;
-        logger.error(INFO_PLACEHOLDER_2, prefix, m);
-    }
-
-    private void setSucceeded() {
-        finalInstant = Instant.now();
-        status = JobStatus.SUCCEEDED;
-        String m = Colors.BRIGHT_GREEN + status + Colors.ANSI_RESET;
-        logger.info(INFO_PLACEHOLDER_2, prefix, m);
+    void stop() {
+        logger.info("{} -> Stopping", this);
+        instances.forEach(JobInstance::stop);
     }
 
     public Duration duration() {
-        if (duration == null) {
-            if (status.isDisabled() || status.isBlocked()) {
-                duration = Duration.ZERO;
-                return duration;
-            } else if (status.isSucceeded() || status.isFailed()) {
-                duration = Duration.between(initialInstant, finalInstant);
-                return duration;
-            } else if (status.isWaiting()) {
-                return Duration.ZERO;
-            } else {
-                return Duration.between(initialInstant, Instant.now());
-            }
-        } else {
+        if (duration != null) {
             return duration;
+        } else if (initialInstant == null) {
+            return Duration.ZERO;
+        } else {
+            return Duration.between(initialInstant, Instant.now());
         }
-    }
-
-    public List<String> logs() {
-        return Collections.unmodifiableList(logs);
     }
 
     public List<JobInstance> instances() {
         return Collections.unmodifiableList(instances);
     }
 
-    public Set<JobDependency> dependencies() {
-        return Collections.unmodifiableSet(dependencies);
+    public Map<Job, JobDependencyCondition> dependencyMap() {
+        return Collections.unmodifiableMap(dependencyMap);
     }
 
     public Pipeline pipeline() {
@@ -248,24 +239,12 @@ public class Job {
         return status;
     }
 
-    public String expression() {
-        return expression;
-    }
-
-    public Boolean expressionResult() {
-        return expressionResult;
-    }
-
     public Integer scale() {
         return scale;
     }
 
     public Instant initialInstant() {
         return initialInstant;
-    }
-
-    public Duration timeoutLimit() {
-        return timeoutLimit;
     }
 
     public Instant finalInstant() {
@@ -278,6 +257,22 @@ public class Job {
 
     public boolean isWaitingOrRunning() {
         return status == JobStatus.WAITING || status == JobStatus.RUNNING;
+    }
+
+    public boolean allInstancesExitedZero() {
+        return allInstancesExitedZero;
+    }
+
+    public boolean anyInstanceExitedZero() {
+        return anyInstanceExitedZero;
+    }
+
+    public boolean allInstancesExitedNonZero() {
+        return allInstancesExitedNonZero;
+    }
+
+    public boolean anyInstanceExitedNonZero() {
+        return anyInstanceExitedNonZero;
     }
 
     public int dependencyLevel() {
