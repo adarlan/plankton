@@ -1,8 +1,12 @@
 package me.adarlan.plankton.compose;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -12,35 +16,37 @@ import org.slf4j.LoggerFactory;
 
 public class ComposeService {
 
-    public final String name;
+    private final String name;
     private final Map<String, Object> map;
     private final Set<String> supportedKeys = new HashSet<>();
 
-    public final Build build;
-    public final Command command;
-    public final DependsOn dependsOn;
-    public final Entrypoint entrypoint;
-    public final Environment environment;
-    public final EnvFile envFile;
-    public final Expose expose;
-    public final Extends extends1;
-    public final GroupAdd groupAdd;
-    public final Healthcheck healthcheck;
-    public final Image image;
-    public final Labels labels;
-    public final Profiles profiles;
-    public final Scale scale;
-    public final User user;
-    public final Volumes volumes;
-    public final VolumesFrom volumesFrom;
-    public final WorkingDir workingDir;
+    private final Build build;
+    private final Command command;
+    private final DependsOn dependsOn;
+    private final Entrypoint entrypoint;
+    private final Environment environment;
+    private final EnvFile envFile;
+    private final Expose expose;
+    private final Extends extends1;
+    private final GroupAdd groupAdd;
+    private final Healthcheck healthcheck;
+    private final Image image;
+    private final Labels labels;
+    private final Profiles profiles;
+    private final Scale scale;
+    private final User user;
+    private final Volumes volumes;
+    private final VolumesFrom volumesFrom;
+    private final WorkingDir workingDir;
 
     private static final Logger logger = LoggerFactory.getLogger(ComposeService.class);
     private final String logPrefix;
+    private static final String PREFIX_KEY_VALUE = "{}{}={}";
 
     ComposeService(String name, Object object) {
 
         this.name = name;
+        // TODO validate name
 
         logPrefix = "Loading " + getClass().getSimpleName() + ": " + name + " ... ";
         logger.info(logPrefix);
@@ -67,10 +73,15 @@ public class ComposeService {
         this.workingDir = get(WorkingDir.KEY, WorkingDir::new);
 
         map.keySet().forEach(key -> {
-            if (!supportedKeys.contains(key))
+            if (!supportedKeys.contains(key)) {
                 logger.warn("{}Ignoring: {}", logPrefix, key);
+                map.remove(key);
+            }
         });
     }
+
+    // TODO process extends1
+    // TODO process volumesFrom
 
     private <T> T get(String key, Function<Object, T> function) {
         supportedKeys.add(key);
@@ -82,37 +93,100 @@ public class ComposeService {
         }
     }
 
+    public String name() {
+        return name;
+    }
+
+    public Optional<Build> build() {
+        return Optional.ofNullable(build);
+    }
+
+    public Optional<String> command() {
+        return Optional.ofNullable(command).map(c -> c.string);
+    }
+
+    public Map<String, String> dependsOn() {
+        return Collections.unmodifiableMap(dependsOn == null ? new HashMap<>() : dependsOn.serviceConditionMap);
+    }
+
+    public Optional<String> entrypoint() {
+        return Optional.ofNullable(entrypoint).map(e -> e.string);
+    }
+
+    public List<String> environment() {
+        return Collections.unmodifiableList(environment == null ? new ArrayList<>() : toKeyValueList(environment.map));
+    }
+
+    public List<String> envFile() {
+        return Collections.unmodifiableList(envFile == null ? new ArrayList<>() : envFile.list);
+    }
+
+    public List<Integer> expose() {
+        return Collections.unmodifiableList(expose == null ? new ArrayList<>() : expose.ports);
+    }
+
+    public List<String> groupAdd() {
+        return Collections.unmodifiableList(groupAdd == null ? new ArrayList<>() : groupAdd.groups);
+    }
+
+    public Optional<Healthcheck> healthcheck() {
+        return Optional.ofNullable(healthcheck);
+    }
+
+    public Optional<String> image() {
+        return Optional.ofNullable(image).map(i -> i.string);
+    }
+
+    public Map<String, String> labels() {
+        return Collections.unmodifiableMap(labels == null ? new HashMap<>() : labels.map);
+    }
+
+    public List<String> profiles() {
+        return Collections.unmodifiableList(profiles == null ? new ArrayList<>() : profiles.list);
+    }
+
+    public Integer scale() {
+        return scale == null ? 1 : scale.number;
+    }
+
+    public Optional<String> user() {
+        return Optional.ofNullable(user).map(u -> u.name);
+    }
+
+    public List<String> volumes() {
+        return Collections.unmodifiableList(volumes == null ? new ArrayList<>() : volumes.list);
+    }
+
+    public Optional<String> workingDir() {
+        return Optional.ofNullable(workingDir).map(w -> w.path);
+    }
+
+    // ------------------------------------------------------------------------
+
     public class Build {
         public static final String KEY = "build";
 
         private Build(Object object) {
+            String c;
+            String d = null;
             if (isString(object)) {
-                context = castToString(object);
-                dockerfile = null;
+                c = castToString(object);
             } else {
-                context = getStringProperty(object, "context");
-                dockerfile = getStringProperty(object, "dockerfile");
+                c = getStringProperty(object, "context");
+                d = getStringProperty(object, "dockerfile");
             }
-            context = expandPath(context);
-            if (dockerfile == null) {
+            context = expandPath(c);
+            if (d == null) {
                 dockerfile = concatPath(context, "Dockerfile");
             } else {
-                dockerfile = expandPath(dockerfile);
+                dockerfile = expandPath(d);
             }
             logger.info("{}{}.context={}", logPrefix, KEY, context);
             logger.info("{}{}.dockerfile={}", logPrefix, KEY, dockerfile);
         }
 
-        private String context;
-        private String dockerfile;
-
-        public String context() {
-            return context;
-        }
-
-        public String dockerfile() {
-            return dockerfile;
-        }
+        public final String context;
+        public final String dockerfile;
     }
 
     public class Command {
@@ -120,40 +194,59 @@ public class ComposeService {
 
         private Command(Object object) {
             if (isString(object)) {
-                value = castToString(object);
+                string = castToString(object);
             } else {
                 List<String> list = castToStringList(object);
-                value = list.stream().collect(Collectors.joining(" "));
+                string = list.stream().collect(Collectors.joining(" "));
                 // TODO just join the strings?
             }
-            logger.info("{}{}={}", logPrefix, KEY, value);
+            logger.info(PREFIX_KEY_VALUE, logPrefix, KEY, string);
         }
 
-        private String value;
-
-        public String get() {
-            return value;
-        }
+        public final String string;
     }
 
     public class DependsOn {
         public static final String KEY = "depends_on";
 
-        private DependsOn(Object object) {
+        public static final String SERVICE_HEALTHY = "service_healthy";
+        public static final String SERVICE_STARTED = "service_started";
+        public static final String SERVICE_EXITED_ZERO = "service_exited_zero";
+        public static final String SERVICE_EXITED_NON_ZERO = "service_exited_non_zero";
 
+        private DependsOn(Object object) {
+            Map<String, String> m = new HashMap<>();
+            if (isString(object)) {
+                String s = castToString(object);
+                m.put(s, SERVICE_EXITED_ZERO);
+            } else if (isList(object)) {
+                List<String> list = castToStringList(object);
+                list.forEach(s -> m.put(s, SERVICE_EXITED_ZERO));
+            } else if (isMap(object)) {
+                // TODO depends_on as map
+            }
+            serviceConditionMap = Collections.unmodifiableMap(m);
+            logger.info(PREFIX_KEY_VALUE, logPrefix, KEY, serviceConditionMap);
         }
 
-        private Map<String, String> serviceConditionMap;
+        public final Map<String, String> serviceConditionMap;
     }
 
     public class Entrypoint {
         public static final String KEY = "entrypoint";
 
         private Entrypoint(Object object) {
-
+            if (isString(object)) {
+                string = castToString(object);
+            } else {
+                List<String> list = castToStringList(object);
+                string = list.stream().collect(Collectors.joining(" "));
+                // TODO just join the strings?
+            }
+            logger.info(PREFIX_KEY_VALUE, logPrefix, KEY, string);
         }
 
-        private String value;
+        public final String string;
     }
 
     public class Environment {
@@ -163,7 +256,7 @@ public class ComposeService {
 
         }
 
-        private Map<String, String> variableValueMap;
+        private Map<String, String> map;
     }
 
     public class EnvFile {
@@ -226,10 +319,11 @@ public class ComposeService {
         public static final String KEY = "image";
 
         private Image(Object object) {
-
+            string = castToString(object);
+            logger.info(PREFIX_KEY_VALUE, logPrefix, KEY, string);
         }
 
-        private String url;
+        public final String string;
     }
 
     public class Labels {
@@ -239,7 +333,7 @@ public class ComposeService {
 
         }
 
-        private Map<String, String> nameValueMap;
+        private Map<String, String> map;
     }
 
     public class Profiles {
@@ -256,10 +350,12 @@ public class ComposeService {
         public static final String KEY = "scale";
 
         private Scale(Object object) {
-
+            Number n = castToNumber(object);
+            number = n.intValue();
+            logger.info(PREFIX_KEY_VALUE, logPrefix, KEY, number);
         }
 
-        private Integer number;
+        public final Integer number;
     }
 
     public class User {
@@ -289,7 +385,7 @@ public class ComposeService {
 
         }
 
-        private List<String> list;
+        private List<String> stringList;
     }
 
     public class WorkingDir {
@@ -299,13 +395,21 @@ public class ComposeService {
 
         }
 
-        private String value;
+        private String path;
     }
 
     /* ---------------------------------------------------- */
 
     private boolean isString(Object object) {
         return object instanceof String;
+    }
+
+    private boolean isList(Object object) {
+        return object instanceof List;
+    }
+
+    private boolean isMap(Object object) {
+        return object instanceof Map;
     }
 
     private String castToString(Object object) {
@@ -320,6 +424,16 @@ public class ComposeService {
     @SuppressWarnings("unchecked")
     private List<String> castToStringList(Object object) {
         return (List<String>) object;
+    }
+
+    private Number castToNumber(Object object) {
+        return (Number) object;
+    }
+
+    private List<String> toKeyValueList(Map<String, String> map) {
+        List<String> list = new ArrayList<>();
+        map.forEach((k, v) -> list.add(v == null ? k : (k + "=" + v)));
+        return list;
     }
 
     private String getStringProperty(Object object, String property) {

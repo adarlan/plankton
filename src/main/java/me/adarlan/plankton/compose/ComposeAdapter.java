@@ -1,20 +1,10 @@
 package me.adarlan.plankton.compose;
 
-import java.util.function.Consumer;
-
 public interface ComposeAdapter {
 
-    boolean createContainers(String serviceName, int serviceScale, Consumer<String> forEachOutput,
-            Consumer<String> forEachError);
-    // TODO throws ContainersCreationFailedException
+    void createContainers(ComposeService service);
 
-    boolean runContainer(String containerName, Consumer<String> forEachOutput, Consumer<String> forEachError);
-    // TODO throws ContainerRunningFailedException
+    int runContainer(ComposeService service, int containerIndex);
 
-    ContainerState getContainerState(String containerName);
-
-    boolean stopContainer(String containerName);
-    // TODO ContainerStoppingFailedException
-
-    void disconnect();
+    void stopContainer(ComposeService service, int containerIndex);
 }
