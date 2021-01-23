@@ -76,22 +76,4 @@ public class DockerContainerState implements ContainerState {
         else
             return Instant.parse(text);
     }
-
-    // } else if (!containerState.error.isBlank()) {
-    // running = false;
-    // ended = true;
-    // if (initialInstant == null) {
-    // initialInstant = parseInstant(containerState.startedAt);
-    // }
-    // finalInstant = parseInstant(containerState.finishedAt);
-    // if (containerState.exitCode() != 0) {
-    // exitCode = containerState.exitCode();
-    // }
-    // } else if (containerState.status.equals("created")) {
-    // /* ok */
-    // } else {
-    // throw new PlanktonDockerException("Unexpected container state: " +
-    // containerState);
-    // // TODO stop thread? failed?
-
 }

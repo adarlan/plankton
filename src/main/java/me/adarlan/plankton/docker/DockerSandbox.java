@@ -127,6 +127,9 @@ public class DockerSandbox implements DockerDaemon {
             containerOptionList.add("--network " + networkName);
         }
 
+        // TODO docker volume create $sandboxVolumeName
+        // containerOptionList.add("--mount source=" + sandboxVolumeName + ",target=/var/lib/docker");
+
         List<String> sandboxOptionList = new ArrayList<>();
         sandboxOptionList.add("-H tcp://0.0.0.0:2375");
         sandboxOptionList.add("-H unix:///var/run/docker.sock");
@@ -219,16 +222,12 @@ public class DockerSandbox implements DockerDaemon {
                 /* ignore */
             }
         }
+        // TODO need to run this method when pipeline finish
     }
 
     private BashScript createDockerHostScript() {
         BashScript script = new BashScript();
         script.env("DOCKER_HOST=" + dockerHostSocketAddress);
         return script;
-    }
-
-    @Override
-    public void disconnect() {
-        shutdown();
     }
 }

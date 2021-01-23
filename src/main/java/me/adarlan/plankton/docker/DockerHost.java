@@ -23,9 +23,4 @@ public class DockerHost implements DockerDaemon {
     public String socketAddress() {
         return socketAddress;
     }
-
-    @Override
-    public void disconnect() {
-        /* ignore */
-    }
 }

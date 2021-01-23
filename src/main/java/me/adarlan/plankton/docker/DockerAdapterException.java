@@ -7,4 +7,8 @@ public class DockerAdapterException extends RuntimeException {
     DockerAdapterException(String msg, Throwable e) {
         super(msg, e);
     }
+
+    DockerAdapterException(String msg) {
+        super(msg);
+    }
 }

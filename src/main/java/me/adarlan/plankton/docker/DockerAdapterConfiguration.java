@@ -7,6 +7,4 @@ public interface DockerAdapterConfiguration {
     DockerDaemon dockerDaemon();
 
     ComposeDocument composeDocument();
-
-    String containerStateDirectoryPath();
 }
