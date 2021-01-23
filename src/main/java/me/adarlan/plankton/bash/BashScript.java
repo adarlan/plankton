@@ -134,7 +134,7 @@ public class BashScript {
         }
     }
 
-    public int getExitCode() {
+    public int exitCode() {
         return exitCode;
     }
 
