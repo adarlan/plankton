@@ -1,5 +1,3 @@
-version: '3.7'
-
 services:
 
   test:
@@ -9,11 +7,11 @@ services:
   build:
     image: alpine
     command: echo Building...
-    labels:
-      plankton.wait.success.of: test
+    depends_on:
+      - test
 
   deploy:
     image: alpine
     command: echo Deploying...
-    labels:
-      plankton.wait.success.of: build
+    depends_on:
+      - build
