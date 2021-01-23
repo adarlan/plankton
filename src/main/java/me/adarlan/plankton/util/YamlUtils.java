@@ -1,4 +1,4 @@
-package me.adarlan.plankton.yaml;
+package me.adarlan.plankton.util;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -22,7 +22,7 @@ public class YamlUtils {
         try (FileInputStream fileInputStream = new FileInputStream(filePath);) {
             return loadFromInputStream(fileInputStream);
         } catch (IOException e) {
-            throw new YamlLoadingException("Unable to load from file path", e);
+            throw new YamlException("Unable to load from file path", e);
         }
     }
 }
