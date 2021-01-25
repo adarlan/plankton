@@ -16,16 +16,16 @@ import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.compose.ComposeService;
+import me.adarlan.plankton.util.Colors;
 
 @EqualsAndHashCode(of = "id")
 @ToString(of = "id")
 public class Pipeline {
 
     final ComposeDocument composeDocument;
-    final ComposeAdapter composeAdapter;
+    final ContainerRuntimeAdapter composeAdapter;
 
     private final String id;
 
@@ -88,7 +88,7 @@ public class Pipeline {
         ComposeService service = composeDocument.serviceOfName(job.name);
         service.dependsOn().forEach((requiredJobName, condition) -> {
             Job requiredJob = getJobByName(requiredJobName);
-            job.dependencyMap.put(requiredJob, JobDependencyCondition.of(condition));
+            job.dependencyMap.put(requiredJob, condition);
         });
         logger.info("{}{}.dependencyMap={}", LOADING, job.name, job.dependencyMap);
     }
@@ -155,10 +155,11 @@ public class Pipeline {
 
     public void start() {
         logger.info("Starting {}", this);
-        if (jobs.isEmpty()) {
-            logger.info("{} -> {}", this, "");
+        Set<Job> enabledJobs = enabledJobs();
+        if (enabledJobs.isEmpty()) {
+            logger.info("{} -> {}", this, "There is no jobs to run");
         }
-        jobs.forEach(Job::start);
+        enabledJobs.forEach(Job::start);
     }
 
     public void stop() {

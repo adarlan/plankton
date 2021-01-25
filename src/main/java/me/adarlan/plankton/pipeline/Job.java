@@ -13,9 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.compose.ComposeService;
+import me.adarlan.plankton.compose.DependsOnCondition;
 
 @EqualsAndHashCode(of = { "pipeline", "name" })
 @ToString(of = { "name" })
@@ -25,12 +25,12 @@ public class Job {
     final String name;
 
     final ComposeDocument compose;
-    final ComposeAdapter composeAdapter;
+    final ContainerRuntimeAdapter composeAdapter;
     final ComposeService service;
 
     JobStatus status;
 
-    final Map<Job, JobDependencyCondition> dependencyMap = new HashMap<>();
+    final Map<Job, DependsOnCondition> dependencyMap = new HashMap<>();
     Integer dependencyLevel;
 
     Integer scale;
@@ -63,7 +63,6 @@ public class Job {
     private boolean dependenciesBlocked = false;
 
     void start() {
-        logger.info("{} -> Starting", this);
         Thread thread = new Thread(() -> {
             if (!dependencyMap.isEmpty()) {
                 logger.info("{} -> Waiting for dependencies", this);
@@ -84,11 +83,8 @@ public class Job {
             startInstances();
         });
         thread.setUncaughtExceptionHandler((t, e) -> {
-            logger.error("{} -> Uncaught exception", this, e);
-            throw new PipelineException("Uncaught exception", e);
-            // status = JobStatus.FAILED;
-            // stopTimer();
-            // pipeline.refresh();
+            logger.error("{} -> Unable to start", this, e);
+            throw new PipelineException("Unable to start: " + this, e);
         });
         thread.start();
     }
@@ -114,13 +110,35 @@ public class Job {
         dependenciesSatisfied = true;
         dependenciesBlocked = false;
         dependencyMap.forEach((dependsOnJob, condition) -> {
-            if (!condition.isSatisfiedFor(dependsOnJob)) {
+            if (!dependsOnJob.satisfiesCondition(condition)) {
                 dependenciesSatisfied = false;
             }
-            if (condition.isBlockedFor(dependsOnJob)) {
+            if (dependsOnJob.blockedByCondition(condition)) {
                 dependenciesBlocked = true;
             }
         });
+    }
+
+    private boolean satisfiesCondition(DependsOnCondition condition) {
+        switch (condition) {
+            case SERVICE_EXITED_ZERO:
+                return allInstancesExitedZero();
+            case SERVICE_EXITED_NON_ZERO:
+                return anyInstanceExitedNonZero();
+            default:
+                return false;
+        }
+    }
+
+    private boolean blockedByCondition(DependsOnCondition condition) {
+        switch (condition) {
+            case SERVICE_EXITED_ZERO:
+                return anyInstanceExitedNonZero();
+            case SERVICE_EXITED_NON_ZERO:
+                return allInstancesExitedZero();
+            default:
+                return false;
+        }
     }
 
     private void startTimer() {
@@ -223,7 +241,7 @@ public class Job {
         return Collections.unmodifiableList(instances);
     }
 
-    public Map<Job, JobDependencyCondition> dependencyMap() {
+    public Map<Job, DependsOnCondition> dependencyMap() {
         return Collections.unmodifiableMap(dependencyMap);
     }
 

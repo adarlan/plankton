@@ -8,9 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.compose.ComposeService;
+import me.adarlan.plankton.util.Colors;
 
 @EqualsAndHashCode(of = { "job", "index" })
 @ToString(of = { "job", "index" })
@@ -21,7 +21,7 @@ public class JobInstance {
     final int index;
 
     final ComposeDocument compose;
-    final ComposeAdapter composeAdapter;
+    final ContainerRuntimeAdapter composeAdapter;
     final ComposeService service;
 
     private boolean running = false;
@@ -52,8 +52,8 @@ public class JobInstance {
         logger.info(INFO_PLACEHOLDER, prefix, "Starting");
         Thread thread = new Thread(this::run);
         thread.setUncaughtExceptionHandler((t, e) -> {
-            logger.error("{} -> Uncaught exception", this, e);
-            throw new PipelineException("Uncaught exception", e);
+            logger.error("{} -> Unable to start", this, e);
+            throw new PipelineException("Unable to start: " + this, e);
         });
         thread.start();
     }
@@ -61,7 +61,7 @@ public class JobInstance {
     private void run() {
         initialInstant = Instant.now();
         running = true;
-        exitCode = composeAdapter.runContainer(service, index);
+        exitCode = composeAdapter.runContainerAndGetExitCode(service, index);
         finalInstant = Instant.now();
         duration = Duration.between(initialInstant, finalInstant);
         running = false;
