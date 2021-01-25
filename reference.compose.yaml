@@ -1,19 +1,29 @@
 services:
   SERVICE:
+    build: CONTEXT
     build:
       context: CONTEXT
       dockerfile: DOCKERFILE
     command: COMMAND
+    command:
+      - COMMAND
+    credential_spec: # [???]
+    depends_on:
+      - SERVICE
     depends_on:
       SERVICE:
-        condition: CONDITION
-        # condition: service_healthy
-        # condition: service_started
-        # condition: service_exited_zero
-        # condition: service_exited_non_zero
+        condition: service_healthy
+        condition: service_started
+        condition: service_exited_zero # [PLANKTON] [DEFAULT]
+        condition: service_exited_non_zero # [PLANKTON]
     entrypoint: ENTRYPOINT
+    entrypoint:
+      - ENTRYPOINT
+    environment:
+      - VARIABLE=VALUE
     environment:
       VARIABLE: VALUE
+    env_file: ENV_FILE
     env_file:
       - ENV_FILE
     expose:
@@ -29,15 +39,25 @@ services:
       timeout: TIMEOUT
       retries: RETRIES
       start_period: START_PERIOD
+    healthcheck:
+      disabled: true
     image: IMAGE
     labels:
-      plankton.depends_on.SERVICE: CONDITION
-      # plankton.depends_on.SERVICE: exited_zero
-      # plankton.depends_on.SERVICE: exited_non_zero
+      - plankton.depends_on.SERVICE=exited_zero
+      - plankton.depends_on.SERVICE=exited_non_zero
+    labels:
+      plankton.depends_on.SERVICE: exited_zero
+      plankton.depends_on.SERVICE: exited_non_zero
     profiles:
       - PROFILE
-    scale: SCALE # [DEPRECATED] but implemented
+    secrets: # [???]
+    scale: SCALE # [DEPRECATED]
     user: USER
+    volumes:
+      - type: bind
+        source: SOURCE_PATH
+        target: TARGET_PATH
+        read_only: BOOLEAN
     volumes:
       - SOURCE_PATH:TARGET_PATH
       - SOURCE_PATH:TARGET_PATH:rw
@@ -47,28 +67,6 @@ services:
       - SERVICE:rw
       - SERVICE:ro
     working_dir: WORKING_DIR
-
-  ALTERNATIVE:
-    build: CONTEXT
-    command:
-      - COMMAND
-    depends_on:
-      - SERVICE
-    entrypoint:
-      - ENTRYPOINT
-    environment:
-      - VARIABLE=VALUE
-    env_file: ENV_FILE
-    healthcheck:
-      disabled: true
-    labels:
-      - plankton.depends_on.SERVICE=exited_zero
-      - plankton.depends_on.SERVICE=exited_non_zero
-    volumes:
-      - type: bind
-        source: SOURCE_PATH
-        target: TARGET_PATH
-        read_only: BOOLEAN
 
 # IGNORED
 # -------
@@ -94,7 +92,6 @@ services:
 # services.SERVICE.cgroup_parent:
 # services.SERVICE.configs:
 # services.SERVICE.container_name:
-# services.SERVICE.credential_spec: (???)
 # services.SERVICE.deploy:
 # services.SERVICE.device_cgroup_rules:
 # services.SERVICE.devices:
@@ -105,7 +102,7 @@ services:
 # services.SERVICE.external_links:
 # services.SERVICE.extra_hosts:
 # services.SERVICE.hostname:
-# services.SERVICE.init: (???)
+# services.SERVICE.init: [???]
 # services.SERVICE.ipc:
 # services.SERVICE.isolation:
 # services.SERVICE.links:
@@ -121,15 +118,14 @@ services:
 # services.SERVICE.oom_score_adj:
 # services.SERVICE.pid:
 # services.SERVICE.pid_limit:
-# services.SERVICE.platform: (???)
+# services.SERVICE.platform: [???]
 # services.SERVICE.ports:
 # services.SERVICE.privileged:
-# services.SERVICE.pull_policy: (???)
+# services.SERVICE.pull_policy: [???]
 # services.SERVICE.read_only:
 # services.SERVICE.restart:
 # services.SERVICE.runtime: [DEPRECATED]
-# services.SERVICE.secrets:
-# services.SERVICE.security_opt: (???)
+# services.SERVICE.security_opt: [???]
 # services.SERVICE.shm_size:
 # services.SERVICE.stdin_open:
 # services.SERVICE.stop_grace_period:
