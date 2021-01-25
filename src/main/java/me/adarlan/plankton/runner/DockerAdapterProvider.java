@@ -20,7 +20,7 @@ public class DockerAdapterProvider {
     private ComposeDocument composeDocument;
 
     @Bean
-    public ContainerRuntimeAdapter composeAdapter() {
+    public ContainerRuntimeAdapter containerRuntimeAdapter() {
         return new DockerAdapter(new DockerAdapterConfiguration() {
 
             @Override

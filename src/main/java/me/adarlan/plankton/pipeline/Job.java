@@ -25,7 +25,7 @@ public class Job {
     final String name;
 
     final ComposeDocument compose;
-    final ContainerRuntimeAdapter composeAdapter;
+    final ContainerRuntimeAdapter adapter;
     final ComposeService service;
 
     JobStatus status;
@@ -53,8 +53,8 @@ public class Job {
 
     Job(Pipeline pipeline, ComposeService service) {
         this.pipeline = pipeline;
-        this.compose = pipeline.composeDocument;
-        this.composeAdapter = pipeline.composeAdapter;
+        this.compose = pipeline.compose;
+        this.adapter = pipeline.adapter;
         this.service = service;
         this.name = service.name();
     }
@@ -170,7 +170,7 @@ public class Job {
     }
 
     private void createContainers() {
-        composeAdapter.createContainers(service);
+        adapter.createContainers(service);
     }
 
     private void startInstances() {

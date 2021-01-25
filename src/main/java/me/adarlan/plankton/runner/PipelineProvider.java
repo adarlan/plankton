@@ -16,7 +16,7 @@ public class PipelineProvider {
     private ComposeDocument composeDocument;
 
     @Autowired
-    private ContainerRuntimeAdapter composeAdapter;
+    private ContainerRuntimeAdapter containerRuntimeAdapter;
 
     @Bean
     public Pipeline pipeline() {
@@ -28,8 +28,8 @@ public class PipelineProvider {
             }
 
             @Override
-            public ContainerRuntimeAdapter composeAdapter() {
-                return composeAdapter;
+            public ContainerRuntimeAdapter containerRuntimeAdapter() {
+                return containerRuntimeAdapter;
             }
         });
     }

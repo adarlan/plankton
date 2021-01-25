@@ -6,5 +6,5 @@ public interface PipelineConfiguration {
 
     ComposeDocument composeDocument();
 
-    ContainerRuntimeAdapter composeAdapter();
+    ContainerRuntimeAdapter containerRuntimeAdapter();
 }

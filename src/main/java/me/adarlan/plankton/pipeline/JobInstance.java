@@ -21,7 +21,7 @@ public class JobInstance {
     final int index;
 
     final ComposeDocument compose;
-    final ContainerRuntimeAdapter composeAdapter;
+    final ContainerRuntimeAdapter adapter;
     final ComposeService service;
 
     private boolean running = false;
@@ -44,7 +44,7 @@ public class JobInstance {
         this.pipeline = job.pipeline;
         this.index = index;
         this.compose = job.compose;
-        this.composeAdapter = job.composeAdapter;
+        this.adapter = job.adapter;
         this.service = job.service;
     }
 
@@ -61,7 +61,7 @@ public class JobInstance {
     private void run() {
         initialInstant = Instant.now();
         running = true;
-        exitCode = composeAdapter.runContainerAndGetExitCode(service, index);
+        exitCode = adapter.runContainerAndGetExitCode(service, index);
         finalInstant = Instant.now();
         duration = Duration.between(initialInstant, finalInstant);
         running = false;
@@ -72,7 +72,7 @@ public class JobInstance {
     void stop() {
         synchronized (this) {
             logger.info(INFO_PLACEHOLDER, prefix, "Stopping");
-            composeAdapter.stopContainer(service, index);
+            adapter.stopContainer(service, index);
         }
     }
 

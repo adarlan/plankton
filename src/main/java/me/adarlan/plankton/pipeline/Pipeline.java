@@ -24,8 +24,8 @@ import me.adarlan.plankton.util.Colors;
 @ToString(of = "id")
 public class Pipeline {
 
-    final ComposeDocument composeDocument;
-    final ContainerRuntimeAdapter composeAdapter;
+    final ComposeDocument compose;
+    final ContainerRuntimeAdapter adapter;
 
     private final String id;
 
@@ -42,16 +42,16 @@ public class Pipeline {
 
         logger.info(LOADING);
 
-        this.composeAdapter = configuration.composeAdapter();
-        this.composeDocument = configuration.composeDocument();
-        this.id = composeDocument.projectName();
+        this.adapter = configuration.containerRuntimeAdapter();
+        this.compose = configuration.composeDocument();
+        this.id = compose.projectName();
 
         this.timeoutLimitForJobs = Duration.of(1L, ChronoUnit.MINUTES);
         // TODO read from configuration
 
         logger.info("{}id={}", LOADING, id);
-        logger.info("{}composeDocument={}", LOADING, composeDocument);
-        logger.info("{}composeAdapter={}", LOADING, composeAdapter);
+        logger.info("{}compose={}", LOADING, compose);
+        logger.info("{}adapter={}", LOADING, adapter);
 
         instantiateJobs();
         jobs.forEach(this::initializeJobScaleAndInstances);
@@ -63,7 +63,7 @@ public class Pipeline {
 
     private void instantiateJobs() {
         logger.trace("{}Instantiating jobs", LOADING);
-        composeDocument.services().forEach(service -> {
+        compose.services().forEach(service -> {
             Job job = new Job(this, service);
             this.jobs.add(job);
             this.jobsByName.put(job.name, job);
@@ -85,7 +85,7 @@ public class Pipeline {
     }
 
     private void initializeJobDependencyMap(Job job) {
-        ComposeService service = composeDocument.serviceOfName(job.name);
+        ComposeService service = compose.serviceOfName(job.name);
         service.dependsOn().forEach((requiredJobName, condition) -> {
             Job requiredJob = getJobByName(requiredJobName);
             job.dependencyMap.put(requiredJob, condition);
