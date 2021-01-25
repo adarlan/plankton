@@ -42,3 +42,9 @@ See the pipeline logs:
 View the pipeline in your browser: [http://localhost:1329](http://localhost:1329)
 
 ![Pipeline page](screenshots/pipeline-page.png)
+
+## CLI
+
+```shell
+./plankton [ARGS...]
+```

@@ -1,0 +1,21 @@
+#!/bin/sh
+set -eu
+
+if [ "${1}" = "--from" ] && [ "${2}" = "java" ]; then
+    WORKSPACE="${3}"
+    JAR=$PWD/target/plankton.jar
+    cd $WORKSPACE
+    java -jar $JAR
+
+elif [ "${1}" = "--from" ] && [ "${2}" = "mvn" ]; then
+    WORKSPACE="${3}"
+    cd $WORKSPACE
+    PROJECT_PATH=$PWD
+    COMPOSE_FILE=$PWD/plankton.compose.yaml
+    cd -
+    mvn spring-boot:run -Dspring-boot.run.arguments="--plankton.compose.file=$COMPOSE_FILE --plankton.project.directory=$PROJECT_PATH"
+
+else
+    [ ! -z ${2+x} ] && cd ${2}
+    docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.sock adarlan/plankton ${@}
+fi

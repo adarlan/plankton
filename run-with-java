@@ -1,7 +1,0 @@
-#!/bin/bash
-set -ex
-
-JAR=$PWD/target/plankton.jar
-
-cd $1
-java -jar $JAR

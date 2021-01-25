@@ -1,5 +1,0 @@
-#!/bin/bash
-set -ex
-
-cd $1
-docker run -it --rm -v $PWD:/workspace -v /var/run/docker.sock:/var/run/docker.sock --network host adarlan/plankton
