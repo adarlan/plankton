@@ -9,13 +9,16 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import me.adarlan.plankton.util.YamlUtils;
 
+@EqualsAndHashCode(of = "projectName")
 @ToString(of = { "projectName", "filePath", "projectDirectory" })
 public class ComposeDocument {
 
     // TODO secrets
+    // TODO ignore services based on profiles
 
     private final String projectName;
     private final String filePath;
@@ -28,19 +31,14 @@ public class ComposeDocument {
     private final Map<String, ComposeService> servicesByName = new HashMap<>();
 
     private static final Logger logger = LoggerFactory.getLogger(ComposeDocument.class);
-    private static final String LOADING = "Loading " + ComposeDocument.class.getSimpleName() + " ... ";
 
     public ComposeDocument(ComposeDocumentConfiguration configuration) {
-
-        logger.info(LOADING);
 
         this.projectName = configuration.projectName();
         this.projectDirectory = configuration.projectDirectory();
         this.filePath = configuration.filePath();
 
-        logger.info("{}projectName={}", LOADING, projectName);
-        logger.info("{}projectDirectory={}", LOADING, projectDirectory);
-        logger.info("{}filePath={}", LOADING, filePath);
+        logger.info("Loading {} ...", this);
 
         expandVariables();
         readFile();
@@ -56,16 +54,16 @@ public class ComposeDocument {
     }
 
     private void readFile() {
-        logger.trace("{}Reading file", LOADING);
+        logger.info("Loading {} ... Reading file", this);
         map = YamlUtils.loadFromFilePath(filePath);
-        logger.debug("{}map={}", LOADING, map);
+        logger.debug("Loading {} ... Reading file -> map={}", this, map);
     }
 
     private void removeUnsupportedTopLevelKeys() {
         Set<String> keys = new HashSet<>(map.keySet());
         keys.forEach(key -> {
             if (!key.equals("services")) {
-                logger.warn("{}Ignoring: {}", LOADING, key);
+                logger.warn("Loading {} ... Ignoring key: {}", this, key);
                 map.remove(key);
             }
         });
@@ -73,12 +71,26 @@ public class ComposeDocument {
 
     @SuppressWarnings("unchecked")
     private void initializeServices() {
-        Map<String, Object> servicesMap = (Map<String, Object>) map.get("services");
+        logger.info("Loading {} ... Initializing services", this);
+        Map<String, Map<String, Object>> servicesMap;
+        servicesMap = (Map<String, Map<String, Object>>) map.get("services");
+        servicesMap.keySet().forEach(serviceNames::add);
+        Set<String> invalidServices = new HashSet<>();
         servicesMap.forEach((serviceName, object) -> {
-            ComposeService service = new ComposeService(serviceName, object);
+            ComposeService service = new ComposeService(this, serviceName, object);
             services.add(service);
-            serviceNames.add(serviceName);
             servicesByName.put(serviceName, service);
+            if (!service.valid)
+                invalidServices.add(service.name());
+        });
+        if (!invalidServices.isEmpty()) {
+            logger.error("Loading {} ... Invalid services: {}", this, invalidServices);
+            throw new ComposeFileFormatException("Invalid services: " + invalidServices);
+        }
+        services.forEach(service -> {
+            if (service.extends1 != null) {
+                // TODO service.extendsFrom(other)
+            }
         });
     }
 
