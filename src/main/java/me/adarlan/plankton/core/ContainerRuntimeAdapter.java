@@ -1,4 +1,4 @@
-package me.adarlan.plankton.pipeline;
+package me.adarlan.plankton.core;
 
 import me.adarlan.plankton.compose.ComposeService;
 

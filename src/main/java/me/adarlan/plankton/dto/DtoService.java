@@ -2,8 +2,8 @@ package me.adarlan.plankton.dto;
 
 import java.util.Collections;
 
-import me.adarlan.plankton.pipeline.Job;
-import me.adarlan.plankton.pipeline.Pipeline;
+import me.adarlan.plankton.core.Job;
+import me.adarlan.plankton.core.Pipeline;
 
 public class DtoService {
 

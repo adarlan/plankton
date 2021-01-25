@@ -5,9 +5,9 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import me.adarlan.plankton.core.Pipeline;
 import me.adarlan.plankton.dto.DtoService;
 import me.adarlan.plankton.dto.PipelineDto;
-import me.adarlan.plankton.pipeline.Pipeline;
 
 @RestController
 @CrossOrigin(origins = "*")

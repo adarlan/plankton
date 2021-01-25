@@ -1,4 +1,4 @@
-package me.adarlan.plankton.pipeline;
+package me.adarlan.plankton.core;
 
 public enum JobStatus {
     DISABLED, WAITING, BLOCKED, RUNNING, FAILED, SUCCEEDED;

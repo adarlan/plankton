@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import me.adarlan.plankton.pipeline.ContainerState;
+import me.adarlan.plankton.core.ContainerState;
 
 @NoArgsConstructor
 @ToString

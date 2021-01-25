@@ -5,9 +5,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 import me.adarlan.plankton.compose.ComposeDocument;
-import me.adarlan.plankton.pipeline.ContainerRuntimeAdapter;
-import me.adarlan.plankton.pipeline.Pipeline;
-import me.adarlan.plankton.pipeline.PipelineConfiguration;
+import me.adarlan.plankton.core.ContainerRuntimeAdapter;
+import me.adarlan.plankton.core.Pipeline;
+import me.adarlan.plankton.core.PipelineConfiguration;
 
 @Component
 public class PipelineProvider {

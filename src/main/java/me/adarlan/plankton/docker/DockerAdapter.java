@@ -18,7 +18,7 @@ import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.bash.BashScriptFailedException;
 import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.compose.ComposeService;
-import me.adarlan.plankton.pipeline.ContainerRuntimeAdapter;
+import me.adarlan.plankton.core.ContainerRuntimeAdapter;
 
 @ToString(of = { "dockerDaemon", "composeDocument" })
 public class DockerAdapter implements ContainerRuntimeAdapter {

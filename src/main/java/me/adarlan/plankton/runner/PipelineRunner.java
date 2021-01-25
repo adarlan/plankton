@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import me.adarlan.plankton.pipeline.Pipeline;
+import me.adarlan.plankton.core.Pipeline;
 
 @Component
 public class PipelineRunner implements CommandLineRunner {
