@@ -1,4 +1,4 @@
-package me.adarlan.plankton.compose;
+package me.adarlan.plankton.pipeline;
 
 import java.time.Instant;
 
