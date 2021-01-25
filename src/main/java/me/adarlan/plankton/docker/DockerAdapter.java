@@ -1,24 +1,27 @@
 package me.adarlan.plankton.docker;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.ToString;
+
 import me.adarlan.plankton.bash.BashScript;
 import me.adarlan.plankton.bash.BashScriptFailedException;
-import me.adarlan.plankton.compose.ComposeAdapter;
 import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.compose.ComposeService;
-import me.adarlan.plankton.util.Utils;
+import me.adarlan.plankton.pipeline.ContainerRuntimeAdapter;
 
 @ToString(of = { "dockerDaemon", "composeDocument" })
-public class DockerAdapter implements ComposeAdapter {
+public class DockerAdapter implements ContainerRuntimeAdapter {
 
     private final DockerDaemon dockerDaemon;
     private final ComposeDocument composeDocument;
@@ -26,11 +29,12 @@ public class DockerAdapter implements ComposeAdapter {
     private final String projectName;
     private final String networkName;
 
+    private final Map<ComposeService, Thread> threadsForCreateContainers = new HashMap<>();
     private final Set<String> runningContainers = new HashSet<>();
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final String LOADING = "Loading DockerAdapter ... ";
-    private static final String PREFIX_MSG = "{}{}";
+    private static final String MSG_PLACEHOLDER = " -> {}";
 
     public DockerAdapter(DockerAdapterConfiguration configuration) {
 
@@ -45,55 +49,103 @@ public class DockerAdapter implements ComposeAdapter {
         logger.info("{}composeDocument={}", LOADING, composeDocument);
 
         createNetwork();
+        startThreadsForCreateContainers();
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
     private void createNetwork() {
-        String description = "Creating network: " + networkName;
         String command = "docker network create --attachable " + networkName;
-        runDockerCommand(command, description);
+        String logPlaceholder = LOADING + "Creating network: " + networkName + MSG_PLACEHOLDER;
+        runCommand(command, logPlaceholder);
     }
 
-    private void runDockerCommand(String command, String description) {
-        int exitCode = runDockerCommandAndGetExitCode(command, description);
+    private void startThreadsForCreateContainers() {
+        logger.info("{}Starting threads for create containers", LOADING);
+        composeDocument.services().forEach(service -> {
+            Thread thread = getThreadForCreateContainersOf(service);
+            thread.start();
+        });
+    }
+
+    private Thread getThreadForCreateContainersOf(ComposeService s) {
+        return threadsForCreateContainers.computeIfAbsent(s, service -> {
+            Thread thread = new Thread(() -> {
+                buildOrPullImage(service);
+                for (int i = 0; i < service.scale(); i++) {
+                    createContainer(service, i);
+                }
+            });
+            thread.setUncaughtExceptionHandler((t, e) -> {
+                throw new DockerAdapterException("Unable to create containers for: " + service, e);
+            });
+            return thread;
+        });
+    }
+
+    private void buildOrPullImage(ComposeService service) {
+        Optional<ComposeService.Build> build = service.build();
+        if (build.isPresent()) {
+            buildImage(service.imageTag(), build.get().context, build.get().dockerfile);
+        } else {
+            pullImage(service.imageTag());
+        }
+    }
+
+    private void buildImage(String imageTag, String context, String dockerfile) {
+        String command = "docker image build -t " + imageTag + " -f " + dockerfile + " " + context;
+        String logPlaceholder = "Building image: " + imageTag + MSG_PLACEHOLDER;
+        runCommand(command, logPlaceholder);
+    }
+
+    private void pullImage(String imageTag) {
+        // TODO credential_spec
+        String command = "docker pull " + imageTag;
+        String logPlaceholder = "Pulling image: " + imageTag + MSG_PLACEHOLDER;
+        runCommand(command, logPlaceholder);
+    }
+
+    private void runCommand(String command, String logPlaceholder) {
+        int exitCode = runCommandAndGetExitCode(command, logPlaceholder);
         if (exitCode != 0) {
             throw new DockerAdapterException(
                     "Docker command exited a non-zero code: " + exitCode + "; Command: " + command);
         }
     }
 
-    private int runDockerCommandAndGetExitCode(String command, String description) {
-        BashScript script = createScript();
+    private int runCommandAndGetExitCode(String command, String logPlaceholder) {
+        logger.info(logPlaceholder, command);
+        BashScript script = new BashScript();
+        script.env("DOCKER_HOST=" + dockerDaemon.socketAddress());
         script.command(command);
-        String prefix = description + " ... ";
-        logger.info(prefix);
-        script.forEachOutput(msg -> logger.info(PREFIX_MSG, prefix, msg));
-        script.forEachError(msg -> logger.error(PREFIX_MSG, prefix, msg));
+        script.forEachOutput(msg -> logger.info(logPlaceholder, msg));
+        script.forEachError(msg -> logger.error(logPlaceholder, msg));
         try {
             script.run();
         } catch (BashScriptFailedException e) {
+            /* ignore */
         }
         return script.exitCode();
     }
 
-    private void buildImage(String image, String context, String dockerfile) {
-        String command = "docker image build -t " + image + " -f " + dockerfile + " " + context;
-        String description = "Building image: " + image;
-        runDockerCommand(command, description);
+    @Override
+    public void createContainers(ComposeService service) {
+        Thread thread = getThreadForCreateContainersOf(service);
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new DockerAdapterException("Interrupted when creating containers of: " + service, e);
+        }
     }
 
-    private void pullImage(String imageTag) {
-        // TODO service.credential_spec
-        String description = "Pulling image: " + imageTag;
-        String command = "docker pull " + imageTag;
-        runDockerCommand(command, description);
-    }
-
-    private void createContainer(ComposeService service, String image, int containerIndex) {
+    private void createContainer(ComposeService service, int containerIndex) {
 
         String containerName = composeDocument.containerNameOf(service, containerIndex);
-        String description = "Creating container: " + containerName;
+
+        // TODO avoid shell script injection
+        // validating properties with regex?
+        // using the docker rest api?
 
         List<String> command = new ArrayList<>();
 
@@ -111,7 +163,14 @@ public class DockerAdapter implements ComposeAdapter {
         service.groupAdd().forEach(g -> command.add("--group-add " + g));
         service.user().ifPresent(u -> command.add("--user " + u));
         service.workingDir().ifPresent(w -> command.add("--workdir " + w));
-        service.entrypoint().ifPresent(e -> command.add("--entrypoint " + e));
+
+        List<String> entrypoint = service.entrypoint();
+        if (!entrypoint.isEmpty()) {
+            if (entrypoint.size() == 1 && entrypoint.get(0).trim().equals(""))
+                command.add("--entrypoint \"\"");
+            else
+                command.add("--entrypoint " + entrypoint.stream().collect(Collectors.joining(" ")));
+        }
 
         service.healthcheck().ifPresent(h -> {
             // TODO
@@ -125,39 +184,24 @@ public class DockerAdapter implements ComposeAdapter {
         service.volumes().forEach(v -> command.add("--volume " + v));
         // TODO --volumes-from
 
-        command.add(image);
-        service.command().ifPresent(command::add);
+        command.add(service.imageTag());
+        command.add(service.command().stream().collect(Collectors.joining(" ")));
 
-        String dockerCommand = Utils.join(command, " ");
-        runDockerCommand(dockerCommand, description);
+        String dockerCommand = command.stream().collect(Collectors.joining(" "));
+
+        String logPlaceholder = "Creating container: " + containerName + MSG_PLACEHOLDER;
+        runCommand(dockerCommand, logPlaceholder);
     }
 
     @Override
-    public void createContainers(ComposeService service) {
-        String imageTag;
-        Optional<ComposeService.Build> build = service.build();
-        if (build.isPresent()) {
-            imageTag = projectName + "_" + service.name();
-            buildImage(imageTag, build.get().context, build.get().dockerfile);
-        } else {
-            imageTag = service.image()
-                    .orElseThrow(() -> new DockerAdapterException("Missing " + service.name() + ".image"));
-            pullImage(imageTag);
-        }
-        for (int index = 0; index < service.scale(); index++) {
-            createContainer(service, imageTag, index);
-        }
-    }
-
-    @Override
-    public int runContainer(ComposeService service, int containerIndex) {
+    public int runContainerAndGetExitCode(ComposeService service, int containerIndex) {
         String containerName = composeDocument.containerNameOf(service, containerIndex);
-        String description = "Running container: " + containerName;
         String command = "docker container start --attach " + containerName;
         synchronized (runningContainers) {
             runningContainers.add(containerName);
         }
-        int exitCode = runDockerCommandAndGetExitCode(command, description);
+        String logPlaceholder = "Running container: " + containerName + MSG_PLACEHOLDER;
+        int exitCode = runCommandAndGetExitCode(command, logPlaceholder);
         synchronized (runningContainers) {
             runningContainers.remove(containerName);
         }
@@ -167,25 +211,17 @@ public class DockerAdapter implements ComposeAdapter {
     @Override
     public void stopContainer(ComposeService service, int containerIndex) {
         String containerName = composeDocument.containerNameOf(service, containerIndex);
-        String description = "Stopping container: " + containerName;
         String command = "docker container stop " + containerName;
-        runDockerCommand(command, description);
-    }
-
-    private BashScript createScript() {
-        BashScript script = new BashScript();
-        script.env("DOCKER_HOST=" + dockerDaemon.socketAddress());
-        return script;
+        String logPlaceholder = "Stopping container: " + containerName + MSG_PLACEHOLDER;
+        runCommand(command, logPlaceholder);
     }
 
     private void killContainer(String containerName) {
-        logger.info("Killing container: {}", containerName);
-        BashScript script = createScript();
-        script.command("docker container kill " + containerName);
-        try {
-            script.run();
-        } catch (BashScriptFailedException e) {
-            logger.error("Unable to kill container: {}", containerName, e);
+        String command = "docker container kill " + containerName;
+        String logPlaceholder = "Killing container: " + containerName + MSG_PLACEHOLDER;
+        int exitCode = runCommandAndGetExitCode(command, logPlaceholder);
+        if (exitCode != 0) {
+            logger.warn("Unable to kill container: {}", containerName);
         }
     }
 
