@@ -67,7 +67,6 @@ public class BashScript {
     private Consumer<String> forEachError;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private static final String LOG_PREFIX = BashScript.class.getSimpleName() + ": ";
 
     private static int count = 0;
     private final int number;
@@ -78,6 +77,11 @@ public class BashScript {
             count++;
         }
         number = count;
+    }
+
+    @Override
+    public String toString() {
+        return BashScript.class.getSimpleName() + "[" + number + "]";
     }
 
     public BashScript command(String command) {
@@ -117,9 +121,10 @@ public class BashScript {
     }
 
     public void run() throws BashScriptFailedException {
-        variables.forEach(variable -> logger.debug("{}export {}", LOG_PREFIX, variable));
-        commands.forEach(command -> logger.debug("{}{}", LOG_PREFIX, command));
-        commands.addAll(0, Arrays.asList("#!/bin/bash", "set -e"));
+        variables.forEach(variable -> logger.debug("{} ... Variable: {}", this, variable));
+        commands.forEach(command -> logger.debug("{} ... Command: {}", this, command));
+        commands.add(0, "#!/bin/bash");
+        commands.add(1, "set -e");
         ProcessBuilder processBuilder = createProcessBuilder();
         process = startProcessBuilder(processBuilder);
         Thread outputStreamThread = followOutputStream();
@@ -129,6 +134,7 @@ public class BashScript {
         exitCode = waitForProcess();
         joinOutputStreamThread(outputStreamThread);
         joinErrorStreamThread(errorStreamThread);
+        logger.debug("{} ... Exit code: {}", this, exitCode);
         if (exitCode != 0) {
             throw new BashScriptFailedException(exitCode);
         }
@@ -203,6 +209,8 @@ public class BashScript {
         }
     }
 
+    private static final String LOG_TEMPLATE = "{} ... {}";
+
     private Thread followOutputStream() {
         return new Thread(() -> {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -210,11 +218,9 @@ public class BashScript {
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
                     if (!line.isBlank()) {
-                        if (forEachOutput != null) {
+                        logger.debug(LOG_TEMPLATE, this, line);
+                        if (forEachOutput != null)
                             forEachOutput.accept(line);
-                        } else {
-                            logger.debug("{}{}", LOG_PREFIX, line);
-                        }
                     }
                 }
             } catch (IOException e) {
@@ -231,9 +237,10 @@ public class BashScript {
                 while ((line = bufferedReader.readLine()) != null) {
                     if (!line.isBlank()) {
                         if (forEachError != null) {
+                            logger.debug("{} ERROR ... {}", this, line);
                             forEachError.accept(line);
                         } else {
-                            logger.error("{}{}", LOG_PREFIX, line);
+                            logger.error(LOG_TEMPLATE, this, line);
                         }
                     }
                 }
