@@ -1,0 +1,65 @@
+services:
+
+  build_jar:
+    image: maven:3.6-jdk-11
+    entrypoint: mvn package -DskipTests
+    working_dir: /workspace
+    user: 1001:1001
+    volumes:
+      - /etc/passwd:/etc/passwd:ro
+      - /home/adarlan/plankton:/workspace
+      - /home/adarlan/.m2/repository:/home/adarlan/.m2/repository
+
+  build_runner:
+    build: /home/adarlan/plankton
+    image: adarlan/plankton
+    entrypoint: echo Built!
+    # TODO how to tell that it is just to build, not to run?
+    depends_on: build_jar
+
+  test_runner:
+    image: adarlan/plankton
+    command: --plankton.project.path /workspace
+    working_dir: /workspace
+    volumes:
+      - /home/adarlan/plankton/examples/getting-started:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on: build_runner
+      # TODO if this dependency is not declared, an older version of the image will be used
+      # so, this dependency could be added automatically
+      # or just check if it is declared
+
+  push_runner:
+    image: docker
+    entrypoint:
+      - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
+      - docker push adarlan/plankton
+    working_dir: /workspace
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    env_file: /home/adarlan/plankton/plankton.env
+    depends_on: test_runner
+
+  build_sandbox:
+    build: sandbox
+    image: adarlan/plankton:sandbox
+    entrypoint: echo Built!
+
+  push_sandbox:
+    image: docker
+    entrypoint:
+      - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
+      - docker push adarlan/plankton:sandbox
+    working_dir: /workspace
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    env_file: /home/adarlan/plankton/plankton.env
+    depends_on: build_sandbox
+
+# TODO buildSandboxStuffed () {
+    # TODO /etc/docker/daemon.json ADD -> "default-runtime": "sysbox-runc"
+    # docker build -t adarlan/plankton:sandbox-stuffed \
+    #     --build-arg "BUILT_IN_IMAGES=alpine docker" \
+    #     -f sandbox/Dockerfile sandbox
+    # TODO /etc/docker/daemon.json REMOVE -> "default-runtime"
+# }

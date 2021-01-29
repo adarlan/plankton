@@ -1,9 +1,0 @@
-#!/bin/bash
-set -ex
-
-./run --from $1 examples/build-job-image
-./run --from $1 examples/demo-1
-./run --from $1 examples/demo-2
-./run --from $1 examples/getting-started
-./run --from $1 examples/pull-job-image
-./run --from $1 examples/wait-ports
