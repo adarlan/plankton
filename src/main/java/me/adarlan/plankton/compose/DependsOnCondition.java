@@ -1,7 +1,7 @@
 package me.adarlan.plankton.compose;
 
 public enum DependsOnCondition {
-    SERVICE_HEALTHY, SERVICE_STARTED, SERVICE_EXITED_ZERO, SERVICE_EXITED_NON_ZERO;
+    SERVICE_HEALTHY, SERVICE_STARTED, EXIT_ZERO, EXIT_NON_ZERO;
 
     static DependsOnCondition of(String string) {
         switch (string) {
@@ -9,12 +9,13 @@ public enum DependsOnCondition {
                 return SERVICE_HEALTHY;
             case "service_started":
                 return SERVICE_STARTED;
-            case "service_exited_zero":
-                return SERVICE_EXITED_ZERO;
-            case "service_exited_non_zero":
-                return SERVICE_EXITED_NON_ZERO;
+            case "exit_zero":
+                return EXIT_ZERO;
+            case "exit_non_zero":
+                return EXIT_NON_ZERO;
             default:
-                throw new ComposeFileFormatException("Unexpected depends_on condition: " + string);
+                throw new ComposeFileFormatException(
+                        "Unexpected " + DependsOnCondition.class.getSimpleName() + ": " + string);
         }
     }
 }

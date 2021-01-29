@@ -14,8 +14,8 @@ services:
       SERVICE:
         condition: service_healthy
         condition: service_started
-        condition: service_exited_zero # [PLANKTON] [DEFAULT]
-        condition: service_exited_non_zero # [PLANKTON]
+        condition: exit_zero # [PLANKTON] [DEFAULT]
+        condition: exit_non_zero # [PLANKTON]
     entrypoint: ENTRYPOINT
     entrypoint:
       - ENTRYPOINT
@@ -43,11 +43,11 @@ services:
       disabled: true
     image: IMAGE
     labels:
-      - plankton.depends_on.SERVICE=exited_zero
-      - plankton.depends_on.SERVICE=exited_non_zero
+      - plankton.depends_on.SERVICE=exit_zero
+      - plankton.depends_on.SERVICE=exit_non_zero
     labels:
-      plankton.depends_on.SERVICE: exited_zero
-      plankton.depends_on.SERVICE: exited_non_zero
+      plankton.depends_on.SERVICE: exit_zero
+      plankton.depends_on.SERVICE: exit_non_zero
     profiles:
       - PROFILE
     secrets: # [???]
