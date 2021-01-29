@@ -22,7 +22,7 @@ public class YamlUtils {
         try (FileInputStream fileInputStream = new FileInputStream(filePath);) {
             return loadFromInputStream(fileInputStream);
         } catch (IOException e) {
-            throw new YamlException("Unable to load from file path", e);
+            throw new YamlException("Unable to load from file path: " + filePath, e);
         }
     }
 }
