@@ -1,5 +1,7 @@
 package me.adarlan.plankton.docker;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -112,13 +114,6 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         runningContainers.remove(containerName);
     }
 
-    // TODO expand paths from composeDirectoryTargetPath
-
-    // @Override
-    // public String toString() {
-    // return DockerAdapter.class.getSimpleName();
-    // }
-
     @Override
     public void pullImage(ComposeService service) {
         String imageTag = service.imageTag()
@@ -163,8 +158,9 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         logger.debug("{}Building image for: {}", prefix, service);
         ComposeService.Build build = service.build()
                 .orElseThrow(() -> new DockerAdapterException("Missing 'build' of: " + service.name()));
-        String context = build.context;
-        String dockerfile = build.dockerfile;
+        String context = build.context; // TODO resolve path
+        String dockerfile = build.dockerfile; // TODO resolve path
+        // TODO get more build options from service
         String command = "docker image build -t " + imageTag + (dockerfile == null ? "" : " -f " + dockerfile) + " "
                 + context;
         runCommand(command, service);
@@ -212,7 +208,8 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         // or use the TCP API
 
         service.environment().forEach(e -> command.add("--env \"" + e + "\""));
-        service.envFile().forEach(f -> command.add("--env-file " + f));
+        service.envFile().forEach(
+                path -> command.add("--env-file " + FileSystemUtils.resolvePath(composeDirectoryTargetPath, path)));
         service.expose().forEach(p -> command.add("--expose " + p));
         service.groupAdd().forEach(g -> command.add("--group-add " + g));
         service.user().ifPresent(u -> command.add("--user " + u));
@@ -237,7 +234,13 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
             // --health-timeout duration
         });
 
-        service.volumes().forEach(v -> command.add("--volume " + v));
+        service.volumes().forEach(v -> {
+            int i = v.indexOf(":");
+            String fromPath = v.substring(0, i);
+            String toPath = v.substring(i + 1);
+            fromPath = FileSystemUtils.resolvePath(composeDirectoryTargetPath, fromPath);
+            command.add("--volume " + fromPath + ":" + toPath);
+        });
         // TODO --volumes-from
 
         command.add(service.imageTag().get());
