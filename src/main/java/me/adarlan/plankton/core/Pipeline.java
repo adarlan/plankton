@@ -15,73 +15,77 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
+
 import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.compose.ComposeService;
-import me.adarlan.plankton.util.Colors;
+import me.adarlan.plankton.util.LogUtils;
 
-@EqualsAndHashCode(of = "id")
-@ToString(of = "id")
+@EqualsAndHashCode(of = "compose")
 public class Pipeline {
 
     final ComposeDocument compose;
     final ContainerRuntimeAdapter adapter;
 
-    private final String id;
-
     private final Set<Job> jobs = new HashSet<>();
     private final Map<String, Job> jobsByName = new HashMap<>();
+    private List<Set<Job>> dependencyLevels = new ArrayList<>();
 
     final Duration timeoutLimitForJobs;
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-    Integer biggestJobNameLength;
-    private static final String LOADING = "Loading " + Pipeline.class.getSimpleName() + " ... ";
+    private static final Logger logger = LoggerFactory.getLogger(Pipeline.class);
 
     public Pipeline(PipelineConfiguration configuration) {
 
-        logger.info(LOADING);
-
         this.adapter = configuration.containerRuntimeAdapter();
         this.compose = configuration.composeDocument();
-        this.id = compose.projectName();
 
-        this.timeoutLimitForJobs = Duration.of(1L, ChronoUnit.MINUTES);
+        this.timeoutLimitForJobs = Duration.of(1L, ChronoUnit.HOURS);
         // TODO read from configuration
 
-        logger.info("{}id={}", LOADING, id);
-        logger.info("{}compose={}", LOADING, compose);
-        logger.info("{}adapter={}", LOADING, adapter);
-
+        initializeLogPrefixLength();
         instantiateJobs();
         jobs.forEach(this::initializeJobScaleAndInstances);
         jobs.forEach(this::initializeJobDependencyMap);
         jobs.forEach(this::initializeJobDependencyLevel);
-        this.initializeInstanceNamesAndBiggestName();
-        this.initializeColors();
+    }
+
+    @Override
+    public String toString() {
+        return Pipeline.class.getSimpleName();
+    }
+
+    private void initializeLogPrefixLength() {
+        Set<String> ns = new HashSet<>();
+        compose.services().forEach(service -> {
+            String n;
+            if (service.scale() == 1)
+                n = service.name();
+            else
+                n = service.name() + "[" + service.scale() + "]";
+            ns.add(n);
+        });
+        LogUtils.initializePrefixLength(ns);
     }
 
     private void instantiateJobs() {
-        logger.trace("{}Instantiating jobs", LOADING);
         compose.services().forEach(service -> {
             Job job = new Job(this, service);
             this.jobs.add(job);
             this.jobsByName.put(job.name, job);
         });
-        logger.info("{}jobs={}", LOADING, jobs);
+        logger.debug("Jobs: {}", jobs);
     }
 
     private void initializeJobScaleAndInstances(Job job) {
-        logger.trace("{}Initializing {}.scale", LOADING, job.name);
-        job.scale = job.service.scale();
-        logger.info("{}{}.scale={}", LOADING, job.name, job.scale);
 
-        logger.trace("{}Initializing {}.instances", LOADING, job.name);
+        job.scale = job.service.scale();
+        if (job.scale > 1)
+            logger.info("{} ... Scale: {}", job.logPrefix, job.scale);
+
         for (int instanceIndex = 0; instanceIndex < job.scale; instanceIndex++) {
             JobInstance instance = new JobInstance(job, instanceIndex);
             job.instances.add(instance);
         }
-        logger.info("{}{}.instances={}", LOADING, job.name, job.instances);
     }
 
     private void initializeJobDependencyMap(Job job) {
@@ -90,50 +94,17 @@ public class Pipeline {
             Job requiredJob = getJobByName(requiredJobName);
             job.dependencyMap.put(requiredJob, condition);
         });
-        logger.info("{}{}.dependencyMap={}", LOADING, job.name, job.dependencyMap);
-    }
-
-    private void initializeInstanceNamesAndBiggestName() {
-        biggestJobNameLength = 0;
-        for (Job job : enabledJobs()) {
-            for (JobInstance instance : job.instances) {
-                if (job.scale() == 1) {
-                    instance.name = job.name;
-                } else {
-                    instance.name = job.name + "_" + instance.index;
-                }
-                int len = instance.name.length();
-                if (len > biggestJobNameLength) {
-                    biggestJobNameLength = len;
-                }
-            }
-        }
-    }
-
-    private void initializeColors() {
-        List<String> list = new ArrayList<>();
-        list.add(Colors.BRIGHT_BLUE);
-        list.add(Colors.BRIGHT_YELLOW);
-        list.add(Colors.BRIGHT_GREEN);
-        list.add(Colors.BRIGHT_CYAN);
-        list.add(Colors.BRIGHT_PURPLE);
-        list.add(Colors.BRIGHT_RED);
-        int jobIndex = 0;
-        for (Job job : enabledJobs()) {
-            int colorIndex = jobIndex % list.size();
-            job.color = list.get(colorIndex);
-            jobIndex++;
-            job.prefix = Utils.prefixOf(job);
-            for (JobInstance instance : job.instances) {
-                instance.prefix = Utils.prefixOf(instance);
-            }
-        }
+        if (!job.dependencyMap.isEmpty())
+            logger.debug("{} ... Dependencies: {}", job.logPrefix, job.dependencyMap);
     }
 
     private void initializeJobDependencyLevel(Job job) {
-        logger.trace("{}Initializing {}.dependencyLevel", LOADING, job.name);
-        dependencyLevelOf(job, new HashSet<>());
-        logger.info("{}{}.dependencyLevel={}", LOADING, job.name, job.dependencyLevel);
+        int dependencyLevel = dependencyLevelOf(job, new HashSet<>());
+        for (int i = dependencyLevels.size(); i <= dependencyLevel; i++)
+            dependencyLevels.add(new HashSet<>());
+        Set<Job> dependencyLevelJobs = dependencyLevels.get(dependencyLevel);
+        dependencyLevelJobs.add(job);
+        logger.debug("{} ... Dependency level: {}", job.logPrefix, job.dependencyLevel);
     }
 
     private int dependencyLevelOf(Job job, Set<Job> knownDependents) {
@@ -144,6 +115,7 @@ public class Pipeline {
                 if (knownDependents.contains(requiredJob)) {
                     throw new JobDependencyLoopException();
                 }
+                requiredJob.directDependents.add(job);
                 int d = dependencyLevelOf(requiredJob, knownDependents);
                 if (d > maxDepth)
                     maxDepth = d;
@@ -154,27 +126,45 @@ public class Pipeline {
     }
 
     public void start() {
-        logger.info("Starting {}", this);
+        logger.debug("{} ... Starting", this);
+        startThreadsForCreateContainers();
         Set<Job> enabledJobs = enabledJobs();
         if (enabledJobs.isEmpty()) {
-            logger.info("{} -> {}", this, "There is no jobs to run");
+            logger.warn("{} ... {}", this, "There are no jobs to run");
         }
         enabledJobs.forEach(Job::start);
     }
 
+    private Set<Job> jobsWithoutDependency() {
+        return jobs.stream().filter(job -> job.dependencyLevel == 0).collect(Collectors.toSet());
+    }
+
+    private void startThreadsForCreateContainers() {
+        jobsWithoutDependency().forEach(job -> {
+            Thread thread = new Thread(() -> createContainersOfJobAndItsDependents(job));
+            thread.setUncaughtExceptionHandler((t, e) -> {
+                throw new PipelineException("Unable to create containers of " + job + " and its dependents");
+            });
+            thread.start();
+        });
+    }
+
+    private void createContainersOfJobAndItsDependents(Job job) {
+        if (!job.service.build().isPresent())
+            return;
+        job.waitCreateContainers();
+        job.directDependents.forEach(this::createContainersOfJobAndItsDependents);
+    }
+
     public void stop() {
-        logger.info("Stopping {}", this);
+        logger.info("{} ... Stopping", this);
         jobs.forEach(Job::stop);
     }
 
-    void refresh() {
+    synchronized void refresh() {
         if (waitingOrRunningJobs().isEmpty()) {
-            logger.info("Finished {}", this);
+            logger.info("Pipeline finished");
         }
-    }
-
-    public String id() {
-        return id;
     }
 
     public Set<Job> jobs() {

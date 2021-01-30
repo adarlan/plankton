@@ -7,13 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
+
 import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.compose.ComposeService;
 import me.adarlan.plankton.util.Colors;
 
 @EqualsAndHashCode(of = { "job", "index" })
-@ToString(of = { "job", "index" })
 public class JobInstance {
 
     final Pipeline pipeline;
@@ -33,11 +32,8 @@ public class JobInstance {
 
     private Integer exitCode = null;
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-    private static final String INFO_PLACEHOLDER = "{}" + Colors.BRIGHT_WHITE + "{}" + Colors.ANSI_RESET;
-
-    String name;
-    String prefix;
+    private static final Logger logger = LoggerFactory.getLogger(JobInstance.class);
+    final String colorizedName;
 
     JobInstance(Job job, int index) {
         this.job = job;
@@ -46,14 +42,24 @@ public class JobInstance {
         this.compose = job.compose;
         this.adapter = job.adapter;
         this.service = job.service;
+
+        if (job.scale() == 1) {
+            colorizedName = Colors.colorized(job.name);
+        } else {
+            colorizedName = Colors.colorized(job.name + "_" + index, job.name);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return colorizedName;
     }
 
     void start() {
-        logger.info(INFO_PLACEHOLDER, prefix, "Starting");
+        logger.debug("{} ... Starting instance", this);
         Thread thread = new Thread(this::run);
         thread.setUncaughtExceptionHandler((t, e) -> {
-            logger.error("{} -> Unable to start", this, e);
-            throw new PipelineException("Unable to start: " + this, e);
+            throw new PipelineException(this, "Unable to start", e);
         });
         thread.start();
     }
@@ -71,7 +77,7 @@ public class JobInstance {
 
     void stop() {
         synchronized (this) {
-            logger.info(INFO_PLACEHOLDER, prefix, "Stopping");
+            logger.debug("{} ... Stopping instance", this);
             adapter.stopContainer(service, index);
         }
     }
