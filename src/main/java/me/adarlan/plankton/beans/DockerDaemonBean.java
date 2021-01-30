@@ -1,4 +1,6 @@
-package me.adarlan.plankton.runner;
+package me.adarlan.plankton.beans;
+
+import java.time.Instant;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -8,16 +10,17 @@ import me.adarlan.plankton.docker.DockerDaemon;
 import me.adarlan.plankton.docker.DockerHost;
 import me.adarlan.plankton.docker.DockerSandbox;
 import me.adarlan.plankton.docker.DockerSandboxConfiguration;
+import me.adarlan.plankton.PlanktonSetup;
 
 @Component
-public class DockerDaemonProvider {
+public class DockerDaemonBean {
 
     @Autowired
     private PlanktonSetup planktonSetup;
 
     @Bean
     public DockerDaemon dockerDaemon() {
-        if (planktonSetup.isDockerSandboxEnabled()) {
+        if (planktonSetup.isSandboxEnabled()) {
             return dockerSandbox();
         } else {
             return dockerHost();
@@ -33,7 +36,7 @@ public class DockerDaemonProvider {
 
             @Override
             public String id() {
-                return planktonSetup.getPipelineId();
+                return String.valueOf(Instant.now().getEpochSecond());
             }
 
             @Override
@@ -43,12 +46,12 @@ public class DockerDaemonProvider {
 
             @Override
             public String underlyingWorkspaceDirectoryPath() {
-                return planktonSetup.getUnderlyingWorkspaceDirectoryPath();
+                return planktonSetup.getProjectDirectoryPathOnHost();
             }
 
             @Override
             public String workspaceDirectoryPath() {
-                return planktonSetup.getWorkspaceDirectoryPath();
+                return planktonSetup.getProjectDirectoryPathOnSandbox();
             }
 
             @Override
@@ -60,7 +63,6 @@ public class DockerDaemonProvider {
             public String runningFromContainerId() {
                 return planktonSetup.getRunningFromContainerId();
             }
-
         });
     }
 }

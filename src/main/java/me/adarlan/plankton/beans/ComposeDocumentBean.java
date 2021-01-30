@@ -1,4 +1,4 @@
-package me.adarlan.plankton.runner;
+package me.adarlan.plankton.beans;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -6,9 +6,10 @@ import org.springframework.stereotype.Component;
 
 import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.compose.ComposeDocumentConfiguration;
+import me.adarlan.plankton.PlanktonSetup;
 
 @Component
-public class ComposeDocumentProvider {
+public class ComposeDocumentBean {
 
     @Autowired
     private PlanktonSetup planktonSetup;
@@ -18,18 +19,13 @@ public class ComposeDocumentProvider {
         return new ComposeDocument(new ComposeDocumentConfiguration() {
 
             @Override
-            public String projectName() {
-                return planktonSetup.getPipelineId();
+            public String projectDirectory() {
+                return planktonSetup.getProjectDirectoryPath();
             }
 
             @Override
             public String filePath() {
-                return planktonSetup.getComposeFilePath();
-            }
-
-            @Override
-            public String projectDirectory() {
-                return planktonSetup.getWorkspaceDirectoryPath();
+                return planktonSetup.getComposeFileSourcePath();
             }
         });
     }

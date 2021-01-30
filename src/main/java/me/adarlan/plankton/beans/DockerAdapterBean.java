@@ -1,4 +1,6 @@
-package me.adarlan.plankton.runner;
+package me.adarlan.plankton.beans;
+
+import java.time.Instant;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -9,9 +11,13 @@ import me.adarlan.plankton.core.ContainerRuntimeAdapter;
 import me.adarlan.plankton.docker.DockerAdapter;
 import me.adarlan.plankton.docker.DockerAdapterConfiguration;
 import me.adarlan.plankton.docker.DockerDaemon;
+import me.adarlan.plankton.PlanktonSetup;
 
 @Component
-public class DockerAdapterProvider {
+public class DockerAdapterBean {
+
+    @Autowired
+    private PlanktonSetup planktonSetup;
 
     @Autowired
     private DockerDaemon dockerDaemon;
@@ -31,6 +37,26 @@ public class DockerAdapterProvider {
             @Override
             public ComposeDocument composeDocument() {
                 return composeDocument;
+            }
+
+            @Override
+            public String namespace() {
+                return String.valueOf(Instant.now().getEpochSecond());
+            }
+
+            @Override
+            public String composeDirectoryTargetPath() {
+                return planktonSetup.getComposeDirectoryTargetPath();
+            }
+
+            @Override
+            public String projectDirectoryPath() {
+                return planktonSetup.getProjectDirectoryPath();
+            }
+
+            @Override
+            public String projectDirectoryTargetPath() {
+                return planktonSetup.getProjectDirectoryTargetPath();
             }
         });
     }

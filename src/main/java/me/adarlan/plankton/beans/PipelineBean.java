@@ -1,4 +1,4 @@
-package me.adarlan.plankton.runner;
+package me.adarlan.plankton.beans;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -10,7 +10,7 @@ import me.adarlan.plankton.core.Pipeline;
 import me.adarlan.plankton.core.PipelineConfiguration;
 
 @Component
-public class PipelineProvider {
+public class PipelineBean {
 
     @Autowired
     private ComposeDocument composeDocument;
