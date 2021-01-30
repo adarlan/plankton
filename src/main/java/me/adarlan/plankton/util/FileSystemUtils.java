@@ -3,10 +3,10 @@ package me.adarlan.plankton.util;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.List;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -84,4 +84,13 @@ public class FileSystemUtils {
         });
     }
 
+    public static String resolvePath(String base, String other) {
+        Path basePath = Paths.get(base);
+        Path otherPath = basePath.resolve(other);
+        try {
+            return otherPath.toAbsolutePath().toFile().getCanonicalPath();
+        } catch (IOException e) {
+            throw new FileSystemException("Unable to resolve path", e);
+        }
+    }
 }
