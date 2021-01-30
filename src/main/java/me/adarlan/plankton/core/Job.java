@@ -48,8 +48,10 @@ public class Job {
     Integer scale;
     final List<JobInstance> instances = new ArrayList<>();
 
+    private boolean allInstancesExited = false;
     private boolean allInstancesExitedZero = false;
     private boolean anyInstanceExitedZero = false;
+    private final Set<Integer> exitCodes = new HashSet<>();
 
     private boolean allInstancesExitedNonZero = false;
     private boolean anyInstanceExitedNonZero = false;
@@ -84,13 +86,15 @@ public class Job {
     void start() {
         Thread thread = new Thread(() -> {
             if (!dependencyMap.isEmpty()) {
-                logger.info("{}Waiting for dependencies: {}", logPrefix, dependencyMap);
+                logger.info("{}{}Waiting for dependencies{}: {}", logPrefix, Colors.BRIGHT_WHITE, Colors.ANSI_RESET,
+                        dependencyMap);
                 waitForDependencies();
                 if (dependenciesSatisfied) {
-                    logger.info("{}All dependencies satisfied", logPrefix);
+                    logger.info("{}{}All dependencies satisfied{}: {}", logPrefix, Colors.BRIGHT_WHITE,
+                            Colors.ANSI_RESET, dependencyMap);
                 } else {
-                    logger.info("{}Blocked by dependencies", logPrefix);
                     status = JobStatus.BLOCKED;
+                    info();
                     pipeline.refresh();
                     return;
                 }
@@ -123,15 +127,19 @@ public class Job {
         }
     }
 
+    private final Map<Job, DependsOnCondition> blockedByDependencies = new HashMap<>();
+
     private void checkDependencies() {
         dependenciesSatisfied = true;
         dependenciesBlocked = false;
+        blockedByDependencies.clear();
         dependencyMap.forEach((dependsOnJob, condition) -> {
             if (!dependsOnJob.satisfiesCondition(condition)) {
                 dependenciesSatisfied = false;
             }
             if (dependsOnJob.blockedByCondition(condition)) {
                 dependenciesBlocked = true;
+                blockedByDependencies.put(dependsOnJob, condition);
             }
         });
     }
@@ -165,7 +173,7 @@ public class Job {
         timeoutCountdown = new Thread(() -> {
             try {
                 Thread.sleep(pipeline.timeoutLimitForJobs.toMillis());
-                logger.error("{}Timeout limit has been reached", logPrefix);
+                logger.error("{}{}Timeout limit has been reached{}", logPrefix, Colors.RED, Colors.ANSI_RESET);
                 stop();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -235,9 +243,10 @@ public class Job {
     }
 
     private synchronized void checkInstancesAndSetSucceededOrFailed() {
+        allInstancesExited = true;
         allInstancesExitedZero = true;
         allInstancesExitedNonZero = true;
-        Set<Integer> exitCodes = new HashSet<>();
+        exitCodes.clear();
         for (JobInstance instance : instances) {
             if (instance.exited()) {
                 int exitCode = instance.exitCode();
@@ -250,30 +259,47 @@ public class Job {
                     allInstancesExitedZero = false;
                 }
             } else {
+                allInstancesExited = false;
                 allInstancesExitedZero = false;
                 allInstancesExitedNonZero = false;
             }
         }
         if (allInstancesExitedZero || allInstancesExitedNonZero)
-            exited(exitCodes);
+            exited();
     }
 
-    private void exited(Set<Integer> exitCodes) {
+    private void exited() {
         stopTimer();
-        String logPlaceholder = "{}Exited: {}; Duration: {}min {}sec";
         if (allInstancesExitedZero) {
             status = JobStatus.SUCCEEDED;
-            logger.info(logPlaceholder, logPrefix, "0", duration.toMinutesPart(), duration.toSecondsPart());
-        } else if (allInstancesExitedNonZero) {
+        } else
             status = JobStatus.FAILED;
-            String x = exitCodes.stream().map(Object::toString).collect(Collectors.joining(", "));
-            logger.info(logPlaceholder, logPrefix, x, duration.toMinutesPart(), duration.toSecondsPart());
-        }
+        info();
         pipeline.refresh();
     }
 
+    void info() {
+        if (status.isBlocked())
+            logger.info("{}{}Blocked by dependencies{}: {}", logPrefix, Colors.RED, Colors.ANSI_RESET, dependencyMap);
+
+        else if (allInstancesExited) {
+            String logPlaceholder = "{}{}Exited: {}; Duration: {}min {}sec" + Colors.ANSI_RESET;
+            // TODO what if it has more than 1 hour?
+            // how to represent duration properly?
+
+            if (allInstancesExitedZero) {
+                logger.info(logPlaceholder, logPrefix, Colors.GREEN, "0", duration.toMinutesPart(),
+                        duration.toSecondsPart());
+            } else {
+                String x = exitCodes.stream().map(Object::toString).collect(Collectors.joining(", "));
+                logger.error(logPlaceholder, logPrefix, Colors.RED, x, duration.toMinutesPart(),
+                        duration.toSecondsPart());
+            }
+        }
+    }
+
     void stop() {
-        logger.info("{}Stopping", logPrefix);
+        logger.debug("{}Stopping", logPrefix);
         instances.forEach(JobInstance::stop);
     }
 
@@ -319,15 +345,23 @@ public class Job {
         return finalInstant;
     }
 
-    public boolean isEnabled() {
-        return !status.isDisabled();
-    }
-
     public boolean isWaitingOrRunning() {
         return status.isWaiting() || status.isRunning();
     }
 
-    public int dependencyLevel() {
+    public boolean isSucceeded() {
+        return status.isSucceeded();
+    }
+
+    public Integer dependencyLevel() {
         return dependencyLevel;
+    }
+
+    public boolean allInstancesExitedZero() {
+        return allInstancesExitedZero;
+    }
+
+    public boolean anyInstanceExitedNonZero() {
+        return anyInstanceExitedNonZero;
     }
 }

@@ -18,6 +18,7 @@ import lombok.EqualsAndHashCode;
 
 import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.compose.ComposeService;
+import me.adarlan.plankton.util.Colors;
 import me.adarlan.plankton.util.LogUtils;
 
 @EqualsAndHashCode(of = "compose")
@@ -26,7 +27,7 @@ public class Pipeline {
     final ComposeDocument compose;
     final ContainerRuntimeAdapter adapter;
 
-    private final Set<Job> jobs = new HashSet<>();
+    private final List<Job> jobs = new ArrayList<>();
     private final Map<String, Job> jobsByName = new HashMap<>();
     private List<Set<Job>> dependencyLevels = new ArrayList<>();
 
@@ -47,6 +48,7 @@ public class Pipeline {
         jobs.forEach(this::initializeJobScaleAndInstances);
         jobs.forEach(this::initializeJobDependencyMap);
         jobs.forEach(this::initializeJobDependencyLevel);
+        sortJobsByDependencyLevel();
     }
 
     @Override
@@ -80,7 +82,7 @@ public class Pipeline {
 
         job.scale = job.service.scale();
         if (job.scale > 1)
-            logger.info("{} ... Scale: {}", job.logPrefix, job.scale);
+            logger.debug("{} ... Scale: {}", job.logPrefix, job.scale);
 
         for (int instanceIndex = 0; instanceIndex < job.scale; instanceIndex++) {
             JobInstance instance = new JobInstance(job, instanceIndex);
@@ -125,18 +127,21 @@ public class Pipeline {
         return job.dependencyLevel;
     }
 
-    public void start() {
-        logger.debug("{} ... Starting", this);
-        startThreadsForCreateContainers();
-        Set<Job> enabledJobs = enabledJobs();
-        if (enabledJobs.isEmpty()) {
-            logger.warn("{} ... {}", this, "There are no jobs to run");
-        }
-        enabledJobs.forEach(Job::start);
+    private void sortJobsByDependencyLevel() {
+        Collections.sort(jobs, (job1, job2) -> job1.dependencyLevel().compareTo(job2.dependencyLevel()));
     }
 
-    private Set<Job> jobsWithoutDependency() {
-        return jobs.stream().filter(job -> job.dependencyLevel == 0).collect(Collectors.toSet());
+    public void start() {
+        logger.info("{}PIPELINE STARTED{}", Colors.BRIGHT_GREEN, Colors.ANSI_RESET);
+        startThreadsForCreateContainers();
+        if (jobs.isEmpty()) {
+            logger.warn("{} ... {}", this, "There are no jobs to run");
+        }
+        jobs.forEach(Job::start);
+    }
+
+    private List<Job> jobsWithoutDependency() {
+        return jobs.stream().filter(job -> job.dependencyLevel == 0).collect(Collectors.toList());
     }
 
     private void startThreadsForCreateContainers() {
@@ -156,30 +161,39 @@ public class Pipeline {
         job.directDependents.forEach(this::createContainersOfJobAndItsDependents);
     }
 
-    public void stop() {
-        logger.info("{} ... Stopping", this);
-        jobs.forEach(Job::stop);
-    }
+    private boolean finished = false;
+    private boolean allJobsSucceeded = false;
 
     synchronized void refresh() {
-        if (waitingOrRunningJobs().isEmpty()) {
-            logger.info("Pipeline finished");
+        finished = true;
+        allJobsSucceeded = true;
+        for (Job job : jobs) {
+            if (job.isWaitingOrRunning()) {
+                finished = false;
+                allJobsSucceeded = false;
+            } else if (!job.isSucceeded()) {
+                allJobsSucceeded = false;
+            }
+        }
+        if (finished) {
+            if (allJobsSucceeded)
+                logger.info("{}PIPELINE FINISHED WITH SUCCESS{}", Colors.BRIGHT_GREEN, Colors.ANSI_RESET);
+            else
+                logger.error("{}PIPELINE FINISHED WITH FAILURE{}", Colors.BRIGHT_RED, Colors.ANSI_RESET);
+            jobs.forEach(Job::info);
         }
     }
 
-    public Set<Job> jobs() {
-        return Collections.unmodifiableSet(jobs);
+    public void stop() {
+        logger.debug("{} ... Stopping", this);
+        jobs.forEach(Job::stop);
+    }
+
+    public List<Job> jobs() {
+        return Collections.unmodifiableList(jobs);
     }
 
     public Job getJobByName(String jobName) {
         return jobsByName.get(jobName);
-    }
-
-    public Set<Job> enabledJobs() {
-        return Collections.unmodifiableSet(jobs.stream().filter(Job::isEnabled).collect(Collectors.toSet()));
-    }
-
-    public Set<Job> waitingOrRunningJobs() {
-        return Collections.unmodifiableSet(jobs.stream().filter(Job::isWaitingOrRunning).collect(Collectors.toSet()));
     }
 }

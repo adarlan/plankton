@@ -1,11 +1,7 @@
 package me.adarlan.plankton.core;
 
 public enum JobStatus {
-    DISABLED, WAITING, BLOCKED, RUNNING, FAILED, SUCCEEDED;
-
-    public boolean isDisabled() {
-        return this == DISABLED;
-    }
+    WAITING, BLOCKED, RUNNING, FAILED, SUCCEEDED;
 
     public boolean isWaiting() {
         return this == WAITING;
