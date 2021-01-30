@@ -7,6 +7,7 @@ import lombok.Data;
 
 @Data
 public class StageDto {
+    // TODO -> DependencyLevelDto
 
     Integer index;
     List<JobDto> jobs = new ArrayList<>();
