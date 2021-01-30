@@ -13,7 +13,7 @@ services:
   build_runner:
     build: /home/adarlan/plankton
     image: adarlan/plankton
-    entrypoint: echo Built!
+    entrypoint: echo
     # TODO how to tell that it is just to build, not to run?
     depends_on: build_jar
 
@@ -43,7 +43,7 @@ services:
   build_sandbox:
     build: sandbox
     image: adarlan/plankton:sandbox
-    entrypoint: echo Built!
+    entrypoint: echo
 
   push_sandbox:
     image: docker
@@ -56,10 +56,9 @@ services:
     env_file: /home/adarlan/plankton/plankton.env
     depends_on: build_sandbox
 
-# TODO buildSandboxStuffed () {
-    # TODO /etc/docker/daemon.json ADD -> "default-runtime": "sysbox-runc"
-    # docker build -t adarlan/plankton:sandbox-stuffed \
-    #     --build-arg "BUILT_IN_IMAGES=alpine docker" \
-    #     -f sandbox/Dockerfile sandbox
-    # TODO /etc/docker/daemon.json REMOVE -> "default-runtime"
-# }
+# TODO build_sandbox_stuffed:
+# /etc/docker/daemon.json ADD -> "default-runtime": "sysbox-runc"
+# docker build -t adarlan/plankton:sandbox-stuffed \
+#     --build-arg "BUILT_IN_IMAGES=alpine docker" \
+#     -f sandbox/Dockerfile sandbox
+# /etc/docker/daemon.json REMOVE -> "default-runtime"
