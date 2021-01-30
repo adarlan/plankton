@@ -2,9 +2,9 @@ package me.adarlan.plankton.compose;
 
 public interface ComposeDocumentConfiguration {
 
-    String projectName();
+    String projectDirectory();
 
     String filePath();
 
-    String projectDirectory();
+    // TODO Set<String> profiles();
 }

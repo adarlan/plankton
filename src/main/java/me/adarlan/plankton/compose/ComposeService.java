@@ -16,13 +16,14 @@ import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
+
 import lombok.experimental.Accessors;
+import me.adarlan.plankton.util.Colors;
 
 @EqualsAndHashCode(of = { "composeDocument", "name" })
-@ToString(of = "name")
 @Accessors(fluent = true)
 public class ComposeService {
+    public static final String PARENT_KEY = "services";
 
     @Getter
     private final ComposeDocument composeDocument;
@@ -55,13 +56,13 @@ public class ComposeService {
     final Extends extends1;
 
     private static final Logger logger = LoggerFactory.getLogger(ComposeService.class);
+    private final String colorizedName;
 
     ComposeService(ComposeDocument composeDocument1, String name1, Map<String, Object> propertiesMap1) {
         this.composeDocument = composeDocument1;
         this.name = name1;
         this.propertiesMap = propertiesMap1;
-
-        logger.info("Loading {} ...", this);
+        this.colorizedName = Colors.colorized(name);
 
         this.build = initialize(Build.KEY, Build::new);
         this.command = initialize(Command.KEY, Command::new);
@@ -86,14 +87,14 @@ public class ComposeService {
     }
 
     private <T> T initialize(String key, Function<Object, T> function) {
-        logger.info("Loading {} ... Initializing property: {}", this, key);
         if (propertiesMap.containsKey(key)) {
+            logger.info("Loading property: {}.{}.{}", PARENT_KEY, this, key);
             Object object = propertiesMap.remove(key);
             try {
                 return function.apply(object);
             } catch (ClassCastException | ComposeFileFormatException e) {
                 valid = false;
-                logger.error("Loading {} ... Initializing property: {} -> {}", this, key, e.getMessage(), e);
+                logger.error("Loading property: {}.{}.{} -> {}", PARENT_KEY, this, key, e.getMessage(), e);
                 return null;
             }
         } else {
@@ -107,7 +108,7 @@ public class ComposeService {
 
     private void warnIgnoredKeys() {
         ignoredKeys.addAll(propertiesMap.keySet());
-        ignoredKeys.forEach(key -> logger.warn("Loading {} ... Ignoring property: {}", this, key));
+        ignoredKeys.forEach(key -> logger.warn("Ignoring key: {}.{}.{}", PARENT_KEY, this, key));
     }
 
     void extendsFrom(ComposeService other) {
@@ -152,8 +153,8 @@ public class ComposeService {
         return (Optional.ofNullable(healthcheck));
     }
 
-    public String imageTag() {
-        return (build == null ? image.tag : composeDocument.projectName() + "_" + name);
+    public Optional<String> imageTag() {
+        return Optional.ofNullable(image).map(i -> i.tag);
     }
 
     public List<String> labels() {
@@ -182,6 +183,11 @@ public class ComposeService {
 
     public Optional<String> workingDir() {
         return (Optional.ofNullable(workingDir).map(w -> w.path));
+    }
+
+    @Override
+    public String toString() {
+        return colorizedName;
     }
 
     @SuppressWarnings("unchecked")
@@ -260,11 +266,10 @@ public class ComposeService {
 
         private DependsOn(Object object) {
             if (object instanceof String) {
-                serviceConditionMap.put((String) object, DependsOnCondition.SERVICE_EXITED_ZERO);
+                serviceConditionMap.put((String) object, DependsOnCondition.EXIT_ZERO);
             } else if (object instanceof List) {
                 List<String> list = castToStringList(object);
-                list.forEach(
-                        serviceName -> serviceConditionMap.put(serviceName, DependsOnCondition.SERVICE_EXITED_ZERO));
+                list.forEach(serviceName -> serviceConditionMap.put(serviceName, DependsOnCondition.EXIT_ZERO));
             } else if (object instanceof Map) {
                 Map<String, Map<String, Object>> m = castToMapOfMaps(object);
                 m.forEach((serviceName, serviceMap) -> {
