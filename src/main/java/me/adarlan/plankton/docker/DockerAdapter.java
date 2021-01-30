@@ -267,7 +267,17 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
 
             List<String> commands = new ArrayList<>();
             commands.add("#!/bin/sh");
-            commands.addAll(entrypointList);
+            commands.add("set -e");
+
+            entrypointList.forEach(line -> {
+                commands.add("printf \"\\033[1;37m+ \\033[0m\" || true");
+                for (int i = 0; i < line.length(); i++) {
+                    commands.add("printf \"\\033[1;37m" + line.charAt(i) + "\\033[0m\" || true");
+                }
+                commands.add("printf \"\\n\" || true");
+                commands.add(line);
+            });
+
             FileSystemUtils.writeFile(filePath, commands);
 
             runBashScript("chmod +x " + filePath);
