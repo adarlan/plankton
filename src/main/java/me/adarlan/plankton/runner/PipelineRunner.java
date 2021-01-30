@@ -9,11 +9,11 @@ import me.adarlan.plankton.core.Pipeline;
 @Component
 public class PipelineRunner implements CommandLineRunner {
 
-    @Autowired
-    private Pipeline pipeline;
+	@Autowired
+	private Pipeline pipeline;
 
-    @Override
-    public void run(String... args) throws Exception {
-        pipeline.start();
-    }
+	@Override
+	public void run(String... args) throws Exception {
+		pipeline.start();
+	}
 }
