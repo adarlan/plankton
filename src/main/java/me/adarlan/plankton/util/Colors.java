@@ -38,8 +38,11 @@ public class Colors {
     private static void initializeList() {
         list.add(BRIGHT_BLUE);
         list.add(BRIGHT_YELLOW);
-        list.add(BRIGHT_GREEN);
-        list.add(BRIGHT_RED);
+
+        // list.add(BRIGHT_GREEN);
+        // list.add(BRIGHT_RED);
+        // TODO enable green and red?
+
         list.add(BRIGHT_CYAN);
         list.add(BRIGHT_PURPLE);
     }
