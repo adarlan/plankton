@@ -153,7 +153,7 @@ public class ComposeService {
         return (Optional.ofNullable(healthcheck));
     }
 
-    public Optional<String> imageTag() {
+    public Optional<String> imageTag() { // TODO rename -> image()
         return Optional.ofNullable(image).map(i -> i.tag);
     }
 
@@ -441,6 +441,8 @@ public class ComposeService {
 
         private Volumes(Object object) {
             list = castToStringList(object);
+            // TODO add support for super-short-syntax (a string)
+            // and for long-syntax (a list of maps)
         }
     }
 
