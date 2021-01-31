@@ -1,5 +1,6 @@
 package me.adarlan.plankton.compose;
 
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,18 +11,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
-import me.adarlan.plankton.util.FileSystemUtils;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import me.adarlan.plankton.util.YamlUtils;
 
-@EqualsAndHashCode(of = "filePath")
+@EqualsAndHashCode(of = { "filePath", "resolvePathsFrom" })
+@Accessors(fluent = true)
 public class ComposeDocument {
 
-    // TODO secrets
     // TODO ignore services based on profiles
 
-    private final String projectDirectory;
-    private final String filePath;
-    private final String relativeFilePath;
+    @Getter
+    private final Path filePath;
+
+    @Getter
+    private final Path resolvePathsFrom;
 
     private Map<String, Object> documentMap;
 
@@ -30,59 +34,29 @@ public class ComposeDocument {
     private final Map<String, ComposeService> servicesByName = new HashMap<>();
 
     private static final Logger logger = LoggerFactory.getLogger(ComposeDocument.class);
+    private final String logPrefix;
 
     public ComposeDocument(ComposeDocumentConfiguration configuration) {
 
-        this.projectDirectory = configuration.projectDirectory();
         this.filePath = configuration.filePath();
-        this.relativeFilePath = FileSystemUtils.relativePath(projectDirectory, filePath);
+        this.resolvePathsFrom = configuration.resolvePathsFrom();
+        this.logPrefix = resolvePathsFrom.relativize(filePath).toString() + " ... ";
 
-        logger.debug("{} ... Loading", this);
-
-        expandVariables();
         readFile();
         removeUnsupportedTopLevelKeys();
         initializeServices();
     }
 
-    @Override
-    public String toString() {
-        return relativeFilePath;
-    }
-
-    private void expandVariables() {
-
-        // TODO expandVariables
-
-        // inject variables: from configuration, from git...
-        // script.env(variables);
-
-        // escape $
-        // 1: replace all '$$' by '<$$>'
-        // 2: envsubst
-        // 3: replace all '<$$>' by '$'
-        // is it right?
-        // read envsubst documentation
-
-        // put the result in a second file:
-        // -> cat file1 | envsubst > file2
-
-        // or get the input stream and give it to the yaml parser:
-        // -> sed "s/$$/<$$>/g" | envsubst | sed "s/<$$>/$/g"
-        // this way there is no need to change the workspace
-    }
-
     private void readFile() {
-        logger.debug("{} ... Reading file", this);
-        documentMap = YamlUtils.loadFromFilePath(filePath);
-        logger.debug("{} ... Reading file -> {}", this, documentMap);
+        documentMap = YamlUtils.loadFrom(filePath);
+        logger.debug("{}Document map: {}", logPrefix, documentMap);
     }
 
     private void removeUnsupportedTopLevelKeys() {
         Set<String> keys = new HashSet<>(documentMap.keySet());
         keys.forEach(key -> {
             if (!key.equals(ComposeService.PARENT_KEY)) {
-                logger.warn("{} ... Ignoring key: {}", this, key);
+                logger.warn("{}Ignoring key: {}", logPrefix, key);
                 documentMap.remove(key);
             }
         });
@@ -90,7 +64,7 @@ public class ComposeDocument {
 
     @SuppressWarnings("unchecked")
     private void initializeServices() {
-        logger.debug("{} ... Initializing services", this);
+        logger.debug("{}Initializing services", logPrefix);
         Map<String, Map<String, Object>> servicesMap;
         servicesMap = (Map<String, Map<String, Object>>) documentMap.get(ComposeService.PARENT_KEY);
         servicesMap.keySet().forEach(serviceNames::add);
@@ -103,7 +77,7 @@ public class ComposeDocument {
                 invalidServices.add(service.name());
         });
         if (!invalidServices.isEmpty()) {
-            logger.error("{} ... Invalid services: {}", this, invalidServices);
+            logger.error("{}Invalid services: {}", logPrefix, invalidServices);
             throw new ComposeFileFormatException("Invalid services: " + invalidServices);
         }
         services.forEach(service -> {
@@ -111,10 +85,6 @@ public class ComposeDocument {
                 // TODO service.extendsFrom(other)
             }
         });
-    }
-
-    public String filePath() {
-        return filePath;
     }
 
     public Set<ComposeService> services() {

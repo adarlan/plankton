@@ -1,7 +1,5 @@
 package me.adarlan.plankton.docker;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,7 +26,6 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
     private final ComposeDocument composeDocument;
     private final String projectDirectoryPath;
     private final String projectDirectoryTargetPath;
-    private final String composeDirectoryTargetPath;
 
     private final DockerDaemon daemon;
     private final String namespace;
@@ -42,7 +39,6 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         this.composeDocument = configuration.composeDocument();
         this.projectDirectoryPath = configuration.projectDirectoryPath();
         this.projectDirectoryTargetPath = configuration.projectDirectoryTargetPath();
-        this.composeDirectoryTargetPath = configuration.composeDirectoryTargetPath();
 
         this.daemon = configuration.dockerDaemon();
         this.namespace = configuration.namespace();
@@ -51,7 +47,6 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         logger.debug("composeDocument={}", composeDocument);
         logger.debug("projectDirectoryPath={}", projectDirectoryPath);
         logger.debug("projectDirectoryTargetPath={}", projectDirectoryTargetPath);
-        logger.debug("composeDirectoryTargetPath={}", composeDirectoryTargetPath);
 
         logger.debug("daemon={}", daemon);
         logger.debug("namespace={}", namespace);
@@ -207,9 +202,8 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         // TODO wrap each option value using quotes
         // or use the TCP API
 
-        service.environment().forEach(e -> command.add("--env \"" + e + "\""));
-        service.envFile().forEach(
-                path -> command.add("--env-file " + FileSystemUtils.resolvePath(composeDirectoryTargetPath, path)));
+        service.environment().forEach(e -> command.add("--env \"" + e + "\"")); // TODO what if it contains this: "
+        service.envFile().forEach(f -> command.add("--env-file " + f));
         service.expose().forEach(p -> command.add("--expose " + p));
         service.groupAdd().forEach(g -> command.add("--group-add " + g));
         service.user().ifPresent(u -> command.add("--user " + u));
@@ -234,13 +228,7 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
             // --health-timeout duration
         });
 
-        service.volumes().forEach(v -> {
-            int i = v.indexOf(":");
-            String fromPath = v.substring(0, i);
-            String toPath = v.substring(i + 1);
-            fromPath = FileSystemUtils.resolvePath(composeDirectoryTargetPath, fromPath);
-            command.add("--volume " + fromPath + ":" + toPath);
-        });
+        service.volumes().forEach(v -> command.add("--volume " + v));
         // TODO --volumes-from
 
         command.add(service.imageTag().get());

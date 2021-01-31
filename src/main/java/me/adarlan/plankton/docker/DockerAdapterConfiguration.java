@@ -10,8 +10,6 @@ public interface DockerAdapterConfiguration {
 
     String projectDirectoryTargetPath();
 
-    String composeDirectoryTargetPath();
-
     DockerDaemon dockerDaemon();
 
     String namespace();

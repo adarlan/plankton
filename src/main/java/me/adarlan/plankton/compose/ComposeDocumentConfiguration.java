@@ -1,10 +1,12 @@
 package me.adarlan.plankton.compose;
 
+import java.nio.file.Path;
+
 public interface ComposeDocumentConfiguration {
 
-    String projectDirectory();
+    Path filePath();
 
-    String filePath();
+    Path resolvePathsFrom();
 
     // TODO Set<String> profiles();
 }

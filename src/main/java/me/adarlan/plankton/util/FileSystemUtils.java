@@ -5,8 +5,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -38,10 +36,6 @@ public class FileSystemUtils {
         } catch (BashScriptFailedException e) {
             throw new FileSystemException("Unable to copy directory content from " + fromPath + " to " + toPath, e);
         }
-    }
-
-    public static String relativePath(String fromPath, String toPath) {
-        return toPath.substring(fromPath.length() + 1);
     }
 
     public static void writeFile(String filePath, Iterable<String> strings) {
@@ -82,15 +76,5 @@ public class FileSystemUtils {
                 throw new FileSystemException("Unable to write file with BufferedWriter", e);
             }
         });
-    }
-
-    public static String resolvePath(String base, String other) {
-        Path basePath = Paths.get(base);
-        Path otherPath = basePath.resolve(other);
-        try {
-            return otherPath.toAbsolutePath().toFile().getCanonicalPath();
-        } catch (IOException e) {
-            throw new FileSystemException("Unable to resolve path", e);
-        }
     }
 }

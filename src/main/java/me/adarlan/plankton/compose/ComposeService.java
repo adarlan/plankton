@@ -1,5 +1,8 @@
 package me.adarlan.plankton.compose;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,8 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-
 import lombok.experimental.Accessors;
+
 import me.adarlan.plankton.util.Colors;
 
 @EqualsAndHashCode(of = { "composeDocument", "name" })
@@ -32,6 +35,7 @@ public class ComposeService {
     private final String name;
 
     private final Map<String, Object> propertiesMap;
+    private String currentKey;
     private final Set<String> ignoredKeys = new HashSet<>();
     boolean valid = true;
 
@@ -88,13 +92,16 @@ public class ComposeService {
 
     private <T> T initialize(String key, Function<Object, T> function) {
         if (propertiesMap.containsKey(key)) {
-            logger.info("Loading property: {}.{}.{}", PARENT_KEY, this, key);
+            currentKey = key;
+            logger.debug("{}.{}.{} ... Loading", PARENT_KEY, this, key);
             Object object = propertiesMap.remove(key);
             try {
-                return function.apply(object);
+                T property = function.apply(object);
+                logger.debug("{}.{}.{}: {}", PARENT_KEY, this, key, property);
+                return property;
             } catch (ClassCastException | ComposeFileFormatException e) {
                 valid = false;
-                logger.error("Loading property: {}.{}.{} -> {}", PARENT_KEY, this, key, e.getMessage(), e);
+                logger.error("{}.{}.{} ... Error: {}", PARENT_KEY, this, key, e.getMessage(), e);
                 return null;
             }
         } else {
@@ -108,7 +115,7 @@ public class ComposeService {
 
     private void warnIgnoredKeys() {
         ignoredKeys.addAll(propertiesMap.keySet());
-        ignoredKeys.forEach(key -> logger.warn("Ignoring key: {}.{}.{}", PARENT_KEY, this, key));
+        ignoredKeys.forEach(key -> logger.warn("{}.{}.{} ... Ignored", PARENT_KEY, this, key));
     }
 
     void extendsFrom(ComposeService other) {
@@ -191,40 +198,49 @@ public class ComposeService {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> castToMapOfObjects(Object object) {
+    private static Map<String, Object> castToMapOfObjects(Object object) {
         return (Map<String, Object>) object;
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, String> castToMapOfStrings(Object object) {
+    private static Map<String, String> castToMapOfStrings(Object object) {
         return (Map<String, String>) object;
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Map<String, Object>> castToMapOfMaps(Object object) {
+    private static Map<String, Map<String, Object>> castToMapOfMaps(Object object) {
         return (Map<String, Map<String, Object>>) object;
     }
 
     @SuppressWarnings("unchecked")
-    private List<String> castToStringList(Object object) {
+    private static List<String> castToStringList(Object object) {
         return (List<String>) object;
     }
 
-    private List<String> convertToKeyValueList(Map<String, String> keyValueMap) {
+    private static List<String> convertToKeyValueList(Map<String, String> keyValueMap) {
         List<String> list = new ArrayList<>();
-        keyValueMap.forEach((k, v) -> list.add(k + "=" + v));
+        keyValueMap.forEach((k, v) -> {
+            if (v == null)
+                list.add(k);
+            else
+                list.add(k + "=" + v);
+        });
         return list;
     }
 
-    private String validateAndExpandPath(String path) {
-        return path;
+    private String resolvePath(String pathString) {
 
-        // TODO check if the path is relative (don't start with `/`)
+        Path path = Paths.get(pathString);
+        if (path.isAbsolute())
+            logger.warn("{}.{}.{} ... Contains an absolute path: {}", PARENT_KEY, this, currentKey, pathString);
 
-        // TODO expand to the full path from inside the direcory which contains the
-        // compose file
-        // cd $composeDirectoryPath
-        // get-full-path-of $path
+        Path basePath = composeDocument.resolvePathsFrom();
+        Path resolvedPath = basePath.resolve(path);
+        try {
+            return resolvedPath.toAbsolutePath().toFile().getCanonicalPath();
+        } catch (IOException e) {
+            throw new ComposeFileFormatException("Unable to resolve path: " + path, e);
+        }
     }
 
     public class Build {
@@ -235,16 +251,24 @@ public class ComposeService {
         private Build(Object object) {
             if (object instanceof String) {
                 String c = (String) object;
-                context = validateAndExpandPath(c);
+                context = resolvePath(c);
                 dockerfile = null;
             } else {
                 Map<String, Object> map = castToMapOfObjects(object);
                 String c = (String) map.remove("context");
-                context = validateAndExpandPath(c);
+                context = resolvePath(c);
                 String d = (String) map.remove("dockerfile");
-                dockerfile = validateAndExpandPath(d);
+                dockerfile = resolvePath(d);
                 ignoredKeys(KEY, map.keySet());
             }
+        }
+
+        @Override
+        public String toString() {
+            if (dockerfile == null)
+                return context;
+            else
+                return "(context=" + context + ", dockerfile=" + dockerfile + ")";
         }
     }
 
@@ -257,6 +281,11 @@ public class ComposeService {
                 list = Arrays.asList((String) object);
             else
                 list = castToStringList(object);
+        }
+
+        @Override
+        public String toString() {
+            return list.toString();
         }
     }
 
@@ -280,6 +309,11 @@ public class ComposeService {
                 });
             }
         }
+
+        @Override
+        public String toString() {
+            return serviceConditionMap.toString();
+        }
     }
 
     public class Entrypoint {
@@ -291,6 +325,11 @@ public class ComposeService {
                 list = Arrays.asList((String) object);
             else
                 list = castToStringList(object);
+        }
+
+        @Override
+        public String toString() {
+            return list.toString();
         }
     }
 
@@ -307,6 +346,11 @@ public class ComposeService {
             } else
                 list = castToStringList(object);
         }
+
+        @Override
+        public String toString() {
+            return list.toString();
+        }
     }
 
     public class EnvFile {
@@ -314,13 +358,18 @@ public class ComposeService {
         public final List<String> list;
 
         private EnvFile(Object object) {
+            List<String> list1;
             if (object instanceof String)
-                list = Arrays.asList((String) object);
-            else {
-                list = new ArrayList<>();
-                List<String> l = castToStringList(object);
-                l.forEach(filePath -> list.add(validateAndExpandPath(filePath)));
-            }
+                list1 = Arrays.asList((String) object);
+            else
+                list1 = castToStringList(object);
+            list = new ArrayList<>();
+            list1.forEach(filePath -> list.add(resolvePath(filePath)));
+        }
+
+        @Override
+        public String toString() {
+            return list.toString();
         }
     }
 
@@ -330,6 +379,11 @@ public class ComposeService {
 
         private Expose(Object object) {
             ports = new ArrayList<>();
+        }
+
+        @Override
+        public String toString() {
+            return ports.toString();
         }
     }
 
@@ -344,10 +398,18 @@ public class ComposeService {
                 service = (String) object;
             } else {
                 Map<String, Object> map = castToMapOfObjects(object);
-                file = validateAndExpandPath((String) map.remove("file"));
+                file = resolvePath((String) map.remove("file"));
                 service = (String) map.remove("service");
                 ignoredKeys(KEY, map.keySet());
             }
+        }
+
+        @Override
+        public String toString() {
+            if (file == null)
+                return service;
+            else
+                return "(file=" + file + ", service=" + service + ")";
         }
     }
 
@@ -357,6 +419,11 @@ public class ComposeService {
 
         private GroupAdd(Object object) {
             groups = castToStringList(object);
+        }
+
+        @Override
+        public String toString() {
+            return groups.toString();
         }
     }
 
@@ -369,10 +436,12 @@ public class ComposeService {
         public final String retries;
         public final String startPeriod;
 
+        private static final String DISABLE_KEY = "disable";
+
         private Healthcheck(Object object) {
             Map<String, Object> map = castToMapOfObjects(object);
-            if (map.containsKey("disable"))
-                disable = (boolean) map.remove("disable");
+            if (map.containsKey(DISABLE_KEY))
+                disable = (boolean) map.remove(DISABLE_KEY);
             else
                 disable = false;
             test = (String) map.remove("test");
@@ -382,6 +451,15 @@ public class ComposeService {
             startPeriod = (String) map.remove("start_period");
             ignoredKeys(KEY, map.keySet());
         }
+
+        @Override
+        public String toString() {
+            if (disable)
+                return DISABLE_KEY;
+            else
+                return "(test=" + test + ", interval=" + interval + ", timeout=" + timeout + ", retries=" + retries
+                        + ", start_period=" + startPeriod + ")";
+        }
     }
 
     public class Image {
@@ -390,6 +468,11 @@ public class ComposeService {
 
         private Image(Object object) {
             tag = (String) object;
+        }
+
+        @Override
+        public String toString() {
+            return tag;
         }
     }
 
@@ -406,6 +489,11 @@ public class ComposeService {
             } else
                 list = castToStringList(object);
         }
+
+        @Override
+        public String toString() {
+            return list.toString();
+        }
     }
 
     public class Profiles {
@@ -414,6 +502,11 @@ public class ComposeService {
 
         private Profiles(Object object) {
             list = castToStringList(object);
+        }
+
+        @Override
+        public String toString() {
+            return list.toString();
         }
     }
 
@@ -424,6 +517,11 @@ public class ComposeService {
         private Scale(Object object) {
             number = ((Number) object).intValue();
         }
+
+        @Override
+        public String toString() {
+            return number.toString();
+        }
     }
 
     public class User {
@@ -433,6 +531,11 @@ public class ComposeService {
         private User(Object object) {
             name = (String) object;
         }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
     public class Volumes {
@@ -440,9 +543,24 @@ public class ComposeService {
         public final List<String> list;
 
         private Volumes(Object object) {
-            list = castToStringList(object);
-            // TODO add support for super-short-syntax (a string)
-            // and for long-syntax (a list of maps)
+            List<String> tempList;
+            if (object instanceof String)
+                tempList = Arrays.asList((String) object);
+            else
+                tempList = castToStringList(object);
+            list = new ArrayList<>();
+            tempList.forEach(v -> {
+                int i = v.indexOf(":");
+                String source = v.substring(0, i);
+                String target = v.substring(i + 1);
+                source = resolvePath(source);
+                list.add(source + ":" + target);
+            });
+        }
+
+        @Override
+        public String toString() {
+            return list.toString();
         }
     }
 
@@ -452,7 +570,11 @@ public class ComposeService {
 
         private VolumesFrom(Object object) {
             list = castToStringList(object);
-            // TODO replace each service name by its first container name
+        }
+
+        @Override
+        public String toString() {
+            return list.toString();
         }
     }
 
@@ -462,6 +584,11 @@ public class ComposeService {
 
         private WorkingDir(Object object) {
             path = (String) object;
+        }
+
+        @Override
+        public String toString() {
+            return path;
         }
     }
 }

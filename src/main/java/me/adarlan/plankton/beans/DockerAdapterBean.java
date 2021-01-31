@@ -45,11 +45,6 @@ public class DockerAdapterBean {
             }
 
             @Override
-            public String composeDirectoryTargetPath() {
-                return planktonSetup.getComposeDirectoryTargetPath();
-            }
-
-            @Override
             public String projectDirectoryPath() {
                 return planktonSetup.getProjectDirectoryPath();
             }
