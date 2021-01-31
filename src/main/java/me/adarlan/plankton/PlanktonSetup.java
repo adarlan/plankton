@@ -96,21 +96,21 @@ public class PlanktonSetup {
         }
 
         if (runningFromHost) {
-            logger.info("{} ... Project directory: {}", this, projectDirectoryPath);
-            logger.info("{} ... Compose file: {}", this, composeFileSourcePath);
+            logger.debug("{} ... Project directory: {}", this, projectDirectoryPath);
+            logger.debug("{} ... Compose file: {}", this, composeFileSourcePath);
         } else {
-            logger.info("{} ... Running from container: {}", this, runningFromContainerId);
-            logger.info("{} ... Project directory on host: {}", this, projectDirectoryPathOnHost);
-            logger.info("{} ... Project directory on container: {}", this, projectDirectoryPath);
-            logger.info("{} ... Compose file on container: {}", this, composeFileSourcePath);
+            logger.debug("{} ... Running from container: {}", this, runningFromContainerId);
+            logger.debug("{} ... Project directory on host: {}", this, projectDirectoryPathOnHost);
+            logger.debug("{} ... Project directory on container: {}", this, projectDirectoryPath);
+            logger.debug("{} ... Compose file on container: {}", this, composeFileSourcePath);
         }
 
-        logger.info("{} ... Docker host: {}", this, dockerHostSocketAddress);
+        logger.debug("{} ... Docker host: {}", this, dockerHostSocketAddress);
 
         if (sandboxEnabled) {
-            logger.info("{} ... Sandbox is enabled", this);
-            logger.info("{} ... Project directory on sandbox: {}", this, projectDirectoryPathOnSandbox);
-            logger.info("{} ... Compose file on sandbox: {}", this, composeFileTargetPath);
+            logger.debug("{} ... Sandbox is enabled", this);
+            logger.debug("{} ... Project directory on sandbox: {}", this, projectDirectoryPathOnSandbox);
+            logger.debug("{} ... Compose file on sandbox: {}", this, composeFileTargetPath);
         }
     }
 
