@@ -1,6 +1,7 @@
 package me.adarlan.plankton.compose;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
+import me.adarlan.plankton.util.RegexUtils;
 import me.adarlan.plankton.util.YamlUtils;
 
 @EqualsAndHashCode(of = { "filePath", "resolvePathsFrom" })
@@ -69,8 +71,19 @@ public class ComposeDocument {
         servicesMap = (Map<String, Map<String, Object>>) documentMap.get(ComposeService.PARENT_KEY);
         servicesMap.keySet().forEach(serviceNames::add);
         Set<String> invalidServices = new HashSet<>();
-        servicesMap.forEach((serviceName, object) -> {
-            ComposeService service = new ComposeService(this, serviceName, object);
+        servicesMap.forEach((serviceName, propertiesMap) -> {
+            if (RegexUtils.stringMatchesRegex(serviceName, "[a-zA-Z0-9\\-\\_\\.]+\\.[a-zA-Z0-9\\-\\_]+")) {
+                int dot = serviceName.indexOf(".", 1);
+                String ext = serviceName.substring(dot);
+                logger.debug("{}Auto extending: {} extends {}", logPrefix, serviceName, ext);
+                if (propertiesMap.containsKey(ComposeService.Extends.KEY)) {
+                    throw new ComposeFileFormatException("Unexpected property '" + ComposeService.Extends.KEY
+                            + "' on service '" + serviceName + "'. This service automatically extends service '" + ext
+                            + "' because of the name suffix");
+                }
+                propertiesMap.put(ComposeService.Extends.KEY, ext);
+            }
+            ComposeService service = new ComposeService(this, serviceName, propertiesMap);
             services.add(service);
             servicesByName.put(serviceName, service);
             if (!service.valid)
@@ -80,11 +93,33 @@ public class ComposeDocument {
             logger.error("{}Invalid services: {}", logPrefix, invalidServices);
             throw new ComposeFileFormatException("Invalid services: " + invalidServices);
         }
-        services.forEach(service -> {
-            if (service.extends1 != null) {
-                // TODO service.extendsFrom(other)
+        services.forEach(ComposeService::afterInitialization);
+    }
+
+    private final Map<String, ComposeDocument> others = new HashMap<>();
+
+    ComposeDocument getOther(String filePath) {
+        // TODO if it is the same file path, return this
+        if (others.containsKey(filePath))
+            return others.get(filePath);
+        ComposeDocument other = new ComposeDocument(new ComposeDocumentConfiguration() {
+
+            @Override
+            public Path filePath() {
+                return Paths.get(filePath);
+            }
+
+            @Override
+            public Path resolvePathsFrom() {
+                return resolvePathsFrom;
+                // TODO resolve paths from the same path?
+                // or from its compose file parent directory?
             }
         });
+        others.forEach(other.others::put);
+        others.put(filePath, other);
+        return other;
+        // TODO catch infinity loop
     }
 
     public Set<ComposeService> services() {
