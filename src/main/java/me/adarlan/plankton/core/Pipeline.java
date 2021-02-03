@@ -21,11 +21,11 @@ import me.adarlan.plankton.compose.ComposeService;
 import me.adarlan.plankton.util.Colors;
 import me.adarlan.plankton.util.LogUtils;
 
-@EqualsAndHashCode(of = "compose")
+@EqualsAndHashCode(of = "composeDocument")
 public class Pipeline {
 
-    final ComposeDocument compose;
-    final ContainerRuntimeAdapter adapter;
+    final ComposeDocument composeDocument;
+    final ContainerRuntimeAdapter containerRuntimeAdapter;
 
     private final List<Job> jobs = new ArrayList<>();
     private final Map<String, Job> jobsByName = new HashMap<>();
@@ -37,18 +37,19 @@ public class Pipeline {
 
     public Pipeline(PipelineConfiguration configuration) {
 
-        this.adapter = configuration.containerRuntimeAdapter();
-        this.compose = configuration.composeDocument();
+        this.containerRuntimeAdapter = configuration.containerRuntimeAdapter();
+        this.composeDocument = configuration.composeDocument();
 
         this.timeoutLimitForJobs = Duration.of(1L, ChronoUnit.HOURS);
         // TODO read from configuration
 
         initializeLogPrefixLength();
         instantiateJobs();
-        jobs.forEach(this::initializeJobScaleAndInstances);
+        jobs.forEach(this::initializeJobInstances);
         jobs.forEach(this::initializeJobDependencyMap);
         jobs.forEach(this::initializeJobDependencyLevel);
         sortJobsByDependencyLevel();
+        jobs.forEach(job -> job.composeService.logInfo());
     }
 
     @Override
@@ -56,43 +57,42 @@ public class Pipeline {
         return Pipeline.class.getSimpleName();
     }
 
+    private Set<ComposeService> composeServices() {
+        return composeDocument.services().stream().filter(s -> !s.name().startsWith(".")).collect(Collectors.toSet());
+    }
+
     private void initializeLogPrefixLength() {
         Set<String> ns = new HashSet<>();
-        compose.services().forEach(service -> {
+        composeServices().forEach(composeService -> {
             String n;
-            if (service.scale() == 1)
-                n = service.name();
+            if (composeService.scale() > 1)
+                n = composeService.name() + "[" + composeService.scale() + "]";
             else
-                n = service.name() + "[" + service.scale() + "]";
+                n = composeService.name();
             ns.add(n);
         });
         LogUtils.initializePrefixLength(ns);
     }
 
     private void instantiateJobs() {
-        compose.services().forEach(service -> {
-            Job job = new Job(this, service);
+        composeServices().forEach(composeService -> {
+            Job job = new Job(this, composeService);
             this.jobs.add(job);
             this.jobsByName.put(job.name, job);
         });
         logger.debug("Jobs: {}", jobs);
     }
 
-    private void initializeJobScaleAndInstances(Job job) {
-
-        job.scale = job.service.scale();
-        if (job.scale > 1)
-            logger.debug("{} ... Scale: {}", job.logPrefix, job.scale);
-
-        for (int instanceIndex = 0; instanceIndex < job.scale; instanceIndex++) {
+    private void initializeJobInstances(Job job) {
+        for (int instanceIndex = 0; instanceIndex < job.composeService.scale(); instanceIndex++) {
             JobInstance instance = new JobInstance(job, instanceIndex);
             job.instances.add(instance);
         }
     }
 
     private void initializeJobDependencyMap(Job job) {
-        ComposeService service = compose.serviceOfName(job.name);
-        service.dependsOn().forEach((requiredJobName, condition) -> {
+        ComposeService composeService = composeDocument.serviceOfName(job.name);
+        composeService.dependsOn().forEach((requiredJobName, condition) -> {
             Job requiredJob = getJobByName(requiredJobName);
             job.dependencyMap.put(requiredJob, condition);
         });
@@ -132,56 +132,33 @@ public class Pipeline {
     }
 
     public void start() {
-        logger.info("{}PIPELINE STARTED{}", Colors.BRIGHT_GREEN, Colors.ANSI_RESET);
-        startThreadsForCreateContainers();
+        line();
+        logger.info("{}                            PIPELINE STARTED{}", Colors.BRIGHT_WHITE, Colors.ANSI_RESET);
+        line();
         if (jobs.isEmpty()) {
             logger.warn("{} ... {}", this, "There are no jobs to run");
         }
         jobs.forEach(Job::start);
     }
 
-    private List<Job> jobsWithoutDependency() {
-        return jobs.stream().filter(job -> job.dependencyLevel == 0).collect(Collectors.toList());
-    }
-
-    private void startThreadsForCreateContainers() {
-        jobsWithoutDependency().forEach(job -> {
-            Thread thread = new Thread(() -> createContainersOfJobAndItsDependents(job));
-            thread.setUncaughtExceptionHandler((t, e) -> {
-                throw new PipelineException("Unable to create containers of " + job + " and its dependents");
-            });
-            thread.start();
-        });
-    }
-
-    private void createContainersOfJobAndItsDependents(Job job) {
-        if (!job.service.build().isPresent())
-            return;
-        job.waitCreateContainers();
-        job.directDependents.forEach(this::createContainersOfJobAndItsDependents);
-    }
-
-    private boolean finished = false;
-    private boolean allJobsSucceeded = false;
-
     synchronized void refresh() {
-        finished = true;
-        allJobsSucceeded = true;
+        boolean finished = true;
         for (Job job : jobs) {
-            if (job.isWaitingOrRunning()) {
+            if (!job.status.isFinal())
                 finished = false;
-                allJobsSucceeded = false;
-            } else if (!job.isSucceeded()) {
-                allJobsSucceeded = false;
-            }
         }
         if (finished) {
-            if (allJobsSucceeded)
-                logger.info("{}PIPELINE FINISHED WITH SUCCESS{}", Colors.BRIGHT_GREEN, Colors.ANSI_RESET);
-            else
-                logger.error("{}PIPELINE FINISHED WITH FAILURE{}", Colors.BRIGHT_RED, Colors.ANSI_RESET);
-            jobs.forEach(Job::info);
+            line();
+            logger.info("{}                           PIPELINE FINISHED{}", Colors.BRIGHT_WHITE, Colors.ANSI_RESET);
+            line();
+            jobs.forEach(Job::logFinalStatus);
+            line();
         }
+    }
+
+    private void line() {
+        String line = "------------------------------------------------------------------------";
+        logger.info("{}{}{}", Colors.BRIGHT_WHITE, line, Colors.ANSI_RESET);
     }
 
     public void stop() {
