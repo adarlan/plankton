@@ -1,6 +1,6 @@
 services:
 
-  build_jar:
+  build_runner_jar:
     image: maven:3.6-jdk-11
     entrypoint: mvn package -DskipTests
     working_dir: /workspace
@@ -10,55 +10,46 @@ services:
       - ./:/workspace
       - /home/adarlan/.m2/repository:/home/adarlan/.m2/repository
 
-  build_runner:
-    build: /home/adarlan/plankton
+  build_runner_image:
+    depends_on: build_runner_jar
+    build: .
     image: adarlan/plankton
-    entrypoint: echo
-    # TODO how to tell that it is just to build, not to run?
-    depends_on: build_jar
+    entrypoint: ""
 
-  test_runner:
+  build_sandbox_image:
+    build: sandbox
+    image: adarlan/plankton:sandbox
+    entrypoint: ""
+
+  .test_runner:
     image: adarlan/plankton
     command: --plankton.project.path /workspace
     working_dir: /workspace
     volumes:
-      - ./examples/getting-started:/workspace
       - /var/run/docker.sock:/var/run/docker.sock
-    depends_on: build_runner
-      # TODO if this dependency is not declared, an older version of the image will be used
-      # so, this dependency could be added automatically
-      # or just check if it is declared
 
-  push_runner:
+  getting_started.test_runner:
+    depends_on: build_runner_image
+    volumes: ./examples/getting-started:/workspace
+
+  demo_1.test_runner:
+    depends_on: build_runner_image
+    volumes: ./examples/demo-1:/workspace
+
+  runner.push_image:
+    depends_on:
+      - getting_started.test_runner
+      - demo_1.test_runner
+    environment: IMAGE=adarlan/plankton
+
+  sandbox.push_image:
+    depends_on: runner.push_image
+    environment: IMAGE=adarlan/plankton:sandbox
+
+  .push_image:
     image: docker
+    volumes: /var/run/docker.sock:/var/run/docker.sock
+    env_file: plankton.env
     entrypoint:
       - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
-      - docker push adarlan/plankton
-    working_dir: /workspace
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    env_file: plankton.env
-    depends_on: test_runner
-
-  build_sandbox:
-    build: sandbox
-    image: adarlan/plankton:sandbox
-    entrypoint: echo
-
-  push_sandbox:
-    image: docker
-    entrypoint:
-      - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
-      - docker push adarlan/plankton:sandbox
-    working_dir: /workspace
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    env_file: plankton.env
-    depends_on: build_sandbox
-
-# TODO build_sandbox_stuffed:
-# /etc/docker/daemon.json ADD -> "default-runtime": "sysbox-runc"
-# docker build -t adarlan/plankton:sandbox-stuffed \
-#     --build-arg "BUILT_IN_IMAGES=alpine docker" \
-#     -f sandbox/Dockerfile sandbox
-# /etc/docker/daemon.json REMOVE -> "default-runtime"
+      - docker push $IMAGE
