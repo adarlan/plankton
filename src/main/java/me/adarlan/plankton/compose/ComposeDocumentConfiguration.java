@@ -6,7 +6,7 @@ public interface ComposeDocumentConfiguration {
 
     Path filePath();
 
-    Path resolvePathsFrom();
+    Path resolvePathsFrom(); // TODO optional
 
     // TODO Set<String> profiles();
 }
