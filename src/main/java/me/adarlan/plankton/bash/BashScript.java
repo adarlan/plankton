@@ -148,9 +148,8 @@ public class BashScript {
         try {
             return process.waitFor();
         } catch (InterruptedException e) {
-            BashScriptException exception = new BashScriptException("Unable to wait for process", e);
             Thread.currentThread().interrupt();
-            throw exception;
+            throw new BashScriptException("Unable to wait for process", e);
         }
     }
 
@@ -158,9 +157,8 @@ public class BashScript {
         try {
             outputStreamThread.join();
         } catch (InterruptedException e) {
-            BashScriptException exception = new BashScriptException("Unable join output stream thread", e);
             Thread.currentThread().interrupt();
-            throw exception;
+            throw new BashScriptException("Unable join output stream thread", e);
         }
     }
 
@@ -168,9 +166,8 @@ public class BashScript {
         try {
             errorStreamThread.join();
         } catch (InterruptedException e) {
-            BashScriptException exception = new BashScriptException("Unable join error stream thread", e);
             Thread.currentThread().interrupt();
-            throw exception;
+            throw new BashScriptException("Unable join error stream thread", e);
         }
     }
 
