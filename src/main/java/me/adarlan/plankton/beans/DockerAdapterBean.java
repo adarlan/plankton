@@ -41,7 +41,10 @@ public class DockerAdapterBean {
 
             @Override
             public String namespace() {
-                return String.valueOf(Instant.now().getEpochSecond());
+                int min = 1;
+                int max = 1000000000;
+                double r = (Math.random() * ((max - min) + 1)) + min;
+                return String.valueOf(Instant.now().getEpochSecond()) + "_" + String.valueOf(r).trim();
             }
 
             @Override
