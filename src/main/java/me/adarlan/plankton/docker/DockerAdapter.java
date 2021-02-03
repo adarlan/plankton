@@ -111,7 +111,7 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
 
     @Override
     public void pullImage(ComposeService service) {
-        String imageTag = service.imageTag()
+        String imageTag = service.image()
                 .orElseThrow(() -> new DockerAdapterException("Missing 'image' of: " + service.name()));
         if (!imageExists(imageTag)) {
             logger.debug("{}Pulling image for: {}", prefix, service);
@@ -144,7 +144,7 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
     @Override
     public void buildImage(ComposeService service) {
         String imageTag;
-        Optional<String> optionalImageTag = service.imageTag();
+        Optional<String> optionalImageTag = service.image();
         if (optionalImageTag.isPresent())
             imageTag = optionalImageTag.get();
         else
@@ -209,14 +209,11 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         service.user().ifPresent(u -> command.add("--user " + u));
         service.workingDir().ifPresent(w -> command.add("--workdir " + w));
 
-        List<String> entrypoint = service.entrypoint();
-        if (!entrypoint.isEmpty()) {
-            if (entrypoint.size() == 1 && entrypoint.get(0).trim().equals(""))
-                command.add("--entrypoint \"\"");
-            else {
-                command.add("-v " + getEntrypointFileTargetPath(service, entrypoint) + ":/docker-entrypoint.sh");
-                command.add("--entrypoint /docker-entrypoint.sh");
-            }
+        if (service.entrypointIsReseted())
+            command.add("--entrypoint \"\"");
+        else if (!service.entrypoint().isEmpty()) {
+            command.add("-v " + getEntrypointFileTargetPath(service) + ":/docker-entrypoint.sh");
+            command.add("--entrypoint /docker-entrypoint.sh");
         }
 
         service.healthcheck().ifPresent(h -> {
@@ -229,9 +226,8 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         });
 
         service.volumes().forEach(v -> command.add("--volume " + v));
-        // TODO --volumes-from
 
-        command.add(service.imageTag().get());
+        command.add(service.image().get());
         command.add(service.command().stream().collect(Collectors.joining(" ")));
 
         String dockerCommand = command.stream().collect(Collectors.joining(" "));
@@ -242,8 +238,10 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
 
     private final Map<ComposeService, String> entrypointFileTargetPaths = new HashMap<>();
 
-    private synchronized String getEntrypointFileTargetPath(ComposeService service, List<String> entrypointList) {
+    private synchronized String getEntrypointFileTargetPath(ComposeService service) {
         return entrypointFileTargetPaths.computeIfAbsent(service, s -> {
+
+            List<String> entrypointList = s.entrypoint();
 
             String directoryName = ".plankton";
             String fileName = namespace + "_" + service.name() + ".entrypoint.sh";
