@@ -11,6 +11,7 @@ import lombok.EqualsAndHashCode;
 import me.adarlan.plankton.compose.ComposeDocument;
 import me.adarlan.plankton.compose.ComposeService;
 import me.adarlan.plankton.util.Colors;
+import me.adarlan.plankton.util.LogUtils;
 
 @EqualsAndHashCode(of = { "job", "index" })
 public class JobInstance {
@@ -19,9 +20,9 @@ public class JobInstance {
     final Job job;
     final int index;
 
-    final ComposeDocument compose;
-    final ContainerRuntimeAdapter adapter;
-    final ComposeService service;
+    final ComposeDocument composeDocument;
+    final ComposeService composeService;
+    final ContainerRuntimeAdapter containerRuntimeAdapter;
 
     private boolean running = false;
     private boolean exited = false;
@@ -33,20 +34,23 @@ public class JobInstance {
     private Integer exitCode = null;
 
     private static final Logger logger = LoggerFactory.getLogger(JobInstance.class);
-    final String colorizedName;
+    private final String colorizedName;
+    private final String logPrefix;
 
     JobInstance(Job job, int index) {
         this.job = job;
         this.pipeline = job.pipeline;
         this.index = index;
-        this.compose = job.compose;
-        this.adapter = job.adapter;
-        this.service = job.service;
+        this.composeDocument = job.composeDocument;
+        this.containerRuntimeAdapter = job.containerRuntimeAdapter;
+        this.composeService = job.composeService;
 
-        if (job.scale() == 1) {
-            colorizedName = Colors.colorized(job.name);
-        } else {
+        if (composeService.scale() > 1) {
             colorizedName = Colors.colorized(job.name + "_" + index, job.name);
+            logPrefix = LogUtils.prefixOf(job.name, "[" + index + "]");
+        } else {
+            colorizedName = Colors.colorized(job.name);
+            logPrefix = LogUtils.prefixOf(job.name);
         }
     }
 
@@ -56,29 +60,28 @@ public class JobInstance {
     }
 
     void start() {
-        logger.debug("{} ... Starting instance", this);
+        logger.debug("{}Starting instance", logPrefix);
         Thread thread = new Thread(this::run);
-        thread.setUncaughtExceptionHandler((t, e) -> {
-            throw new PipelineException(this, "Unable to start", e);
-        });
+        thread.setUncaughtExceptionHandler(
+                (t, e) -> job.setFinalStatusError(e.getClass().getSimpleName() + ": " + e.getMessage()));
         thread.start();
     }
 
     private void run() {
         initialInstant = Instant.now();
         running = true;
-        exitCode = adapter.runContainerAndGetExitCode(service, index);
+        exitCode = containerRuntimeAdapter.runContainerAndGetExitCode(composeService, index);
         finalInstant = Instant.now();
         duration = Duration.between(initialInstant, finalInstant);
         running = false;
         exited = true;
-        job.refresh();
+        job.exited(this);
     }
 
     void stop() {
         synchronized (this) {
-            logger.debug("{} ... Stopping instance", this);
-            adapter.stopContainer(service, index);
+            logger.debug("{}Stopping instance", logPrefix);
+            containerRuntimeAdapter.stopContainer(composeService, index);
         }
     }
 
