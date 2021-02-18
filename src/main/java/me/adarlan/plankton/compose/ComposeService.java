@@ -254,7 +254,7 @@ public class ComposeService {
         return (Optional.ofNullable(healthcheck));
     }
 
-    public Optional<String> image() { // TODO rename -> image()
+    public Optional<String> image() {
         return Optional.ofNullable(image).map(i -> i.tag);
     }
 
