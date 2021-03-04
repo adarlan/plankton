@@ -2,10 +2,12 @@
 
 Plankton is a Container-Native CI/CD tool based on [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
 
-## Getting Started
+## Getting started
 
 Follow this example to create a simple pipeline composed by 3 services:
 `test`, `build` and `deploy`.
+
+> It requires Docker installed.
 
 Create a `plankton.compose.yaml` file with the following content:
 
@@ -32,7 +34,7 @@ services:
 Run the pipeline using the `docker run` command:
 
 ```shell
-docker run -it --rm -v $PWD:/workspace -w /workspace -v /var/run/docker.sock:/var/run/docker.sock -p 1329:1329 adarlan/plankton
+docker run -it -v $PWD:/workspace -w /workspace -v /var/run/docker.sock:/var/run/docker.sock -p 1329:1329 adarlan/plankton
 ```
 
 See the pipeline logs:
@@ -43,45 +45,22 @@ View the pipeline in your browser: [http://localhost:1329](http://localhost:1329
 
 ![Pipeline page](screenshots/pipeline-page.png)
 
-## Profiles
-
-Profiles is a Plankton specific top level key:
-
-```yaml
-profiles:
-  PROFILE: STRING=REGEX
-
-services:
-  SERVICE:
-    profiles:
-      - PROFILE
-```
-
 ## Plankton uses itself
 
-On the plankton project directory there is a `plankton.compose.yaml` file,
+On the Plankton project directory there is a `plankton.compose.yaml` file,
 where is configured a pipeline to:
 
-* Test the Plankton code using Maven
-* Build the `plankton.jar` file using Maven
-* Test the `plankton.jar` file using a JRE (Java Runtime Environment)
-* Build the Plankton container images (tags: `runner` and `sandbox`)
-* Test the Plankton container images using Docker
-* Push the Plankton container images to [Plankton registry](https://hub.docker.com/repository/docker/adarlan/plankton)
-* Deploy the Plankton services on [https://plankton.services](https://plankton.services)
+* Build the `plankton.jar` file
+* Build the container images: `runner` and `sandbox`
+* Test the container images using the [examples](examples)
+* Push the container images to [this registry](https://hub.docker.com/repository/docker/adarlan/plankton)
 
 You can run this pipeline just executing `mvn spring-boot:run` inside the Plankton project directory.
 
-## Benchmark
+It requires Maven and Docker installed.
 
-| Plankton | GitLab-CI |
-| -------- | --------- |
-| Use an open source language (`.compose.yaml`) | Use its own language (`.gitlab-ci.yml`) |
-| Run pipeline locally | Need server |
-| Build job image on pipeline runtime | Job image must already exist before start the pipeline |
-| Use as job image an image built on previous job | Job image must already exist before start the pipeline |
-| Pull ahead the job images | Pull when job start |
-| Bind mounts from underlying file system to job container file system | ... |
-| Containers can share data through bind mounts | Ugly cache feature |
-| Containers can communicate through sockets | ... |
-| A service is just another container that is stopped when no more jobs depend on it | A service is a specific configuration |
+It also requires a `plankton.env` file with the following variables,
+which will be used to push the container images into de registry:
+
+* `DOCKER_REGISTRY_USER`
+* `DOCKER_REGISTRY_PASSWORD`
