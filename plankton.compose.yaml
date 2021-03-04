@@ -36,6 +36,14 @@ services:
     depends_on: build_runner_image
     volumes: ./examples/demo-1:/workspace
 
+  .push_image:
+    image: docker
+    volumes: /var/run/docker.sock:/var/run/docker.sock
+    env_file: plankton.env
+    entrypoint:
+      - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
+      - docker push $IMAGE
+
   runner.push_image:
     depends_on:
       - getting_started.test_runner
@@ -45,11 +53,3 @@ services:
   sandbox.push_image:
     depends_on: runner.push_image
     environment: IMAGE=adarlan/plankton:sandbox
-
-  .push_image:
-    image: docker
-    volumes: /var/run/docker.sock:/var/run/docker.sock
-    env_file: plankton.env
-    entrypoint:
-      - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
-      - docker push $IMAGE
