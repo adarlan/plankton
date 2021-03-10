@@ -44,6 +44,9 @@ public class ComposeDocument {
         this.resolvePathsFrom = configuration.resolvePathsFrom();
         this.logPrefix = resolvePathsFrom.relativize(filePath).toString() + " ... ";
 
+        logger.debug("{} ... filePath={}", getClass().getSimpleName(), filePath);
+        logger.debug("{} ... resolvePathsFrom={}", getClass().getSimpleName(), resolvePathsFrom);
+
         readFile();
         removeUnsupportedTopLevelKeys();
         initializeServices();
