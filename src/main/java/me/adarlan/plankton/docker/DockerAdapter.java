@@ -153,8 +153,8 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         logger.debug("{}Building image for: {}", prefix, service);
         ComposeService.Build build = service.build()
                 .orElseThrow(() -> new DockerAdapterException("Missing 'build' of: " + service.name()));
-        String context = build.context; // TODO resolve path
-        String dockerfile = build.dockerfile; // TODO resolve path
+        String context = build.context;
+        String dockerfile = build.dockerfile;
         // TODO get more build options from service
         String command = "docker image build -t " + imageTag + (dockerfile == null ? "" : " -f " + dockerfile) + " "
                 + context;
@@ -163,18 +163,9 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
 
     @Override
     public void createContainers(ComposeService service) {
-        buildOrPullImage(service);
         logger.debug("{}Creating containers for: {}", prefix, service);
         for (int i = 0; i < service.scale(); i++) {
             createContainer(service, i);
-        }
-    }
-
-    private void buildOrPullImage(ComposeService service) {
-        if (service.build().isPresent()) {
-            buildImage(service);
-        } else {
-            pullImage(service);
         }
     }
 
