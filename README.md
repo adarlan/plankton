@@ -4,37 +4,43 @@ Plankton is a Container-Native CI/CD tool based on [The Compose Specification](h
 
 ## Getting started
 
-Follow this example to create a simple pipeline composed by 3 services:
-`test`, `build` and `deploy`.
+Follow this example to create a simple web application
+and configure a Plankton pipeline to build and deploy it.
 
 > It requires Docker installed.
+
+Create a `Dockerfile` with the following content:
+
+```Dockerfile
+FROM nginx
+RUN echo "Hello Plankton" > /usr/share/nginx/html/index.html
+```
 
 Create a `plankton.compose.yaml` file with the following content:
 
 ```yaml
 services:
 
-  test:
-    image: alpine
-    command: echo Testing...
-
   build:
-    image: alpine
-    command: echo Building...
-    depends_on:
-      - test
+    image: docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/app
+    working_dir: /app
+    entrypoint: docker build -t hello-plankton .
 
   deploy:
-    image: alpine
-    command: echo Deploying...
-    depends_on:
-      - build
+    depends_on: build
+    image: docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: docker run -d hello-plankton
 ```
 
 Run the pipeline using the `docker run` command:
 
 ```shell
-docker run -it -v $PWD:/workspace -w /workspace -v /var/run/docker.sock:/var/run/docker.sock -p 1329:1329 adarlan/plankton
+docker run -it -v $PWD:/app -w /app -v /var/run/docker.sock:/var/run/docker.sock -p 1329:1329 adarlan/plankton
 ```
 
 See the pipeline logs:
