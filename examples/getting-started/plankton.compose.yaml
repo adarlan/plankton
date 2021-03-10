@@ -1,17 +1,16 @@
 services:
 
-  test:
-    image: alpine
-    command: echo Testing...
-
   build:
-    image: alpine
-    command: echo Building...
-    depends_on:
-      - test
+    image: docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/app
+    working_dir: /app
+    entrypoint: docker build -t hello-plankton .
 
   deploy:
-    image: alpine
-    command: echo Deploying...
-    depends_on:
-      - build
+    depends_on: build
+    image: docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: docker run -d hello-plankton
