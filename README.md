@@ -7,8 +7,6 @@ Plankton is a Container-Native CI/CD tool based on [The Compose Specification](h
 Follow this example to create a simple web application
 and configure a Plankton pipeline to build and deploy it.
 
-> It requires Docker installed.
-
 Create a `Dockerfile` with the following content:
 
 ```Dockerfile
@@ -38,6 +36,8 @@ services:
 ```
 
 Run the pipeline using the `docker run` command:
+
+> It requires Docker installed.
 
 ```shell
 docker run -it -v $PWD:/app -w /app -v /var/run/docker.sock:/var/run/docker.sock -p 1329:1329 adarlan/plankton
