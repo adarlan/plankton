@@ -40,7 +40,7 @@ Run the pipeline using the `docker run` command:
 > It requires Docker installed.
 
 ```shell
-docker run -it -v $PWD:/app -w /app -v /var/run/docker.sock:/var/run/docker.sock -p 1329:1329 adarlan/plankton
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v $PWD:/app -w /app -p 1329:1329 adarlan/plankton
 ```
 
 See the pipeline logs:
