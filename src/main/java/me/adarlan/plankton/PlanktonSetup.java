@@ -132,14 +132,14 @@ public class PlanktonSetup {
 
     private String composeFileSourcePath(String composeFile) throws BashScriptFailedException {
         if (composeFile == null || composeFile.isBlank()) {
-            composeFile = "plankton.compose.yaml";
+            composeFile = "plankton-compose.yaml";
             return BashScript.runAndGetOutputString("cd " + projectDirectoryPath + " && realpath " + composeFile);
         }
         return BashScript.runAndGetOutputString("realpath " + composeFile);
 
         // TODO alternative file names:
-        // plankton.compose.yaml
-        // plankton.compose.yml
+        // plankton-compose.yaml
+        // plankton-compose.yml
         // compose.yaml
         // compose.yml
 

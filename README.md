@@ -14,11 +14,10 @@ FROM nginx
 RUN echo "Hello Plankton" > /usr/share/nginx/html/index.html
 ```
 
-Create a `plankton.compose.yaml` file with the following content:
+Create a `plankton-compose.yaml` file with the following content:
 
 ```yaml
 services:
-
   build:
     image: docker
     volumes:
@@ -53,13 +52,13 @@ View the pipeline in your browser: [http://localhost:1329](http://localhost:1329
 
 ## Plankton uses itself
 
-On the Plankton project directory there is a `plankton.compose.yaml` file,
+On the Plankton project directory there is a `plankton-compose.yaml` file,
 where is configured a pipeline to:
 
-* Build the `plankton.jar` file
-* Build the container images: `runner` and `sandbox`
-* Test the container images using the [examples](examples)
-* Push the container images to [this registry](https://hub.docker.com/repository/docker/adarlan/plankton)
+- Build the `plankton.jar` file
+- Build the container images: `runner` and `sandbox`
+- Test the container images using the [examples](examples)
+- Push the container images to [this registry](https://hub.docker.com/repository/docker/adarlan/plankton)
 
 You can run this pipeline just executing `mvn spring-boot:run` inside the Plankton project directory.
 
@@ -68,5 +67,5 @@ It requires Maven and Docker installed.
 It also requires a `plankton.env` file with the following variables,
 which will be used to push the container images into de registry:
 
-* `DOCKER_REGISTRY_USER`
-* `DOCKER_REGISTRY_PASSWORD`
+- `DOCKER_REGISTRY_USER`
+- `DOCKER_REGISTRY_PASSWORD`
