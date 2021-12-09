@@ -1,5 +1,4 @@
 services:
-
   build_runner_jar:
     image: maven:3.6-jdk-11
     entrypoint: mvn package -DskipTests
@@ -41,7 +40,7 @@ services:
     volumes: /var/run/docker.sock:/var/run/docker.sock
     env_file: plankton.env
     entrypoint:
-      - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
+      - docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD
       - docker push $IMAGE
 
   runner.push_image:

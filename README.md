@@ -67,5 +67,5 @@ It requires Maven and Docker installed.
 It also requires a `plankton.env` file with the following variables,
 which will be used to push the container images into de registry:
 
-- `DOCKER_REGISTRY_USER`
-- `DOCKER_REGISTRY_PASSWORD`
+- `REGISTRY_USER`
+- `REGISTRY_PASSWORD`
