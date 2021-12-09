@@ -118,7 +118,7 @@ public class Pipeline {
                     throw new JobDependencyLoopException();
                 }
                 requiredJob.directDependents.add(job);
-                int d = dependencyLevelOf(requiredJob, knownDependents);
+                int d = dependencyLevelOf(requiredJob, new HashSet<>(knownDependents));
                 if (d > maxDepth)
                     maxDepth = d;
             }
