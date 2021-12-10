@@ -34,7 +34,7 @@ not only Docker containers.
 At first, Plankton only supports Docker containers,
 but the design patterns used in the code allow it to be extended by adding new adapters for other container systems.
 
-![/images/posts/class-diagram.png](/images/plankton/class-diagram.png)
+![class-diagram.png](images/class-diagram.png)
 
 ## Run pipelines locally
 
