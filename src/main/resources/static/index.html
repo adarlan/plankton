@@ -1,200 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="jquery-3.5.1.min.js"></script>
     <title>Plankton</title>
     <style>
-        body {
-            padding: 1em;
-        }
+      body {
+        padding: 1em;
+      }
 
-        #pipeline {
-            display: table;
-        }
+      #pipeline {
+        display: table;
+      }
 
-        #stages {
-            display: table-row;
-        }
+      #stages {
+        display: table-row;
+      }
 
-        .stage {
-            display: table-cell;
-        }
+      .stage {
+        display: table-cell;
+      }
 
-        .job {
-            margin: 1em 5em 1em 0;
-            padding: 1em;
-            border-radius: 1em;
-            border-style: solid;
-            border-width: 1pt;
-        }
+      .job {
+        margin: 1em 3em 1em 0;
+        padding: 1em;
+        border-radius: 2em;
+        border-style: solid;
+        border-width: 1pt;
+        display: table;
+      }
 
-        .job.disabled {
-            background-color: white;
-            border-color: silver;
-        }
+      .job.waiting {
+        background-color: lightblue;
+      }
 
-        .job.disabled * {
-            color: silver;
-        }
+      .job.blocked {
+        background-color: lightgrey;
+      }
 
-        .job.waiting {
-            background-color: lightblue;
-        }
+      .job.running {
+        background-color: cornflowerblue;
+      }
 
-        .job.blocked {
-            background-color: lightgrey;
-        }
+      .job.failed {
+        background-color: coral;
+      }
 
-        .job.scheduled {
-            background-color: skyblue;
-        }
+      .job.succeeded {
+        background-color: mediumaquamarine;
+      }
 
-        .job.running {
-            background-color: cornflowerblue;
-        }
+      .job-header {
+        display: table-row;
+      }
 
-        .job.interrupted {
-            background-color: coral;
-        }
+      .job-name {
+        display: table-cell;
+        padding: 0 4pt 0 0;
+        /* font-size: 1.2em; */
+        padding-right: 1em;
+      }
 
-        .job.canceled {
-            background-color: coral;
-        }
+      .job-status {
+        display: table-cell;
+        padding: 0 4pt;
+        background-color: white;
+        border-radius: 8pt;
+      }
 
-        .job.failed {
-            background-color: coral;
-        }
+      .job-dependencies {
+      }
 
-        .job.timeout {
-            background-color: coral;
-        }
+      .dependency {
+        display: table-row;
+      }
 
-        .job.succeeded {
-            background-color: mediumaquamarine;
-        }
+      .dependency-description {
+        display: table-cell;
+      }
 
-        .job-header {
-            display: table-row;
-        }
-
-        .job-name {
-            display: table-cell;
-            padding: 0 4pt 0 0;
-            font-size: 1.2em;
-        }
-
-        .job-status {
-            display: table-cell;
-            padding: 0 4pt;
-            background-color: white;
-            border-radius: 8pt;
-        }
-
-        .job-dependencies {}
-
-        .dependency {
-            display: table-row;
-        }
-
-        .dependency-description {
-            display: table-cell;
-        }
-
-        .dependency-status {
-            display: table-cell;
-        }
+      .dependency-status {
+        display: table-cell;
+      }
     </style>
-</head>
+  </head>
 
-<body>
-    <!-- <h1>Plankton</h1> -->
-
+  <body>
     <div id="pipeline">
-        <div id="stages">
-
-        </div>
+      <div id="stages"></div>
     </div>
 
     <script>
-        const pipelineUrl = "http://localhost:1329/pipeline"
-        let pipeline;
-        let pipid = "";
-        let firstTime = true;
+      const pipelineUrl = "http://localhost:1329/pipeline";
+      let pipeline;
+      let pipid = "";
+      let firstTime = true;
 
-        refresh();
-        setInterval(refresh, 1000);
+      refresh();
+      setInterval(refresh, 1000);
 
-        async function refresh() {
-            const response = await fetch(pipelineUrl);
-            pipeline = await response.json();
-            console.log(pipeline);
-            if (pipid != pipeline.id) {
-                console.log("first time");
-                drawFirstTime();
-                pipid = pipeline.id;
-            } else {
-                console.log("not first time");
-                drawUpdate();
-            }
+      async function refresh() {
+        const response = await fetch(pipelineUrl);
+        pipeline = await response.json();
+        console.log(pipeline);
+        if (pipid != pipeline.id) {
+          console.log("first time");
+          drawFirstTime();
+          pipid = pipeline.id;
+        } else {
+          console.log("not first time");
+          drawUpdate();
         }
+      }
 
-        function drawFirstTime() {
+      function drawFirstTime() {
+        let stages_div = $("#stages");
+        stages_div.empty();
 
-            let stages_div = $("#stages");
-            stages_div.empty();
+        console.log("pipeline.stages", pipeline.stages);
+        for (let stageIndex in pipeline.stages) {
+          console.log("stageIndex", stageIndex);
 
-            console.log("pipeline.stages", pipeline.stages);
-            for (let stageIndex in pipeline.stages) {
-                console.log("stageIndex", stageIndex);
+          let stage = pipeline.stages[stageIndex];
+          console.log("stage", stage);
 
-                let stage = pipeline.stages[stageIndex];
-                console.log("stage", stage);
+          let stage_div = $("<div></div>")
+            .addClass("stage")
+            .appendTo(stages_div);
 
-                let stage_div = $("<div></div>").addClass("stage").appendTo(stages_div);
+          console.log("stage.jobs", stage.jobs);
+          for (let jobIndex in stage.jobs) {
+            console.log("jobIndex", jobIndex);
 
-                console.log("stage.jobs", stage.jobs);
-                for (let jobIndex in stage.jobs) {
-                    console.log("jobIndex", jobIndex);
+            let job = stage.jobs[jobIndex];
+            console.log("job", job);
 
-                    let job = stage.jobs[jobIndex];
-                    console.log("job", job);
+            let job_div = $("<div></div>")
+              .attr("id", "job_" + job.name)
+              .addClass("job")
+              .addClass(job.status)
+              .appendTo(stage_div);
 
-                    let job_div = $("<div></div>").attr("id", "job_" + job.name).addClass("job").addClass(job.status).appendTo(stage_div);
+            let job_header = $("<div></div>")
+              .addClass("job-header")
+              .appendTo(job_div);
+            let job_name = $("<div></div>")
+              .addClass("job-name")
+              .text(job.name)
+              .appendTo(job_header);
+            let job_status = $("<div></div>")
+              .addClass("job-status")
+              .text(job.status)
+              .appendTo(job_header);
 
-                    let job_header = $("<div></div>").addClass("job-header").appendTo(job_div);
-                    let job_name = $("<div></div>").addClass("job-name").text(job.name).appendTo(job_header);
-                    let job_status = $("<div></div>").addClass("job-status").text(job.status).appendTo(job_header);
+            // let job_dependencies = $("<div></div>").addClass("job-dependencies").appendTo(job_div);
 
-                    // let job_dependencies = $("<div></div>").addClass("job-dependencies").appendTo(job_div);
+            // for (let dependencyIndex in job.dependencies) {
+            //     let dependency = job.dependencies[dependencyIndex];
 
-                    // for (let dependencyIndex in job.dependencies) {
-                    //     let dependency = job.dependencies[dependencyIndex];
-
-                    //     let dependency_div = $("<div></div>").addClass("dependency").appendTo(job_dependencies);
-                    //     let dependency_description = $("<div></div>").addClass("dependency-description").text(dependency.description).appendTo(dependency_div);
-                    //     // let dependency_description = $("<div></div>").addClass("dependency-description").text(dependency.name + "=" + dependency.value).appendTo(dependency_div);
-                    //     // let dependency_status = $("<div></div>").addClass("dependency-status").text(dependency.status).appendTo(dependency_div);
-                    // }
-                }
-            }
+            //     let dependency_div = $("<div></div>").addClass("dependency").appendTo(job_dependencies);
+            //     let dependency_description = $("<div></div>").addClass("dependency-description").text(dependency.description).appendTo(dependency_div);
+            //     // let dependency_description = $("<div></div>").addClass("dependency-description").text(dependency.name + "=" + dependency.value).appendTo(dependency_div);
+            //     // let dependency_status = $("<div></div>").addClass("dependency-status").text(dependency.status).appendTo(dependency_div);
+            // }
+          }
         }
+      }
 
-        function drawUpdate() {
-            for (let stageIndex in pipeline.stages) {
-                let stage = pipeline.stages[stageIndex];
-                for (let jobIndex in stage.jobs) {
-                    let job = stage.jobs[jobIndex];
+      function drawUpdate() {
+        for (let stageIndex in pipeline.stages) {
+          let stage = pipeline.stages[stageIndex];
+          for (let jobIndex in stage.jobs) {
+            let job = stage.jobs[jobIndex];
 
-                    let job_div = $("#job_" + job.name).removeClass().addClass("job").addClass(job.status);
-                    let job_status = job_div.children(".job-header").children(".job-status").text(job.status);
-                }
-            }
+            let job_div = $("#job_" + job.name)
+              .removeClass()
+              .addClass("job")
+              .addClass(job.status);
+            let job_status = job_div
+              .children(".job-header")
+              .children(".job-status")
+              .text(job.status);
+          }
         }
-
+      }
     </script>
-</body>
-
+  </body>
 </html>
