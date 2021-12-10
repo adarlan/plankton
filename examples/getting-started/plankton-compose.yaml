@@ -1,6 +1,5 @@
 services:
-
-  build:
+  build-app:
     image: docker
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -8,8 +7,8 @@ services:
     working_dir: /app
     entrypoint: docker build -t hello-plankton .
 
-  deploy:
-    depends_on: build
+  deploy-app:
+    depends_on: build-app
     image: docker
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
