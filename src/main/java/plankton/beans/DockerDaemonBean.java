@@ -10,17 +10,25 @@ import plankton.docker.DockerDaemon;
 import plankton.docker.DockerHost;
 import plankton.docker.DockerSandbox;
 import plankton.docker.DockerSandboxConfiguration;
-import plankton.PlanktonSetup;
+import plankton.perspectives.HostPerspective;
+import plankton.perspectives.PlanktonPerspective;
+import plankton.perspectives.SandboxPerspective;
 
 @Component
 public class DockerDaemonBean {
 
     @Autowired
-    private PlanktonSetup planktonSetup;
+    private HostPerspective hostPerspective;
+
+    @Autowired
+    private PlanktonPerspective planktonPerspective;
+
+    @Autowired
+    private SandboxPerspective sandboxPerspective;
 
     @Bean
     public DockerDaemon dockerDaemon() {
-        if (planktonSetup.isSandboxEnabled()) {
+        if (sandboxPerspective.isSandboxEnabled()) {
             return dockerSandbox();
         } else {
             return dockerHost();
@@ -28,7 +36,7 @@ public class DockerDaemonBean {
     }
 
     private DockerHost dockerHost() {
-        return new DockerHost(() -> planktonSetup.getDockerHostSocketAddress());
+        return new DockerHost(() -> planktonPerspective.getDockerHostSocketAddress());
     }
 
     private DockerSandbox dockerSandbox() {
@@ -41,27 +49,27 @@ public class DockerDaemonBean {
 
             @Override
             public String dockerHostSocketAddress() {
-                return planktonSetup.getDockerHostSocketAddress();
+                return planktonPerspective.getDockerHostSocketAddress();
             }
 
             @Override
             public String underlyingWorkspaceDirectoryPath() {
-                return planktonSetup.getProjectDirectoryPathOnHost();
+                return hostPerspective.getProjectDirectoryPath();
             }
 
             @Override
             public String workspaceDirectoryPath() {
-                return planktonSetup.getProjectDirectoryPathOnSandbox();
+                return sandboxPerspective.getProjectDirectoryPathOnSandbox();
             }
 
             @Override
             public boolean runningFromHost() {
-                return planktonSetup.isRunningFromHost();
+                return planktonPerspective.isRunningFromHost();
             }
 
             @Override
             public String runningFromContainerId() {
-                return planktonSetup.getRunningFromContainerId();
+                return planktonPerspective.getRunningFromContainerId();
             }
         });
     }

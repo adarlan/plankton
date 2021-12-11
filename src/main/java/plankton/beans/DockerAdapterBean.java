@@ -11,13 +11,17 @@ import plankton.core.ContainerRuntimeAdapter;
 import plankton.docker.DockerAdapter;
 import plankton.docker.DockerAdapterConfiguration;
 import plankton.docker.DockerDaemon;
-import plankton.PlanktonSetup;
+import plankton.perspectives.PlanktonPerspective;
+import plankton.perspectives.SandboxPerspective;
 
 @Component
 public class DockerAdapterBean {
 
     @Autowired
-    private PlanktonSetup planktonSetup;
+    private PlanktonPerspective planktonPerspective;
+
+    @Autowired
+    private SandboxPerspective sandboxPerspective;
 
     @Autowired
     private DockerDaemon dockerDaemon;
@@ -49,12 +53,12 @@ public class DockerAdapterBean {
 
             @Override
             public String projectDirectoryPath() {
-                return planktonSetup.getProjectDirectoryPath();
+                return planktonPerspective.getProjectPath();
             }
 
             @Override
             public String projectDirectoryTargetPath() {
-                return planktonSetup.getProjectDirectoryTargetPath();
+                return sandboxPerspective.getProjectDirectoryTargetPath();
             }
         });
     }
