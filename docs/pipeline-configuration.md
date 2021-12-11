@@ -1,4 +1,4 @@
-# Plankton - Configuration Reference
+# Plankton - Pipeline configuration
 
 ## Supported keys
 

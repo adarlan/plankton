@@ -25,5 +25,5 @@ setting the following variables:
 ## Run example project
 
 ```shell
-mvn spring-boot:run -Dspring-boot.run.arguments="--directory=examples/getting-started"
+mvn spring-boot:run -Dspring-boot.run.arguments="--workspace=examples/getting-started"
 ```
