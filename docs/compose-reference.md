@@ -1,3 +1,8 @@
+# Compose Reference
+
+## Supported keys
+
+```yaml
 services:
   SERVICE:
     build: CONTEXT
@@ -56,9 +61,11 @@ services:
       - SOURCE_PATH:TARGET_PATH:rw
       - SOURCE_PATH:TARGET_PATH:ro
     working_dir: WORKING_DIR
+```
 
-# IGNORED
-# -------
+## Ignored keys
+
+```yaml
 # configs
 # networks
 # secrets
@@ -136,3 +143,4 @@ services:
 # services.SERVICE.volumes_from
 # version [DEPRECATED]
 # volumes
+```
