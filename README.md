@@ -34,7 +34,7 @@ not only Docker containers.
 At first, Plankton only supports Docker containers,
 but the design patterns used in the code allow it to be extended by adding new adapters for other container systems.
 
-![class-diagram.png](images/class-diagram.png)
+![class-diagram.png](docs/img/class-diagram.png)
 
 ## Run pipelines locally
 
@@ -109,11 +109,11 @@ docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v $PWD:/app -w /app
 
 #### Follow the logs
 
-![pipeline-logs.png](images/pipeline-logs.png)
+![pipeline-logs.png](docs/img/pipeline-logs.png)
 
 #### Open the web interface at [http://localhost:1329](http://localhost:1329)
 
-![pipeline-page.png](images/pipeline-page.png)
+![pipeline-page.png](docs/img/pipeline-page.png)
 
 ### More examples
 
@@ -146,7 +146,7 @@ docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v $PWD:/app -w /app
 In the Plankton repository there is a `plankton-compose.yaml` file,
 where is configured a pipeline to build, test and deploy itself.
 
-![using-itself-page.png](images/using-itself-page.png)
+![using-itself-page.png](docs/img/using-itself-page.png)
 
 In this case, does not make sense to run the pipeline using the `docker run` command,
 because it will always use the previous version of Plankton to test the current version.
