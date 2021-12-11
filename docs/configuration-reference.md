@@ -1,4 +1,4 @@
-# Plankton Configuration Reference
+# Plankton - Configuration Reference
 
 ## Supported keys
 
