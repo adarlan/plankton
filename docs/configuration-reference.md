@@ -1,65 +1,187 @@
-# Compose Reference
+# Plankton Configuration Reference
 
 ## Supported keys
+
+### build
 
 ```yaml
 services:
   SERVICE:
     build: CONTEXT
+  SERVICE:
     build:
       context: CONTEXT
       dockerfile: DOCKERFILE
+```
+
+### command
+
+```yaml
+services:
+  SERVICE:
     command: COMMAND
+  SERVICE:
     command:
       - COMMAND
-    credential_spec: # [???]
+```
+
+### credential_spec ???
+
+```yaml
+services:
+  SERVICE:
+    credential_spec: # ???
+```
+
+### depends_on
+
+```yaml
+services:
+  SERVICE:
     depends_on:
       - SERVICE
+  SERVICE:
     depends_on:
       SERVICE:
         condition: service_healthy
         condition: service_started
         condition: service_completed_successfully # [DEFAULT]
         condition: service_failed # [PLANKTON]
+```
+
+### entrypoint
+
+```yaml
+services:
+  SERVICE:
     entrypoint: ENTRYPOINT
+  SERVICE:
     entrypoint:
       - ENTRYPOINT
+```
+
+### environment
+
+```yaml
+services:
+  SERVICE:
     environment:
       - VARIABLE=VALUE
+  SERVICE:
     environment:
       VARIABLE: VALUE
+```
+
+### env_file
+
+```yaml
+services:
+  SERVICE:
     env_file: ENV_FILE
+  SERVICE:
     env_file:
       - ENV_FILE
+```
+
+### expose
+
+```yaml
+services:
+  SERVICE:
     expose:
       - PORT
+```
+
+### extends
+
+```yaml
+services:
+  SERVICE:
     extends:
       file: FILE
       service: SERVICE
+```
+
+### group_add
+
+```yaml
+services:
+  SERVICE:
     group_add:
       - GROUP
+```
+
+### healthcheck
+
+```yaml
+services:
+  SERVICE:
     healthcheck:
       test: TEST
       interval: INTERVAL
       timeout: TIMEOUT
       retries: RETRIES
       start_period: START_PERIOD
+  SERVICE:
     healthcheck:
       disabled: true
+```
+
+### image
+
+```yaml
+services:
+  SERVICE:
     image: IMAGE
+```
+
+### profiles
+
+```yaml
+services:
+  SERVICE:
     profiles:
       - PROFILE
+```
+
+### scale
+
+```yaml
+services:
+  SERVICE:
     scale: SCALE # [DEPRECATED]
+```
+
+### user
+
+```yaml
+services:
+  SERVICE:
     user: USER
+```
+
+### volumes
+
+```yaml
+services:
+  SERVICE:
     volumes:
       - type: bind
         source: SOURCE_PATH
         target: TARGET_PATH
         read_only: BOOLEAN
+  SERVICE:
     volumes:
       - SOURCE_PATH:TARGET_PATH
       - SOURCE_PATH:TARGET_PATH:rw
       - SOURCE_PATH:TARGET_PATH:ro
+```
+
+### working_dir
+
+```yaml
+services:
+  SERVICE:
     working_dir: WORKING_DIR
 ```
 
