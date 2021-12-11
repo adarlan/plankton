@@ -22,7 +22,8 @@ services:
 
   .test_runner:
     image: adarlan/plankton
-    command: --plankton.project.path=/workspace --spring.main.web-application-type=none
+    command:
+      - --spring.main.web-application-type=none
     working_dir: /workspace
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
