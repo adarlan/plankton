@@ -1,0 +1,27 @@
+services:
+  build_app_image:
+    image: app
+    build: .
+    entrypoint: ""
+
+  app:
+    depends_on:
+      build_app_image:
+        condition: service_completed_successfully
+    image: app
+
+  test_app:
+    depends_on:
+      app:
+        condition: service_healthy
+    image: adarlan/curl
+    entrypoint: curl http://app
+
+  push_app:
+    depends_on:
+      test_app:
+        condition: service_completed_successfully
+    image: docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: docker push app
