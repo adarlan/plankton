@@ -9,18 +9,15 @@ import lombok.Getter;
 @Component
 public class PlanktonConfiguration {
 
-    @Value("${plankton.project.directory}")
+    @Value("${workspace}")
     private String projectDirectory;
 
-    @Value("${plankton.project.directory.underlying}")
-    private String projectDirectoryOnHost;
-
-    @Value("${plankton.compose.file}")
+    @Value("${file}")
     private String composeFile;
 
-    @Value("${plankton.docker.sandbox.enabled}")
+    @Value("${sandbox}")
     private boolean sandboxEnabled;
 
-    @Value("${plankton.docker.host}")
+    @Value("${docker}")
     private String dockerHost;
 }
