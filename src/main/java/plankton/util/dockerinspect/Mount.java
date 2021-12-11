@@ -1,4 +1,4 @@
-package plankton.util.dockercontainerinspect;
+package plankton.util.dockerinspect;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
