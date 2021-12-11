@@ -14,8 +14,8 @@ services:
       SERVICE:
         condition: service_healthy
         condition: service_started
-        condition: exit_zero # [PLANKTON] [DEFAULT]
-        condition: exit_non_zero # [PLANKTON]
+        condition: service_completed_successfully # [DEFAULT]
+        condition: service_failed # [PLANKTON]
     entrypoint: ENTRYPOINT
     entrypoint:
       - ENTRYPOINT
@@ -42,12 +42,6 @@ services:
     healthcheck:
       disabled: true
     image: IMAGE
-    labels:
-      - plankton.depends_on.SERVICE=exit_zero
-      - plankton.depends_on.SERVICE=exit_non_zero
-    labels:
-      plankton.depends_on.SERVICE: exit_zero
-      plankton.depends_on.SERVICE: exit_non_zero
     profiles:
       - PROFILE
     scale: SCALE # [DEPRECATED]
@@ -100,6 +94,7 @@ services:
 # services.SERVICE.init [???]
 # services.SERVICE.ipc
 # services.SERVICE.isolation
+# services.SERVICE.labels
 # services.SERVICE.links
 # services.SERVICE.logging
 # services.SERVICE.network_mode

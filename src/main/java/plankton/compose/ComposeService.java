@@ -412,10 +412,11 @@ public class ComposeService {
 
         private DependsOn(Object object) {
             if (object instanceof String) {
-                serviceConditionMap.put((String) object, DependsOnCondition.SUCCEEDED);
+                serviceConditionMap.put((String) object, DependsOnCondition.SERVICE_COMPLETED_SUCCESSFULLY);
             } else if (object instanceof List) {
                 List<String> list = castToStringList(object);
-                list.forEach(serviceName -> serviceConditionMap.put(serviceName, DependsOnCondition.SUCCEEDED));
+                list.forEach(serviceName -> serviceConditionMap.put(serviceName,
+                        DependsOnCondition.SERVICE_COMPLETED_SUCCESSFULLY));
             } else if (object instanceof Map) {
                 Map<String, Map<String, Object>> m = castToMapOfMaps(object);
                 m.forEach((serviceName, serviceMap) -> {

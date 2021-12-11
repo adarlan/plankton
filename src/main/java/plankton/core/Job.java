@@ -164,9 +164,11 @@ public class Job {
 
     private synchronized boolean satisfiesCondition(DependsOnCondition condition) {
         switch (condition) {
-            case SUCCEEDED:
+            case SERVICE_STARTED:
+                return started;
+            case SERVICE_COMPLETED_SUCCESSFULLY:
                 return status.isSucceeded();
-            case FAILED:
+            case SERVICE_FAILED:
                 return status.isFailed();
             default:
                 throw new PipelineException(this, "Unsupported dependency condition: " + condition);
@@ -175,14 +177,18 @@ public class Job {
 
     private synchronized boolean blockedByCondition(DependsOnCondition condition) {
         switch (condition) {
-            case SUCCEEDED:
+            case SERVICE_STARTED:
+                return status.isFinal() && !started;
+            case SERVICE_COMPLETED_SUCCESSFULLY:
                 return status.isFailed();
-            case FAILED:
+            case SERVICE_FAILED:
                 return status.isSucceeded();
             default:
                 throw new PipelineException(this, "Unsupported dependency condition: " + condition);
         }
     }
+
+    private boolean started = false;
 
     private void setStatusWaiting() {
         status = JobStatus.WAITING;
@@ -200,6 +206,7 @@ public class Job {
 
     private void setStatusRunning() {
         status = JobStatus.RUNNING;
+        started = true;
         if (!timerStarted)
             startTimer();
     }
