@@ -38,6 +38,13 @@ public class BashScript {
         return output.stream().collect(Collectors.joining());
     }
 
+    public String runAndGetOutputString() throws BashScriptFailedException {
+        List<String> output = new ArrayList<>();
+        forEachOutput(output::add);
+        run();
+        return output.stream().collect(Collectors.joining());
+    }
+
     public static <T> T runAndGetOutputJson(String command, Class<T> class1) throws BashScriptFailedException {
         String json = runAndGetOutputString(command);
         try {
