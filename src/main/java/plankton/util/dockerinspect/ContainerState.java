@@ -1,4 +1,4 @@
-package plankton.docker;
+package plankton.util.dockerinspect;
 
 import java.time.Instant;
 
@@ -6,11 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import plankton.core.ContainerState;
 
 @NoArgsConstructor
 @ToString
-public class DockerContainerState implements ContainerState {
+public class ContainerState {
 
     @JsonProperty("Status")
     String status;
@@ -45,27 +44,22 @@ public class DockerContainerState implements ContainerState {
     @JsonProperty("FinishedAt")
     String finishedAt;
 
-    @Override
     public boolean running() {
         return status.equals("running");
     }
 
-    @Override
     public boolean exited() {
         return status.equals("exited");
     }
 
-    @Override
     public Instant initialInstant() {
         return parseInstant(startedAt);
     }
 
-    @Override
     public Instant finalInstant() {
         return parseInstant(finishedAt);
     }
 
-    @Override
     public Integer exitCode() {
         return exitCode;
     }
