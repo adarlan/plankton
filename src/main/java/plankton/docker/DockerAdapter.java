@@ -186,9 +186,10 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         command.add("--name " + containerName);
 
         command.add("--network " + networkName);
-        // TODO --hostname
-        // if (scale = 1) --hostname ${service.name}
-        // if (scale > 1) --hostname ${service.name}_${instance.index}
+        if (service.scale() == 1)
+            command.add("--hostname " + service.name());
+        else
+            command.add("--hostname " + service.name() + "_" + containerIndex);
 
         // TODO wrap each option value using quotes
         // or use the TCP API
