@@ -38,6 +38,9 @@ public class Job {
     final Set<Job> directDependents = new HashSet<>();
     final List<JobInstance> instances = new ArrayList<>();
 
+    final Set<DependsOnCondition> requiredConditions = new HashSet<>();
+    boolean autoStopWhenDirectDependentsHaveFinalStatus = false;
+
     private static final Logger logger = LoggerFactory.getLogger(Job.class);
     final String colorizedName;
     final String logPrefix;

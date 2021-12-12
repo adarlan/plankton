@@ -18,6 +18,7 @@ import lombok.EqualsAndHashCode;
 
 import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeService;
+import plankton.compose.DependsOnCondition;
 import plankton.util.Colors;
 import plankton.util.LogUtils;
 
@@ -32,6 +33,8 @@ public class Pipeline {
     private List<Set<Job>> dependencyLevels = new ArrayList<>();
 
     final Duration timeoutLimitForJobs;
+
+    final Set<Job> autoStopJobs = new HashSet<>();
 
     private static final Logger logger = LoggerFactory.getLogger(Pipeline.class);
 
@@ -49,7 +52,10 @@ public class Pipeline {
         jobs.forEach(this::initializeJobDependencyMap);
         jobs.forEach(this::initializeJobDependencyLevel);
         sortJobsByDependencyLevel();
+        jobs.forEach(this::initializeJobStopMode);
         jobs.forEach(job -> job.composeService.logInfo());
+
+        logger.debug("Pipeline.autoStopJobs: {}", autoStopJobs);
     }
 
     @Override
@@ -95,6 +101,7 @@ public class Pipeline {
         composeService.dependsOn().forEach((requiredJobName, condition) -> {
             Job requiredJob = getJobByName(requiredJobName);
             job.dependencyMap.put(requiredJob, condition);
+            requiredJob.requiredConditions.add(condition);
         });
         if (!job.dependencyMap.isEmpty())
             logger.debug("{} ... Dependencies: {}", job.logPrefix, job.dependencyMap);
@@ -131,6 +138,16 @@ public class Pipeline {
         Collections.sort(jobs, (job1, job2) -> job1.dependencyLevel().compareTo(job2.dependencyLevel()));
     }
 
+    private void initializeJobStopMode(Job job) {
+        if ((job.requiredConditions.contains(DependsOnCondition.SERVICE_STARTED)
+                || job.requiredConditions.contains(DependsOnCondition.SERVICE_HEALTHY))
+                && !(job.requiredConditions.contains(DependsOnCondition.SERVICE_COMPLETED_SUCCESSFULLY)
+                        || job.requiredConditions.contains(DependsOnCondition.SERVICE_FAILED))) {
+            job.autoStopWhenDirectDependentsHaveFinalStatus = true;
+            autoStopJobs.add(job);
+        }
+    }
+
     public void start() {
         line();
         logger.info("{}                            PIPELINE STARTED{}", Colors.BRIGHT_WHITE, Colors.ANSI_RESET);
@@ -143,6 +160,7 @@ public class Pipeline {
 
     synchronized void refresh() {
         boolean finished = true;
+        autoStopJobs();
         for (Job job : jobs) {
             if (!job.status.isFinal())
                 finished = false;
@@ -153,6 +171,21 @@ public class Pipeline {
             line();
             jobs.forEach(Job::logFinalStatus);
             line();
+        }
+    }
+
+    private void autoStopJobs() {
+        for (Job autoStopJob : autoStopJobs) {
+            boolean autoStopNow = true;
+            for (Job dependentJob : autoStopJob.directDependents) {
+                if (!dependentJob.status.isFinal()) {
+                    autoStopNow = false;
+                }
+            }
+            if (autoStopNow) {
+                logger.debug("Auto stopping {} because it is not required anymore", autoStopJob);
+                autoStopJob.stop();
+            }
         }
     }
 
