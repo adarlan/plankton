@@ -1,7 +1,0 @@
-version: "3.7"
-
-services:
-
-  foo:
-    image: ubuntu
-    command: echo Foo...

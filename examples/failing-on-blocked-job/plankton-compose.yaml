@@ -1,10 +1,9 @@
 services:
-
   foo:
     image: alpine
     entrypoint: spongebob
 
   bar:
+    depends_on: foo
     image: alpine
     entrypoint: echo bar
-    depends_on: foo

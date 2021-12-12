@@ -16,12 +16,3 @@ services:
         condition: service_started
     image: curlimages/curl
     entrypoint: curl http://app
-
-  push_app:
-    depends_on:
-      test_app:
-        condition: service_completed_successfully
-    image: docker
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    entrypoint: echo Pushed!

@@ -1,0 +1,9 @@
+services:
+  build_docker_image:
+    image: docker
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint:
+      - docker build -t foo .

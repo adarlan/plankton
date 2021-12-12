@@ -1,0 +1,4 @@
+services:
+  say_hello_world:
+    image: alpine
+    entrypoint: echo Hello, World!
