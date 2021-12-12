@@ -10,3 +10,5 @@ target/
 plankton.env
 
 .idea/
+
+.m2/

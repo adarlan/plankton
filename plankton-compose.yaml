@@ -1,26 +1,36 @@
 services:
-  build_runner_jar:
+  build_plankton_jar:
     image: maven:3.6-jdk-11
-    entrypoint: mvn package -DskipTests
+    entrypoint:
+      - mvn package -DskipTests
     working_dir: /workspace
-    user: 1001:1001
     volumes:
-      - /etc/passwd:/etc/passwd:ro
-      - ./:/workspace
-      - /home/adarlan/.m2/repository:/home/adarlan/.m2/repository
+      - ./src:/workspace/src:ro
+      - ./pom.xml:/workspace/pom.xml:ro
+      - ./target:/workspace/target
+      - .m2/repository:/root/.m2/repository
 
-  build_runner_image:
-    depends_on: build_runner_jar
-    build: .
-    image: adarlan/plankton
-    entrypoint: ""
+  build_plankton_image:
+    depends_on: build_plankton_jar
+    image: docker:20.10
+    entrypoint:
+      - docker build -t adarlan/plankton .
+    working_dir: /workspace
+    volumes:
+      - ./Dockerfile:/workspace/Dockerfile
+      - ./target:/workspace/target
+      - /var/run/docker.sock:/var/run/docker.sock
 
-  build_sandbox_image:
-    build: sandbox
-    image: adarlan/plankton:sandbox
-    entrypoint: ""
+  build_plankton_sandbox_image:
+    image: docker:20.10
+    entrypoint:
+      - docker build -t adarlan/plankton:sandbox sandbox
+    working_dir: /workspace
+    volumes:
+      - ./sandbox:/workspace/sandbox
+      - /var/run/docker.sock:/var/run/docker.sock
 
-  .test_runner:
+  .test:
     image: adarlan/plankton
     command:
       - --spring.main.web-application-type=none
@@ -28,28 +38,80 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
-  getting_started.test_runner:
-    depends_on: build_runner_image
-    volumes: ./examples/getting-started:/workspace
+  test_building-docker-image:
+    extends: .test
+    depends_on: build_plankton_image
+    volumes:
+      - ./examples/building-docker-image:/workspace
 
-  demo_1.test_runner:
-    depends_on: build_runner_image
-    volumes: ./examples/demo-1:/workspace
+  test_failing-on-blocked-job:
+    extends: .test
+    depends_on: test_building-docker-image
+    volumes:
+      - ./examples/failing-on-blocked-job:/workspace
+
+  test_failing-on-dependency-loop:
+    extends: .test
+    depends_on: test_failing-on-blocked-job
+    volumes:
+      - ./examples/failing-on-dependency-loop:/workspace
+
+  test_running-parallel-jobs:
+    extends: .test
+    depends_on: test_failing-on-dependency-loop
+    volumes:
+      - ./examples/running-parallel-jobs:/workspace
+
+  test_saying-hello-world:
+    extends: .test
+    depends_on: test_running-parallel-jobs
+    volumes:
+      - ./examples/saying-hello-world:/workspace
+
+  test_testing-web-application:
+    extends: .test
+    depends_on: test_saying-hello-world
+    volumes:
+      - ./examples/testing-web-application:/workspace
+
+  # test_testing-web-application-with-database:
+  #   extends: .test
+  #   depends_on: test_testing-web-application
+  #   volumes:
+  #     - ./examples/testing-web-application-with-database:/workspace
 
   .push_image:
     image: docker
-    volumes: /var/run/docker.sock:/var/run/docker.sock
-    env_file: plankton.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    env_file:
+      - plankton.env
     entrypoint:
       - docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD
       - docker push $IMAGE
 
-  runner.push_image:
+  push_plankton_image:
+    extends: .push_image
+    environment:
+      - IMAGE=adarlan/plankton
     depends_on:
-      - getting_started.test_runner
-      - demo_1.test_runner
-    environment: IMAGE=adarlan/plankton
+      - test_building-docker-image
+      - test_failing-on-dependency-loop
+      - test_saying-hello-world
+      - test_failing-on-blocked-job
+      - test_running-parallel-jobs
+      - test_testing-web-application
+      # - test_testing-web-application-with-database
 
-  sandbox.push_image:
-    depends_on: runner.push_image
-    environment: IMAGE=adarlan/plankton:sandbox
+  push_plankton_sandbox_image:
+    extends: .push_image
+    environment:
+      - IMAGE=adarlan/plankton:sandbox
+    depends_on:
+      - test_building-docker-image
+      - test_failing-on-dependency-loop
+      - test_saying-hello-world
+      - test_failing-on-blocked-job
+      - test_running-parallel-jobs
+      - test_testing-web-application
+      # - test_testing-web-application-with-database
