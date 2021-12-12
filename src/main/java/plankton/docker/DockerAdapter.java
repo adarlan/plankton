@@ -250,14 +250,15 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
             commands.add("#!/bin/sh");
             commands.add("set -e");
 
-            entrypointList.forEach(line -> {
-                commands.add("printf \"\\033[1;37m+ \\033[0m\" || true");
-                for (int i = 0; i < line.length(); i++) {
-                    commands.add("printf \"\\033[1;37m" + line.charAt(i) + "\\033[0m\" || true");
-                }
-                commands.add("printf \"\\n\" || true");
-                commands.add(line);
-            });
+            entrypointList.forEach(commands::add);
+            // entrypointList.forEach(line -> {
+            // commands.add("printf \"\\033[1;37m+ \\033[0m\" || true");
+            // for (int i = 0; i < line.length(); i++) {
+            // commands.add("printf \"\\033[1;37m" + line.charAt(i) + "\\033[0m\" || true");
+            // }
+            // commands.add("printf \"\\n\" || true");
+            // commands.add(line);
+            // });
 
             FileSystemUtils.writeFile(filePath, commands);
 
@@ -283,7 +284,17 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         }
         setStartedContainer(containerName);
         String command = "docker container start --attach " + containerName;
-        int exitCode = runCommandAndGetExitCode(command, service, containerIndex);
+        String logPlaceholder = logPrefixOf(service, containerIndex) + MSG;
+        BashScript script = createBashScript();
+        script.command(command);
+        script.forEachOutput(msg -> logger.info(logPlaceholder, msg));
+        script.forEachError(msg -> logger.error(logPlaceholder, msg));
+        try {
+            script.run();
+        } catch (BashScriptFailedException e) {
+            /* ignore */
+        }
+        int exitCode = script.exitCode();
         setExitedContainers(containerName);
         return exitCode;
     }
@@ -344,10 +355,11 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         return runScriptAndGetExitCode(command, MSG);
     }
 
-    private int runCommandAndGetExitCode(String command, ComposeService service, int containerIndex) {
-        String logPlaceholder = logPrefixOf(service, containerIndex) + MSG;
-        return runScriptAndGetExitCode(command, logPlaceholder);
-    }
+    // private int runCommandAndGetExitCode(String command, ComposeService service,
+    // int containerIndex) {
+    // String logPlaceholder = logPrefixOf(service, containerIndex) + MSG;
+    // return runScriptAndGetExitCode(command, logPlaceholder);
+    // }
 
     private void runScript(String command, String logPlaceholder) {
         int exitCode = runScriptAndGetExitCode(command, logPlaceholder);
