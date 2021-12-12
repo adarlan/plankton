@@ -119,12 +119,16 @@ public class ComposeDocument {
 
     private void keepOnlyTargetServicesAndItsDependencies() {
         activeServicesAndItsDependencies();
+        Set<ComposeService> toRemove = new HashSet<>();
         services.forEach(service -> {
             if (!activeServices.contains(service)) {
-                services.remove(service);
-                serviceNames.remove(service.name());
-                servicesByName.remove(service.name(), service);
+                toRemove.add(service);
             }
+        });
+        toRemove.forEach(service -> {
+            services.remove(service);
+            serviceNames.remove(service.name());
+            servicesByName.remove(service.name(), service);
         });
     }
 
