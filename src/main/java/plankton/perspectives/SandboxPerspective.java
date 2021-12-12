@@ -30,9 +30,9 @@ public class SandboxPerspective {
     private static final Logger logger = LoggerFactory.getLogger(SandboxPerspective.class);
 
     public SandboxPerspective(
+            @Autowired PlanktonPerspective planktonPerspective,
             @Autowired PlanktonConfiguration planktonConfiguration,
-            @Autowired WorkspacePerspective workspacePerspective,
-            @Autowired HostPerspective hostPerspective) {
+            @Autowired WorkspacePerspective workspacePerspective) {
         sandboxEnabled = planktonConfiguration.isSandboxEnabled();
         if (sandboxEnabled) {
             projectDirectoryPathOnSandbox = "/sandbox-workspace";
@@ -43,10 +43,10 @@ public class SandboxPerspective {
                     + workspacePerspective.getComposeDirectoryRelativePath();
         } else {
             projectDirectoryPathOnSandbox = null;
-            projectDirectoryTargetPath = hostPerspective.getProjectDirectoryPath();
-            composeFileTargetPath = hostPerspective.getProjectDirectoryPath() + "/"
+            projectDirectoryTargetPath = planktonPerspective.getProjectPath();
+            composeFileTargetPath = planktonPerspective.getProjectPath() + "/"
                     + workspacePerspective.getComposeFileRelativePath();
-            composeDirectoryTargetPath = hostPerspective.getProjectDirectoryPath() + "/"
+            composeDirectoryTargetPath = planktonPerspective.getProjectPath() + "/"
                     + workspacePerspective.getComposeDirectoryRelativePath();
         }
 
