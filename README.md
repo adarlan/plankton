@@ -1,6 +1,7 @@
 # Plankton
 
-Plankton is a Container-Native CI/CD tool based on [The Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
+Plankton is a Container-Native CI/CD tool
+based on the [Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
 
 Just have a `plankton-compose.yaml` file containing the pipeline configuration
 and execute a `docker run` command to start it.
@@ -12,17 +13,24 @@ The `plankton-compose.yaml` file is configured using the
 
 ```yaml
 services:
-  test: { ... }
-  build: { ... }
-  deploy: { ... }
+  foo:
+    image: foo
+    command: --foo
+
+  bar:
+    image: bar
+    command: --bar
 ```
 
 It's the same configuration format used by Docker Compose,
 but it's not exclusive to Docker Compose.
 
-The Compose Specification defines a standard configuration format for systems composed by containers.
+The Compose Specification
+establishes a standard for the definition of multi-container systems.
 So instead of creating a unique configuration format for a tool,
-we can use a well-defined specification that is known to many people and maintained by a global community.
+we can use a well-defined specification
+that is known to many people
+and maintained by a global community.
 
 ## Container-Native
 
