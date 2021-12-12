@@ -47,16 +47,16 @@ public class ComposeDocument {
         this.resolvePathsFrom = configuration.resolvePathsFrom();
         this.logPrefix = resolvePathsFrom.relativize(filePath).toString() + " ... ";
 
-        targetServiceNames = initializeTargetServiceNames(configuration);
-
         logger.debug("{} ... filePath={}", getClass().getSimpleName(), filePath);
         logger.debug("{} ... resolvePathsFrom={}", getClass().getSimpleName(), resolvePathsFrom);
-        logger.debug("{} ... targetServiceNames={}", getClass().getSimpleName(), targetServiceNames);
 
         readFile();
         removeUnsupportedTopLevelKeys();
         initializeServices();
+
+        targetServiceNames = initializeTargetServiceNames(configuration);
         keepOnlyTargetServicesAndItsDependencies();
+        logger.debug("{} ... targetServiceNames={}", getClass().getSimpleName(), targetServiceNames);
     }
 
     private void readFile() {
@@ -82,17 +82,20 @@ public class ComposeDocument {
         servicesMap.keySet().forEach(serviceNames::add);
         Set<String> invalidServices = new HashSet<>();
         servicesMap.forEach((serviceName, propertiesMap) -> {
-            if (RegexUtils.stringMatchesRegex(serviceName, "[a-zA-Z0-9\\-\\_\\.]+\\.[a-zA-Z0-9\\-\\_]+")) {
-                int dot = serviceName.indexOf(".", 1);
-                String ext = serviceName.substring(dot);
-                logger.debug("{}Auto extending: {} extends {}", logPrefix, serviceName, ext);
-                if (propertiesMap.containsKey(ComposeService.Extends.KEY)) {
-                    throw new ComposeFileFormatException("Unexpected property '" + ComposeService.Extends.KEY
-                            + "' on service '" + serviceName + "'. This service automatically extends service '" + ext
-                            + "' because of the name suffix");
-                }
-                propertiesMap.put(ComposeService.Extends.KEY, ext);
-            }
+            // if (RegexUtils.stringMatchesRegex(serviceName,
+            // "[a-zA-Z0-9\\-\\_\\.]+\\.[a-zA-Z0-9\\-\\_]+")) {
+            // int dot = serviceName.indexOf(".", 1);
+            // String ext = serviceName.substring(dot);
+            // logger.debug("{}Auto extending: {} extends {}", logPrefix, serviceName, ext);
+            // if (propertiesMap.containsKey(ComposeService.Extends.KEY)) {
+            // throw new ComposeFileFormatException("Unexpected property '" +
+            // ComposeService.Extends.KEY
+            // + "' on service '" + serviceName + "'. This service automatically extends
+            // service '" + ext
+            // + "' because of the name suffix");
+            // }
+            // propertiesMap.put(ComposeService.Extends.KEY, ext);
+            // }
             ComposeService service = new ComposeService(this, serviceName, propertiesMap);
             services.add(service);
             servicesByName.put(serviceName, service);
@@ -112,7 +115,6 @@ public class ComposeDocument {
             return new HashSet<>(serviceNames);
         else
             return new HashSet<>(Arrays.asList(string.split(",")));
-
     }
 
     private final Set<ComposeService> activeServices = new HashSet<>();
@@ -140,8 +142,12 @@ public class ComposeDocument {
     }
 
     private void activeServiceAndItsDependencies(ComposeService service) {
+        if (activeServices.contains(service))
+            return;
         activeServices.add(service);
-        service.dependsOn().forEach((name, condition) -> {
+        Map<String, DependsOnCondition> dependsOn = service.dependsOn();
+        logger.debug("service {} depends on: {}", service, dependsOn);
+        dependsOn.forEach((name, condition) -> {
             ComposeService s = serviceOfName(name);
             activeServiceAndItsDependencies(s);
         });
@@ -183,6 +189,8 @@ public class ComposeDocument {
     }
 
     public ComposeService serviceOfName(String serviceName) {
+        if (!servicesByName.containsKey(serviceName))
+            throw new ComposeFileFormatException("Service not defined: " + serviceName);
         return servicesByName.get(serviceName);
     }
 
