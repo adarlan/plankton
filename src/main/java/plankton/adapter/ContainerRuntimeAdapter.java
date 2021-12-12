@@ -1,4 +1,4 @@
-package plankton.core;
+package plankton.adapter;
 
 import plankton.compose.ComposeService;
 

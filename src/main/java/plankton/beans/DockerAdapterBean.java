@@ -6,10 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
+import plankton.adapter.ContainerRuntimeAdapter;
+import plankton.adapter.docker.DockerAdapter;
+import plankton.adapter.docker.DockerAdapterConfiguration;
 import plankton.compose.ComposeDocument;
-import plankton.core.ContainerRuntimeAdapter;
-import plankton.docker.DockerAdapter;
-import plankton.docker.DockerAdapterConfiguration;
 import plankton.docker.DockerDaemon;
 import plankton.perspectives.PlanktonPerspective;
 import plankton.perspectives.SandboxPerspective;

@@ -1,4 +1,4 @@
-package plankton.docker;
+package plankton.adapter.docker;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,11 +12,12 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import plankton.adapter.ContainerRuntimeAdapter;
 import plankton.bash.BashScript;
 import plankton.bash.BashScriptFailedException;
 import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeService;
-import plankton.core.ContainerRuntimeAdapter;
+import plankton.docker.DockerDaemon;
 import plankton.util.Colors;
 import plankton.util.FileSystemUtils;
 import plankton.util.LogUtils;

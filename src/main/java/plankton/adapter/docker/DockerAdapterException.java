@@ -1,4 +1,4 @@
-package plankton.docker;
+package plankton.adapter.docker;
 
 public class DockerAdapterException extends RuntimeException {
 
