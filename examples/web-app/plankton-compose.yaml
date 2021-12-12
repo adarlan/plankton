@@ -13,8 +13,8 @@ services:
   test_app:
     depends_on:
       app:
-        condition: service_healthy
-    image: adarlan/curl
+        condition: service_started
+    image: curlimages/curl
     entrypoint: curl http://app
 
   push_app:
@@ -24,4 +24,4 @@ services:
     image: docker
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    entrypoint: docker push app
+    entrypoint: echo Pushed!
