@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
-
+import plankton.adapter.ContainerRuntimeAdapter;
 import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeService;
 import plankton.compose.DependsOnCondition;
@@ -159,13 +159,13 @@ public class Pipeline {
         jobs.forEach(Job::start);
     }
 
+    private boolean finished = false;
+
     synchronized void refresh() {
-        boolean finished = true;
+        if (finished)
+            return;
         autoStopJobs();
-        for (Job job : jobs) {
-            if (!job.status.isFinal())
-                finished = false;
-        }
+        refreshFinished();
         if (finished) {
             line();
             logger.info("{}                           PIPELINE FINISHED{}", Colors.BRIGHT_WHITE, Colors.ANSI_RESET);
@@ -173,6 +173,15 @@ public class Pipeline {
             jobs.forEach(Job::logFinalStatus);
             line();
         }
+    }
+
+    private void refreshFinished() {
+        boolean f = true;
+        for (Job job : jobs) {
+            if (!job.status.isFinal())
+                f = false;
+        }
+        finished = f;
     }
 
     private void autoStopJobs() {
