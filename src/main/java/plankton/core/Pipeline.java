@@ -108,7 +108,7 @@ public class Pipeline {
     }
 
     private void initializeJobDependencyLevel(Job job) {
-        int dependencyLevel = dependencyLevelOf(job, new HashSet<>());
+        int dependencyLevel = dependencyLevelOf(job, new ArrayList<>());
         for (int i = dependencyLevels.size(); i <= dependencyLevel; i++)
             dependencyLevels.add(new HashSet<>());
         Set<Job> dependencyLevelJobs = dependencyLevels.get(dependencyLevel);
@@ -116,16 +116,17 @@ public class Pipeline {
         logger.debug("{} ... Dependency level: {}", job.logPrefix, job.dependencyLevel);
     }
 
-    private int dependencyLevelOf(Job job, Set<Job> knownDependents) {
+    private int dependencyLevelOf(Job job, List<Job> knownDependents) {
         if (job.dependencyLevel == null) {
             knownDependents.add(job);
             int maxDepth = -1;
             for (Job requiredJob : job.dependencyMap.keySet()) {
                 if (knownDependents.contains(requiredJob)) {
-                    throw new JobDependencyLoopException();
+                    throw new JobDependencyLoopException(
+                            requiredJob + " is one of its dependents: " + knownDependents.toString());
                 }
                 requiredJob.directDependents.add(job);
-                int d = dependencyLevelOf(requiredJob, new HashSet<>(knownDependents));
+                int d = dependencyLevelOf(requiredJob, new ArrayList<>(knownDependents));
                 if (d > maxDepth)
                     maxDepth = d;
             }
