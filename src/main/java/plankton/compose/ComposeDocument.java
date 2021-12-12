@@ -2,6 +2,7 @@ package plankton.compose;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +36,8 @@ public class ComposeDocument {
     private final Set<ComposeService> services = new HashSet<>();
     private final Map<String, ComposeService> servicesByName = new HashMap<>();
 
+    private final Set<String> targetServiceNames;
+
     private static final Logger logger = LoggerFactory.getLogger(ComposeDocument.class);
     private final String logPrefix;
 
@@ -44,12 +47,16 @@ public class ComposeDocument {
         this.resolvePathsFrom = configuration.resolvePathsFrom();
         this.logPrefix = resolvePathsFrom.relativize(filePath).toString() + " ... ";
 
+        targetServiceNames = initializeTargetServiceNames(configuration);
+
         logger.debug("{} ... filePath={}", getClass().getSimpleName(), filePath);
         logger.debug("{} ... resolvePathsFrom={}", getClass().getSimpleName(), resolvePathsFrom);
+        logger.debug("{} ... targetServiceNames={}", getClass().getSimpleName(), targetServiceNames);
 
         readFile();
         removeUnsupportedTopLevelKeys();
         initializeServices();
+        keepOnlyTargetServicesAndItsDependencies();
     }
 
     private void readFile() {
@@ -99,6 +106,43 @@ public class ComposeDocument {
         services.forEach(ComposeService::afterInitialization);
     }
 
+    private Set<String> initializeTargetServiceNames(ComposeDocumentConfiguration configuration) {
+        String string = configuration.targetServices();
+        if (string == null || string.isBlank())
+            return new HashSet<>(serviceNames);
+        else
+            return new HashSet<>(Arrays.asList(string.split(",")));
+
+    }
+
+    private final Set<ComposeService> activeServices = new HashSet<>();
+
+    private void keepOnlyTargetServicesAndItsDependencies() {
+        activeServicesAndItsDependencies();
+        services.forEach(service -> {
+            if (!activeServices.contains(service)) {
+                services.remove(service);
+                serviceNames.remove(service.name());
+                servicesByName.remove(service.name(), service);
+            }
+        });
+    }
+
+    private void activeServicesAndItsDependencies() {
+        targetServiceNames.forEach(name -> {
+            ComposeService s = serviceOfName(name);
+            activeServiceAndItsDependencies(s);
+        });
+    }
+
+    private void activeServiceAndItsDependencies(ComposeService service) {
+        activeServices.add(service);
+        service.dependsOn().forEach((name, condition) -> {
+            ComposeService s = serviceOfName(name);
+            activeServiceAndItsDependencies(s);
+        });
+    }
+
     private final Map<String, ComposeDocument> others = new HashMap<>();
 
     ComposeDocument getOther(String filePath) {
@@ -117,6 +161,11 @@ public class ComposeDocument {
                 return resolvePathsFrom;
                 // TODO resolve paths from the same path?
                 // or from its compose file parent directory?
+            }
+
+            @Override
+            public String targetServices() {
+                return null;
             }
         });
         others.forEach(other.others::put);

@@ -8,5 +8,7 @@ public interface ComposeDocumentConfiguration {
 
     Path resolvePathsFrom(); // TODO optional
 
+    String targetServices();
+
     // TODO Set<String> profiles();
 }

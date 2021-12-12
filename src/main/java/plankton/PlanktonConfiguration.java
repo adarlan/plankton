@@ -20,4 +20,7 @@ public class PlanktonConfiguration {
 
     @Value("${docker}")
     private String dockerHost;
+
+    @Value("${target}")
+    private String targetJobs;
 }
