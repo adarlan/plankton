@@ -1,4 +1,4 @@
-package plankton.util.dockerinspect;
+package plankton.docker.inspect;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;

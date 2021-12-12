@@ -4,10 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
-import plankton.adapter.ContainerRuntimeAdapter;
 import plankton.compose.ComposeDocument;
 import plankton.core.Pipeline;
 import plankton.core.PipelineConfiguration;
+import plankton.docker.adapter.ContainerRuntimeAdapter;
 
 @Component
 public class PipelineBean {

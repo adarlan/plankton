@@ -6,10 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
-import plankton.docker.DockerDaemon;
-import plankton.docker.DockerHost;
-import plankton.docker.DockerSandbox;
-import plankton.docker.DockerSandboxConfiguration;
+import plankton.docker.daemon.DockerDaemon;
+import plankton.docker.daemon.DockerHost;
+import plankton.docker.daemon.DockerSandbox;
+import plankton.docker.daemon.DockerSandboxConfiguration;
 import plankton.perspectives.HostPerspective;
 import plankton.perspectives.PlanktonPerspective;
 import plankton.perspectives.SandboxPerspective;

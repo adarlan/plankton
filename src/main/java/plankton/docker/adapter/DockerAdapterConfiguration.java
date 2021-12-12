@@ -1,7 +1,7 @@
-package plankton.adapter.docker;
+package plankton.docker.adapter;
 
 import plankton.compose.ComposeDocument;
-import plankton.docker.DockerDaemon;
+import plankton.docker.daemon.DockerDaemon;
 
 public interface DockerAdapterConfiguration {
 

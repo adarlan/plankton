@@ -1,7 +1,7 @@
 package plankton.core;
 
-import plankton.adapter.ContainerRuntimeAdapter;
 import plankton.compose.ComposeDocument;
+import plankton.docker.adapter.ContainerRuntimeAdapter;
 
 public interface PipelineConfiguration {
 

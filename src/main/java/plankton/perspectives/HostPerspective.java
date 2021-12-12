@@ -6,9 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
-import plankton.util.dockerinspect.Container;
-import plankton.util.dockerinspect.Inspect;
-import plankton.util.dockerinspect.Mount;
+import plankton.docker.inspect.Container;
+import plankton.docker.inspect.Inspect;
+import plankton.docker.inspect.Mount;
 
 @Component
 public class HostPerspective {

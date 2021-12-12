@@ -1,4 +1,4 @@
-package plankton.docker;
+package plankton.docker.daemon;
 
 public class DockerSandboxException extends RuntimeException {
 

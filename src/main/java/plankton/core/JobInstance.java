@@ -7,9 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
-import plankton.adapter.ContainerRuntimeAdapter;
 import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeService;
+import plankton.docker.adapter.ContainerRuntimeAdapter;
 import plankton.util.Colors;
 import plankton.util.LogUtils;
 

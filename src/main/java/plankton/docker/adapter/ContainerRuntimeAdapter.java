@@ -1,4 +1,4 @@
-package plankton.adapter;
+package plankton.docker.adapter;
 
 import plankton.compose.ComposeService;
 

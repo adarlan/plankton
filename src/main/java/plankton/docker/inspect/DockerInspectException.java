@@ -1,4 +1,4 @@
-package plankton.util.dockerinspect;
+package plankton.docker.inspect;
 
 public class DockerInspectException extends RuntimeException {
 

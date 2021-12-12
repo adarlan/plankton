@@ -1,4 +1,4 @@
-package plankton.adapter.docker;
+package plankton.docker.adapter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,12 +12,12 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import plankton.adapter.ContainerRuntimeAdapter;
 import plankton.bash.BashScript;
 import plankton.bash.BashScriptFailedException;
 import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeService;
-import plankton.docker.DockerDaemon;
+import plankton.docker.api.DockerApi;
+import plankton.docker.daemon.DockerDaemon;
 import plankton.util.Colors;
 import plankton.util.FileSystemUtils;
 import plankton.util.LogUtils;
@@ -32,6 +32,8 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
     private final String namespace;
     private final String networkName;
 
+    private final DockerApi dockerApi;
+
     private static final Logger logger = LoggerFactory.getLogger(DockerAdapter.class);
     private final String prefix = DockerAdapter.class.getSimpleName() + " ... ";
 
@@ -44,6 +46,8 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         this.daemon = configuration.dockerDaemon();
         this.namespace = configuration.namespace();
         this.networkName = namespace + "_network";
+
+        this.dockerApi = new DockerApi(daemon);
 
         logger.debug("composeDocument={}", composeDocument);
         logger.debug("projectDirectoryPath={}", projectDirectoryPath);
@@ -59,14 +63,16 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
     }
 
     private void createNetwork() {
-        logger.debug("{}Creating network: {}", prefix, networkName);
-        BashScript script = createBashScript();
-        script.command("docker network create --attachable " + networkName);
-        try {
-            script.run();
-        } catch (BashScriptFailedException e) {
-            throw new DockerAdapterException("Unable to create network: " + networkName, e);
-        }
+        dockerApi.createAttachableNetwork(networkName);
+        // logger.debug("{}Creating network: {}", prefix, networkName);
+        // BashScript script = createBashScript();
+        // script.command("docker network create --attachable " + networkName);
+        // try {
+        // script.run();
+        // } catch (BashScriptFailedException e) {
+        // throw new DockerAdapterException("Unable to create network: " + networkName,
+        // e);
+        // }
     }
 
     // private final Set<String> pulledImages = new HashSet<>();
@@ -123,23 +129,25 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
     }
 
     private boolean imageExists(String imageTag) {
-        logger.debug("{}Checking if image exists locally: {}", prefix, imageTag);
-        List<String> list = new ArrayList<>();
-        BashScript script = createBashScript();
-        script.command("docker images -q " + imageTag);
-        script.forEachOutput(list::add);
-        try {
-            script.run();
-        } catch (BashScriptFailedException e) {
-            throw new DockerAdapterException("Unable to check if image exists: " + imageTag, e);
-        }
-        if (list.isEmpty()) {
-            logger.debug("{}Image DON'T exists locally: {}", prefix, imageTag);
-            return false;
-        } else {
-            logger.debug("{}Image exists locally: {} ({})", prefix, imageTag, list);
-            return true;
-        }
+        return dockerApi.imageExists(imageTag);
+        // logger.debug("{}Checking if image exists locally: {}", prefix, imageTag);
+        // List<String> list = new ArrayList<>();
+        // BashScript script = createBashScript();
+        // script.command("docker images -q " + imageTag);
+        // script.forEachOutput(list::add);
+        // try {
+        // script.run();
+        // } catch (BashScriptFailedException e) {
+        // throw new DockerAdapterException("Unable to check if image exists: " +
+        // imageTag, e);
+        // }
+        // if (list.isEmpty()) {
+        // logger.debug("{}Image DON'T exists locally: {}", prefix, imageTag);
+        // return false;
+        // } else {
+        // logger.debug("{}Image exists locally: {} ({})", prefix, imageTag, list);
+        // return true;
+        // }
     }
 
     @Override

@@ -1,4 +1,4 @@
-package plankton.util.dockerinspect;
+package plankton.docker.inspect;
 
 import java.time.Instant;
 
