@@ -321,8 +321,9 @@ public class ComposeService {
     private String resolvePath(String pathString) {
 
         Path path = Paths.get(pathString);
-        if (path.isAbsolute())
-            logger.warn("{}.{} ... Contains an absolute path: {}", this, currentKey, pathString);
+        // if (path.isAbsolute())
+        // logger.warn("{}.{} ... Contains an absolute path: {}", this, currentKey,
+        // pathString);
 
         Path basePath = composeDocument.resolvePathsFrom();
         Path resolvedPath = basePath.resolve(path);
