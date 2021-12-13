@@ -38,47 +38,11 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
-  test_building-docker-image:
+  test_saying-hello-world:
     extends: .test
     depends_on: build_plankton_image
     volumes:
-      - ./examples/building-docker-image:/workspace
-
-  test_failing-on-blocked-job:
-    extends: .test
-    depends_on: test_building-docker-image
-    volumes:
-      - ./examples/failing-on-blocked-job:/workspace
-
-  test_failing-on-dependency-loop:
-    extends: .test
-    depends_on: test_failing-on-blocked-job
-    volumes:
-      - ./examples/failing-on-dependency-loop:/workspace
-
-  test_running-parallel-jobs:
-    extends: .test
-    depends_on: test_failing-on-dependency-loop
-    volumes:
-      - ./examples/running-parallel-jobs:/workspace
-
-  test_saying-hello-world:
-    extends: .test
-    depends_on: test_running-parallel-jobs
-    volumes:
       - ./examples/saying-hello-world:/workspace
-
-  test_testing-web-application:
-    extends: .test
-    depends_on: test_saying-hello-world
-    volumes:
-      - ./examples/testing-web-application:/workspace
-
-  # test_testing-web-application-with-database:
-  #   extends: .test
-  #   depends_on: test_testing-web-application
-  #   volumes:
-  #     - ./examples/testing-web-application-with-database:/workspace
 
   .push_image:
     image: docker
@@ -95,23 +59,11 @@ services:
     environment:
       - IMAGE=adarlan/plankton
     depends_on:
-      - test_building-docker-image
-      - test_failing-on-dependency-loop
       - test_saying-hello-world
-      - test_failing-on-blocked-job
-      - test_running-parallel-jobs
-      - test_testing-web-application
-      # - test_testing-web-application-with-database
 
   push_plankton_sandbox_image:
     extends: .push_image
     environment:
       - IMAGE=adarlan/plankton:sandbox
     depends_on:
-      - test_building-docker-image
-      - test_failing-on-dependency-loop
       - test_saying-hello-world
-      - test_failing-on-blocked-job
-      - test_running-parallel-jobs
-      - test_testing-web-application
-      # - test_testing-web-application-with-database
