@@ -18,7 +18,6 @@ import lombok.EqualsAndHashCode;
 import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeService;
 import plankton.compose.DependsOnCondition;
-import plankton.docker.adapter.ContainerRuntimeAdapter;
 import plankton.util.Colors;
 import plankton.util.LogUtils;
 
