@@ -14,7 +14,7 @@ import plankton.bash.BashScript;
 import plankton.bash.BashScriptFailedException;
 
 @ToString(of = { "id", "dockerHostSocketAddress", "socketAddress" })
-public class DockerSandbox implements DockerDaemon {
+public class DockerSandboxDaemon implements DockerDaemon {
 
     private final String dockerHostSocketAddress;
     private final String id;
@@ -32,10 +32,10 @@ public class DockerSandbox implements DockerDaemon {
     private final String socketIp;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private static final String LOADING = "Loading " + DockerSandbox.class.getSimpleName() + " ... ";
-    private static final String CONTAINER_LOG_PLACEHOLDER = DockerSandbox.class.getSimpleName() + ": {}";
+    private static final String LOADING = "Loading " + DockerSandboxDaemon.class.getSimpleName() + " ... ";
+    private static final String CONTAINER_LOG_PLACEHOLDER = DockerSandboxDaemon.class.getSimpleName() + ": {}";
 
-    public DockerSandbox(DockerSandboxConfiguration configuration) {
+    public DockerSandboxDaemon(DockerSandboxConfiguration configuration) {
 
         logger.info(LOADING);
 

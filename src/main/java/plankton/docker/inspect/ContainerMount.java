@@ -9,7 +9,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString
 @Getter
-public class Mount {
+public class ContainerMount {
 
     @JsonProperty("Type")
     String type;

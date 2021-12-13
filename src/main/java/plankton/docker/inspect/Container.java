@@ -14,5 +14,5 @@ import lombok.ToString;
 public class Container {
 
     @JsonProperty("Mounts")
-    List<Mount> mounts;
+    List<ContainerMount> mounts;
 }

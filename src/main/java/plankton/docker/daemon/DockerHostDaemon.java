@@ -1,16 +1,16 @@
 package plankton.docker.daemon;
 
-public class DockerHost implements DockerDaemon {
+public class DockerHostDaemon implements DockerDaemon {
 
     private final String socketAddress;
 
-    public DockerHost(DockerHostConfiguration configuration) {
+    public DockerHostDaemon(DockerHostConfiguration configuration) {
         this.socketAddress = configuration.socketAddress();
     }
 
     @Override
     public String toString() {
-        return DockerHost.class.getSimpleName() + "(" + socketAddress + ")";
+        return DockerHostDaemon.class.getSimpleName() + "(" + socketAddress + ")";
     }
 
     @Override
