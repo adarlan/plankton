@@ -10,17 +10,17 @@ import lombok.Getter;
 public class PlanktonConfiguration {
 
     @Value("${workspace}")
-    private String projectDirectory;
+    private String workspace;
 
     @Value("${file}")
-    private String composeFile;
+    private String file;
 
     @Value("${sandbox}")
-    private boolean sandboxEnabled;
+    private boolean sandbox;
 
     @Value("${docker}")
-    private String dockerHost;
+    private String docker;
 
     @Value("${target}")
-    private String targetJobs;
+    private String target;
 }
