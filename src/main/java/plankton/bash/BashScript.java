@@ -9,7 +9,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -72,6 +71,8 @@ public class BashScript {
 
     private Consumer<String> forEachOutput;
     private Consumer<String> forEachError;
+
+    private boolean hasError = false;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -149,6 +150,10 @@ public class BashScript {
 
     public int exitCode() {
         return exitCode;
+    }
+
+    public boolean hasError() {
+        return hasError;
     }
 
     private int waitForProcess() {
@@ -239,6 +244,7 @@ public class BashScript {
             try {
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
+                    hasError = true;
                     if (!line.isBlank()) {
                         if (forEachError != null) {
                             logger.debug("{} ERROR ... {}", this, line);
