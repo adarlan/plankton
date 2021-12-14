@@ -11,7 +11,6 @@ import plankton.core.Pipeline;
 public class PipelineDto {
 
     List<StageDto> stages = new ArrayList<>();
-    // TODO rename? -> dependencyLevels
 
     public PipelineDto(Pipeline pipeline) {
         pipeline.jobs().forEach(job -> {
