@@ -3,6 +3,11 @@ package plankton;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -30,10 +35,12 @@ import plankton.docker.util.DockerUtils;
 @Component
 public class PlanktonSetup {
 
-    private final String namespace;
-    private final PlanktonConfiguration planktonConfiguration;
+    private final String workspace;
+    private final String file;
     private final boolean sandboxEnabled;
     private final String dockerHostSocketAddress;
+    private final List<String> target;
+    private final String namespace;
     private final DockerHostDaemon dockerHostDaemon;
     private final DockerClient dockerHostClient;
     private final String workspacePathFromPlanktonPerspective;
@@ -50,11 +57,13 @@ public class PlanktonSetup {
     @Getter
     private final Pipeline pipeline;
 
-    public PlanktonSetup(@Autowired PlanktonConfiguration configuration) {
-        namespace = namespace();
-        planktonConfiguration = configuration;
+    public PlanktonSetup(@Autowired PlanktonConfiguration planktonConfiguration) {
+        workspace = workspace(planktonConfiguration.getWorkspace());
+        file = file(planktonConfiguration.getFile());
         sandboxEnabled = planktonConfiguration.isSandbox();
-        dockerHostSocketAddress = planktonConfiguration.getDocker();
+        dockerHostSocketAddress = dockerHostSocketAddress(planktonConfiguration.getDocker());
+        target = target(planktonConfiguration.getTarget());
+        namespace = namespace();
         dockerHostDaemon = new DockerHostDaemon(() -> dockerHostSocketAddress);
         dockerHostClient = new DockerClient(dockerHostDaemon);
         workspacePathFromPlanktonPerspective = workspacePathFromPlanktonPerspective();
@@ -80,14 +89,35 @@ public class PlanktonSetup {
         pipeline = pipeline();
     }
 
+    private String workspace(String ws) {
+        return (ws == null || ws.isBlank())
+                ? "."
+                : ws;
+    }
+
+    private String file(String f) {
+        return (f == null || f.isBlank())
+                ? "plankton-compose.yaml"
+                : f;
+    }
+
+    private String dockerHostSocketAddress(String s) {
+        return (dockerHostSocketAddress == null || dockerHostSocketAddress.isBlank())
+                ? "/var/run/docker.sock"
+                : s;
+    }
+
+    private List<String> target(String s) {
+        return (s == null || s.isBlank())
+                ? new ArrayList<>()
+                : Arrays.asList(s.split(","));
+    }
+
     private String namespace() {
         return String.valueOf(Instant.now().getEpochSecond()).trim();
     }
 
     private String workspacePathFromPlanktonPerspective() {
-        String workspace = planktonConfiguration.getWorkspace();
-        if (workspace == null || workspace.isBlank())
-            workspace = ".";
         try {
             return BashScript.runAndGetOutputString("realpath " + workspace);
         } catch (BashScriptFailedException e) {
@@ -97,20 +127,16 @@ public class PlanktonSetup {
     }
 
     private String composeFilePathFromPlanktonPerspective() {
-        String f = planktonConfiguration.getFile();
-        if (f == null || f.isBlank())
-            f = "plankton-compose.yaml";
         String result;
         try {
             result = BashScript
-                    .runAndGetOutputString("cd " + workspacePathFromPlanktonPerspective + " && realpath " + f);
+                    .runAndGetOutputString("cd " + workspacePathFromPlanktonPerspective + " && realpath " + file);
         } catch (BashScriptFailedException e) {
             throw new PlanktonSetupException("Unable to initialize the compose file path from Plankton perspective", e);
         }
         if (!result.startsWith(workspacePathFromPlanktonPerspective))
             throw new PlanktonSetupException("Compose file must be inside workspace");
         return result;
-
         // TODO Check if file exists
     }
 
@@ -128,8 +154,8 @@ public class PlanktonSetup {
             }
 
             @Override
-            public String targetServices() {
-                return planktonConfiguration.getTarget();
+            public Set<String> targetServices() {
+                return new HashSet<>(target);
             }
         });
     }
