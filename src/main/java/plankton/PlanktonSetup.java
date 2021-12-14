@@ -103,7 +103,7 @@ public class PlanktonSetup {
 
     private String dockerHostSocketAddress(String s) {
         return (dockerHostSocketAddress == null || dockerHostSocketAddress.isBlank())
-                ? "/var/run/docker.sock"
+                ? "unix:///var/run/docker.sock"
                 : s;
     }
 
