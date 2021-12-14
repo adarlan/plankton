@@ -1,10 +1,10 @@
 package plankton.util;
 
-public class YamlException extends RuntimeException {
+public class YamlUtilsException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    YamlException(String msg, Throwable e) {
+    YamlUtilsException(String msg, Throwable e) {
         super(msg, e);
     }
 }

@@ -30,7 +30,7 @@ public class YamlUtils {
         try (FileInputStream fileInputStream = new FileInputStream(file);) {
             return loadFrom(fileInputStream);
         } catch (IOException e) {
-            throw new YamlException("Unable to load from file: " + file, e);
+            throw new YamlUtilsException("Unable to load from file: " + file, e);
         }
     }
 

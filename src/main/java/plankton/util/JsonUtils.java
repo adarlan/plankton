@@ -13,7 +13,7 @@ public class JsonUtils {
         try {
             return new ObjectMapper().readValue(json, class1);
         } catch (JsonProcessingException e) {
-            throw new JsonException("Unable to parse JSON: " + json, e);
+            throw new JsonUtilsException("Unable to parse JSON: " + json, e);
         }
     }
 }

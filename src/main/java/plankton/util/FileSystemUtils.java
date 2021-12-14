@@ -18,7 +18,7 @@ public class FileSystemUtils {
         try {
             BashScript.run("mkdir -p " + path);
         } catch (BashScriptFailedException e) {
-            throw new FileSystemException("Unable to create directory " + path, e);
+            throw new FileSystemUtilsException("Unable to create directory " + path, e);
         }
     }
 
@@ -26,7 +26,7 @@ public class FileSystemUtils {
         try {
             BashScript.run("cp " + fromPath + " " + toPath);
         } catch (BashScriptFailedException e) {
-            throw new FileSystemException("Unable to copy file from " + fromPath + " to " + toPath, e);
+            throw new FileSystemUtilsException("Unable to copy file from " + fromPath + " to " + toPath, e);
         }
     }
 
@@ -34,7 +34,8 @@ public class FileSystemUtils {
         try {
             BashScript.run("cp -R " + fromPath + "/. " + toPath + "/");
         } catch (BashScriptFailedException e) {
-            throw new FileSystemException("Unable to copy directory content from " + fromPath + " to " + toPath, e);
+            throw new FileSystemUtilsException("Unable to copy directory content from " + fromPath + " to " + toPath,
+                    e);
         }
     }
 
@@ -47,7 +48,7 @@ public class FileSystemUtils {
         try (FileOutputStream fileOutputStream = new FileOutputStream(file);) {
             writeFile(fileOutputStream, strings);
         } catch (IOException e) {
-            throw new FileSystemException("Unable to write file", e);
+            throw new FileSystemUtilsException("Unable to write file", e);
         }
     }
 
@@ -55,7 +56,7 @@ public class FileSystemUtils {
         try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream);) {
             writeFile(outputStreamWriter, strings);
         } catch (IOException e) {
-            throw new FileSystemException("Unable to write file with FileOutputStream", e);
+            throw new FileSystemUtilsException("Unable to write file with FileOutputStream", e);
         }
     }
 
@@ -63,7 +64,7 @@ public class FileSystemUtils {
         try (BufferedWriter bufferedWriter = new BufferedWriter(outputStreamWriter);) {
             writeFile(bufferedWriter, strings);
         } catch (IOException e) {
-            throw new FileSystemException("Unable to write file with OutputStreamWriter", e);
+            throw new FileSystemUtilsException("Unable to write file with OutputStreamWriter", e);
         }
     }
 
@@ -73,7 +74,7 @@ public class FileSystemUtils {
                 bufferedWriter.write(string);
                 bufferedWriter.newLine();
             } catch (IOException e) {
-                throw new FileSystemException("Unable to write file with BufferedWriter", e);
+                throw new FileSystemUtilsException("Unable to write file with BufferedWriter", e);
             }
         });
     }
