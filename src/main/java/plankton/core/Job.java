@@ -110,7 +110,7 @@ public class Job {
     private final Map<Job, DependsOnCondition> waitingForDependencies = new HashMap<>();
 
     private void waitForDependencies() {
-        logger.info("{}{}Waiting for dependencies{}: {}", logPrefix, Colors.BRIGHT_WHITE, Colors.ANSI_RESET,
+        logger.debug("{}{}Waiting for dependencies{}: {}", logPrefix, Colors.BRIGHT_WHITE, Colors.ANSI_RESET,
                 dependencyMap);
         dependencyMap.forEach(waitingForDependencies::put);
         while (!waitingForDependencies.isEmpty()) {
@@ -128,7 +128,7 @@ public class Job {
             }
         }
         if (blockedByDependencies.isEmpty())
-            logger.info("{}{}Dependencies satisfied{}: {}", logPrefix, Colors.BRIGHT_WHITE, Colors.ANSI_RESET,
+            logger.debug("{}{}Dependencies satisfied{}: {}", logPrefix, Colors.BRIGHT_WHITE, Colors.ANSI_RESET,
                     dependencyMap);
     }
 
@@ -259,7 +259,7 @@ public class Job {
             logger.error("{}Blocked by dependencies: {}", prefix, blockedByDependencies);
 
         else if (status.isBuilt()) {
-            String image = composeService.image().orElse("");
+            String image = composeService.image().orElseThrow();
             logger.info("{}Image built: {}{}", prefix, image, time);
 
         } else if (status.isExitedZero())
