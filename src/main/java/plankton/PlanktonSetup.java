@@ -51,6 +51,8 @@ public class PlanktonSetup {
     private final String workspacePathOnSandbox;
     private final String workspacePathFromAdapterPerspective;
     private final String composeFilePathFromPlanktonPerspective;
+    private final String composeFilePathRelativeToWorkspace;
+    private final String composeFilePathFromAdapterPerspective;
     private final ComposeDocument composeDocument;
     private final boolean runningFromHost;
     private final String runningFromContainerId;
@@ -73,7 +75,7 @@ public class PlanktonSetup {
         dockerHostClient = new DockerClient(dockerHostDaemon);
         workspacePathFromPlanktonPerspective = workspacePathFromPlanktonPerspective();
         composeFilePathFromPlanktonPerspective = composeFilePathFromPlanktonPerspective();
-        composeDocument = composeDocument();
+        composeFilePathRelativeToWorkspace = composeFilePathRelativeToWorkspace();
         runningFromContainerId = DockerUtils.getCurrentContainerId();
         runningFromHost = (runningFromContainerId == null);
         if (runningFromHost) {
@@ -90,6 +92,9 @@ public class PlanktonSetup {
             dockerAdapterDaemon = dockerHostDaemon;
             workspacePathFromAdapterPerspective = workspacePathOnHost;
         }
+        composeFilePathFromAdapterPerspective = workspacePathFromAdapterPerspective + "/"
+                + composeFilePathRelativeToWorkspace;
+        composeDocument = composeDocument();
         dockerAdapter = dockerAdapter();
         pipeline = pipeline();
 
@@ -106,6 +111,8 @@ public class PlanktonSetup {
         logger.info("workspacePathOnSandbox: {}", workspacePathOnSandbox);
         logger.info("workspacePathFromAdapterPerspective: {}", workspacePathFromAdapterPerspective);
         logger.info("composeFilePathFromPlanktonPerspective: {}", composeFilePathFromPlanktonPerspective);
+        logger.info("composeFilePathRelativeToWorkspace: {}", composeFilePathRelativeToWorkspace);
+        logger.info("composeFilePathFromAdapterPerspective: {}", composeFilePathFromAdapterPerspective);
         logger.info("composeDocument: {}", composeDocument);
         logger.info("runningFromHost: {}", runningFromHost);
         logger.info("runningFromContainerId: {}", runningFromContainerId);
@@ -164,6 +171,10 @@ public class PlanktonSetup {
         // TODO Check if file exists
     }
 
+    private String composeFilePathRelativeToWorkspace() {
+        return composeFilePathFromPlanktonPerspective.substring(workspacePathFromPlanktonPerspective.length());
+    }
+
     private ComposeDocument composeDocument() {
         return new ComposeDocument(new ComposeDocumentConfiguration() {
 
@@ -174,7 +185,7 @@ public class PlanktonSetup {
 
             @Override
             public Path resolvePathsFrom() {
-                return Paths.get(composeFilePathFromPlanktonPerspective).getParent();
+                return Paths.get(composeFilePathFromAdapterPerspective).getParent();
             }
 
             @Override
