@@ -1,0 +1,20 @@
+services:
+  read:
+    image: alpine
+    workspace: /ws
+    volumes:
+      - ./file:/ws/file:ro
+      - ./dir:/ws/dir:ro
+    entrypoint:
+      - cat file
+      - cd dir
+      - ls
+
+  write:
+    image: alpine
+    workspace: /ws
+    volumes:
+      - ./dir:/ws/dir
+    entrypoint:
+      - cd dir
+      - echo Hello > hello.txt
