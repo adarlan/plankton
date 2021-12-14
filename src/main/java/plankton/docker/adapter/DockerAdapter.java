@@ -213,7 +213,6 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         List<String> entrypointList = service.entrypoint();
         List<String> commands = new ArrayList<>();
         commands.add("#!/bin/sh");
-        commands.add("set -e");
         entrypointList.forEach(commands::add);
         FileSystemUtils.writeFile(entrypointFilePathFromPlanktonPerspective, commands);
         runBashScript("chmod +x " + entrypointFilePathFromPlanktonPerspective);
