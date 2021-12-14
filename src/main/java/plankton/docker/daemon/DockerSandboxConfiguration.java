@@ -2,7 +2,7 @@ package plankton.docker.daemon;
 
 public interface DockerSandboxConfiguration {
 
-    String id();
+    String namespace();
 
     String dockerHostSocketAddress();
 

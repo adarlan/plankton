@@ -13,11 +13,11 @@ import lombok.ToString;
 import plankton.bash.BashScript;
 import plankton.bash.BashScriptFailedException;
 
-@ToString(of = { "id", "dockerHostSocketAddress", "socketAddress" })
+@ToString(of = { "namespace", "dockerHostSocketAddress", "socketAddress" })
 public class DockerSandboxDaemon implements DockerDaemon {
 
     private final String dockerHostSocketAddress;
-    private final String id;
+    private final String namespace;
 
     private final boolean runningFromHost;
     private final String runningFromContainerId;
@@ -42,20 +42,20 @@ public class DockerSandboxDaemon implements DockerDaemon {
         this.runningFromHost = configuration.runningFromHost();
         this.runningFromContainerId = configuration.runningFromContainerId();
         this.dockerHostSocketAddress = configuration.dockerHostSocketAddress();
-        this.id = configuration.id();
-        this.containerName = id + "_sandbox";
+        this.namespace = configuration.namespace();
+        this.containerName = namespace + "_sandbox";
         if (runningFromHost) {
             this.networkName = null;
             this.socketIp = "127.0.0.1";
         } else {
-            this.networkName = id + "_sandbox";
+            this.networkName = namespace + "_sandbox";
             this.socketIp = containerName;
         }
         this.socketAddress = "tcp://" + socketIp + ":2375";
         this.workspaceDirectoryPath = configuration.workspaceDirectoryPath();
         this.underlyingWorkspaceDirectoryPath = configuration.underlyingWorkspaceDirectoryPath();
 
-        logger.info("{}id={}", LOADING, id);
+        logger.info("{}namespace={}", LOADING, namespace);
         logger.info("{}dockerHostSocketAddress={}", LOADING, dockerHostSocketAddress);
         logger.info("{}containerName={}", LOADING, containerName);
         logger.info("{}socketAddress={}", LOADING, socketAddress);

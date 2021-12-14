@@ -31,25 +31,19 @@ import plankton.docker.util.DockerUtils;
 public class PlanktonSetup {
 
     private final String namespace;
-
     private final PlanktonConfiguration planktonConfiguration;
     private final boolean sandboxEnabled;
-
     private final String dockerHostSocketAddress;
     private final DockerHostDaemon dockerHostDaemon;
     private final DockerClient dockerHostClient;
-
     private final String workspacePathFromPlanktonPerspective;
     private final String workspacePathOnHost;
     private final String workspacePathOnSandbox;
     private final String workspacePathFromAdapterPerspective;
-
     private final String composeFilePathFromPlanktonPerspective;
     private final ComposeDocument composeDocument;
-
     private final boolean runningFromHost;
     private final String runningFromContainerId;
-
     private final DockerDaemon dockerAdapterDaemon;
     private final DockerAdapter dockerAdapter;
 
@@ -118,12 +112,6 @@ public class PlanktonSetup {
         return result;
 
         // TODO Check if file exists
-
-        // TODO Alternative file names:
-        // - plankton-compose.yaml
-        // - plankton-compose.yml
-        // - compose.yaml
-        // - compose.yml
     }
 
     private ComposeDocument composeDocument() {
@@ -164,7 +152,7 @@ public class PlanktonSetup {
         return new DockerSandboxDaemon(new DockerSandboxConfiguration() {
 
             @Override
-            public String id() {
+            public String namespace() {
                 return namespace;
             }
 
