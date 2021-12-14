@@ -7,8 +7,6 @@ RUN apk add gettext
 RUN apk add jq
 
 ENTRYPOINT [ "java", "-jar", "/plankton/plankton.jar" ]
-
 EXPOSE 1329
-WORKDIR /workspace
 
 COPY target/plankton.jar /plankton/plankton.jar
