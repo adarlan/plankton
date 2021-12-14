@@ -56,6 +56,7 @@ public class DockerClient {
         int apply(String args) {
             String opts = String.join(" ", options);
             String line = cmd + " " + opts + " " + args;
+            logger.debug("{} ... Running command: {}", daemon.getClass().getSimpleName(), line);
             BashScript script = createBashScript();
             script.command(line);
             script.forEachOutput(forEachOutput);
