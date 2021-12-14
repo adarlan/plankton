@@ -86,7 +86,7 @@ public class ComposeDocument {
         });
         if (!invalidServices.isEmpty()) {
             logger.error("{}Invalid services: {}", logPrefix, invalidServices);
-            throw new ComposeFileFormatException("Invalid services: " + invalidServices);
+            throw new ComposeFormatException("Invalid services: " + invalidServices);
         }
         services.forEach(ComposeService::afterInitialization);
     }
@@ -170,7 +170,7 @@ public class ComposeDocument {
 
     public ComposeService serviceOfName(String serviceName) {
         if (!servicesByName.containsKey(serviceName))
-            throw new ComposeFileFormatException("Service not defined: " + serviceName);
+            throw new ComposeFormatException("Service not defined: " + serviceName);
         return servicesByName.get(serviceName);
     }
 

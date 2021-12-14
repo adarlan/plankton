@@ -104,7 +104,7 @@ public class ComposeService {
             Object object = propertiesMap.remove(key);
             try {
                 return function.apply(object);
-            } catch (ClassCastException | ComposeFileFormatException e) {
+            } catch (ClassCastException | ComposeFormatException e) {
                 valid = false;
                 logger.error("{}.{} ... Error: {}", this, key, e.getMessage(), e);
                 return null;
@@ -330,7 +330,7 @@ public class ComposeService {
         try {
             return resolvedPath.toAbsolutePath().toFile().getCanonicalPath();
         } catch (IOException e) {
-            throw new ComposeFileFormatException("Unable to resolve path: " + path, e);
+            throw new ComposeFormatException("Unable to resolve path: " + path, e);
         }
     }
 
@@ -430,7 +430,7 @@ public class ComposeService {
         }
 
         private DependsOn(DependsOn dependsOn, DependsOn extendFrom) {
-            throw new ComposeFileFormatException("Unable to extend 'depends_on' property");
+            throw new ComposeFormatException("Unable to extend 'depends_on' property");
 
             // TODO it can extend
             // but only if other service is from the same document
@@ -629,7 +629,7 @@ public class ComposeService {
         }
 
         private Healthcheck(Healthcheck healthcheck, Healthcheck extendFrom) {
-            throw new ComposeFileFormatException("Unable to extend 'healthcheck' property");
+            throw new ComposeFormatException("Unable to extend 'healthcheck' property");
             // TODO
         }
 

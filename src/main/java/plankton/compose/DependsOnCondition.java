@@ -14,7 +14,7 @@ public enum DependsOnCondition {
             case "service_failed":
                 return SERVICE_FAILED;
             default:
-                throw new ComposeFileFormatException(
+                throw new ComposeFormatException(
                         "Unexpected " + DependsOnCondition.class.getSimpleName() + ": " + string);
         }
     }
