@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -57,6 +59,8 @@ public class PlanktonSetup {
     @Getter
     private final Pipeline pipeline;
 
+    private final Logger logger = LoggerFactory.getLogger(PlanktonSetup.class);
+
     public PlanktonSetup(@Autowired PlanktonConfiguration planktonConfiguration) {
         workspace = workspace(planktonConfiguration.getWorkspace());
         file = file(planktonConfiguration.getFile());
@@ -87,6 +91,25 @@ public class PlanktonSetup {
         }
         dockerAdapter = dockerAdapter();
         pipeline = pipeline();
+
+        logger.info("workspace: {}", workspace);
+        logger.info("file: {}", file);
+        logger.info("sandboxEnabled: {}", sandboxEnabled);
+        logger.info("dockerHostSocketAddress: {}", dockerHostSocketAddress);
+        logger.info("target: {}", target);
+        logger.info("namespace: {}", namespace);
+        logger.info("dockerHostDaemon: {}", dockerHostDaemon);
+        logger.info("dockerHostClient: {}", dockerHostClient);
+        logger.info("workspacePathFromPlanktonPerspective: {}", workspacePathFromPlanktonPerspective);
+        logger.info("workspacePathOnHost: {}", workspacePathOnHost);
+        logger.info("workspacePathOnSandbox: {}", workspacePathOnSandbox);
+        logger.info("workspacePathFromAdapterPerspective: {}", workspacePathFromAdapterPerspective);
+        logger.info("composeFilePathFromPlanktonPerspective: {}", composeFilePathFromPlanktonPerspective);
+        logger.info("composeDocument: {}", composeDocument);
+        logger.info("runningFromHost: {}", runningFromHost);
+        logger.info("runningFromContainerId: {}", runningFromContainerId);
+        logger.info("dockerAdapterDaemon: {}", dockerAdapterDaemon);
+        logger.info("dockerAdapter: {}", dockerAdapter);
     }
 
     private String workspace(String ws) {
