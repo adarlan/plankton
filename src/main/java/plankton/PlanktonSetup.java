@@ -48,7 +48,6 @@ public class PlanktonSetup {
     private final ComposeDocument composeDocument;
 
     private final boolean runningFromHost;
-    private final boolean runningFromContainer;
     private final String runningFromContainerId;
 
     private final DockerDaemon dockerAdapterDaemon;
@@ -58,31 +57,22 @@ public class PlanktonSetup {
     private final Pipeline pipeline;
 
     public PlanktonSetup(@Autowired PlanktonConfiguration configuration) {
-
         namespace = namespace();
-
         planktonConfiguration = configuration;
         sandboxEnabled = planktonConfiguration.isSandbox();
-
         dockerHostSocketAddress = planktonConfiguration.getDocker();
         dockerHostDaemon = new DockerHostDaemon(() -> dockerHostSocketAddress);
         dockerHostClient = new DockerClient(dockerHostDaemon);
-
         workspacePathFromPlanktonPerspective = workspacePathFromPlanktonPerspective();
-
         composeFilePathFromPlanktonPerspective = composeFilePathFromPlanktonPerspective();
         composeDocument = composeDocument();
-
         runningFromContainerId = DockerUtils.getCurrentContainerId();
         runningFromHost = (runningFromContainerId == null);
-        runningFromContainer = !runningFromHost;
-
         if (runningFromHost) {
             workspacePathOnHost = workspacePathFromPlanktonPerspective;
         } else {
             workspacePathOnHost = workspacePathOnHostWhenRunningFromContainer();
         }
-
         if (sandboxEnabled) {
             workspacePathOnSandbox = "/sandbox-workspace";
             dockerAdapterDaemon = dockerSandboxDaemon();
@@ -92,18 +82,12 @@ public class PlanktonSetup {
             dockerAdapterDaemon = dockerHostDaemon;
             workspacePathFromAdapterPerspective = workspacePathOnHost;
         }
-
         dockerAdapter = dockerAdapter();
-
         pipeline = pipeline();
     }
 
     private String namespace() {
-        // int min = 1;
-        // int max = 1000000000;
-        // double r = (Math.random() * ((max - min) + 1)) + min;
         return String.valueOf(Instant.now().getEpochSecond()).trim();
-        // + String.valueOf(r).trim();
     }
 
     private String workspacePathFromPlanktonPerspective() {
