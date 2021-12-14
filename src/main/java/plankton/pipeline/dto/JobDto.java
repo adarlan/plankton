@@ -1,4 +1,4 @@
-package plankton.dto;
+package plankton.pipeline.dto;
 
 import java.util.HashMap;
 import java.util.Map;
