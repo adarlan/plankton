@@ -102,8 +102,7 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
 
     @Override
     public void pullImage(ComposeService service) {
-        String imageTag = service.image()
-                .orElseThrow(() -> new DockerAdapterException("Missing 'image' of: " + service.name()));
+        String imageTag = service.image().orElseThrow();
         if (!imageExists(imageTag)) {
             final String logPlaceholder = logPrefixOf(service)
                     + "Pulling image '" + imageTag + "' ... " + MSG;
@@ -128,8 +127,7 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
             imageTag = namespace + "_" + service.name();
         setBuildImage(imageTag);
         logger.debug("{}Building image for: {}", prefix, service);
-        ComposeService.Build build = service.build()
-                .orElseThrow(() -> new DockerAdapterException("Missing 'build' of: " + service.name()));
+        ComposeService.Build build = service.build().orElseThrow();
         String context = build.context;
         String dockerfile = build.dockerfile;
         String logPlaceholder = logPrefixOf(service) + MSG;
@@ -207,7 +205,7 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
 
         service.volumes().forEach(v -> containerCreator.option("--volume " + v));
 
-        containerCreator.image(service.image().get());
+        containerCreator.image(service.image().orElseThrow());
         containerCreator.args(service.command().stream().collect(Collectors.joining(" ")));
 
         String logPlaceholder = logPrefixOf(service, containerIndex) + MSG;
