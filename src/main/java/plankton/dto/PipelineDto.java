@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import lombok.Data;
-import plankton.core.Pipeline;
+import plankton.pipeline.Pipeline;
 
 @Data
 public class PipelineDto {

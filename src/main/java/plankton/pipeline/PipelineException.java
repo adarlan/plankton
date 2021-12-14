@@ -1,4 +1,4 @@
-package plankton.core;
+package plankton.pipeline;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

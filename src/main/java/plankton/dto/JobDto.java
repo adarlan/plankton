@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.Data;
-import plankton.core.Job;
+import plankton.pipeline.Job;
 
 @Data
 public class JobDto {

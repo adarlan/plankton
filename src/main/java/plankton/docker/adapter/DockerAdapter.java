@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeService;
-import plankton.core.ContainerRuntimeAdapter;
 import plankton.docker.client.DockerClient;
 import plankton.docker.daemon.DockerDaemon;
+import plankton.pipeline.ContainerRuntimeAdapter;
 import plankton.util.BashScript;
 import plankton.util.BashScriptFailedException;
 import plankton.util.Colors;

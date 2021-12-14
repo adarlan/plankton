@@ -1,4 +1,4 @@
-package plankton.core;
+package plankton.pipeline;
 
 public class JobDependencyLoopException extends RuntimeException {
 
