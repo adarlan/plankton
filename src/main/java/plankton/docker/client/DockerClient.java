@@ -80,7 +80,6 @@ public class DockerClient {
         public void pullImage(String tag) {
             apply(tag);
         }
-
         // TODO credential_spec ???
     }
 
@@ -202,16 +201,6 @@ public class DockerClient {
     public NetworkCreator networkCreator() {
         return new NetworkCreator();
     }
-
-    // public void createAttachableNetwork(String name) {
-    // BashScript script = createBashScript();
-    // script.command("docker network create --attachable " + name);
-    // try {
-    // script.run();
-    // } catch (BashScriptFailedException e) {
-    // throw new DockerClientException("Unable to create network: " + name, e);
-    // }
-    // }
 
     public boolean imageExists(String imageTag) {
         logger.debug("Checking if image exists: {}", imageTag);
