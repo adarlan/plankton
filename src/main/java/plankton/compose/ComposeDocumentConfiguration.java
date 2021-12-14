@@ -1,14 +1,13 @@
 package plankton.compose;
 
 import java.nio.file.Path;
+import java.util.Set;
 
 public interface ComposeDocumentConfiguration {
 
     Path filePath();
 
-    Path resolvePathsFrom(); // TODO optional
+    Path resolvePathsFrom();
 
-    String targetServices();
-
-    // TODO Set<String> profiles();
+    Set<String> targetServices();
 }

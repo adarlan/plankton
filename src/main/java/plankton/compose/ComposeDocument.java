@@ -110,11 +110,11 @@ public class ComposeDocument {
     }
 
     private Set<String> initializeTargetServiceNames(ComposeDocumentConfiguration configuration) {
-        String string = configuration.targetServices();
-        if (string == null || string.isBlank())
+        Set<String> target = configuration.targetServices();
+        if (target.isEmpty())
             return new HashSet<>(serviceNames);
         else
-            return new HashSet<>(Arrays.asList(string.split(",")));
+            return new HashSet<>(target);
     }
 
     private final Set<ComposeService> activeServices = new HashSet<>();
@@ -174,8 +174,8 @@ public class ComposeDocument {
             }
 
             @Override
-            public String targetServices() {
-                return null;
+            public Set<String> targetServices() {
+                return new HashSet<>();
             }
         });
         others.forEach(other.others::put);
