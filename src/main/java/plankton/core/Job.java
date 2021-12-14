@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
-import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeService;
 import plankton.compose.DependsOnCondition;
 import plankton.util.Colors;
@@ -26,10 +25,7 @@ public class Job {
     Pipeline pipeline;
     String name;
     JobStatus status;
-
-    ComposeDocument composeDocument;
     ComposeService composeService;
-    ContainerRuntimeAdapter containerRuntimeAdapter;
 
     final Map<Job, DependsOnCondition> dependencyMap = new HashMap<>();
     Integer dependencyLevel;
@@ -63,17 +59,17 @@ public class Job {
             }
             if (composeService.build().isPresent()) {
                 setStatusBuilding();
-                containerRuntimeAdapter.buildImage(composeService);
+                pipeline.containerRuntimeAdapter.buildImage(composeService);
             } else {
                 setStatusPulling();
-                containerRuntimeAdapter.pullImage(composeService);
+                pipeline.containerRuntimeAdapter.pullImage(composeService);
             }
             if (composeService.build().isPresent() && composeService.image().isPresent()
                     && composeService.entrypointIsReseted() && composeService.command().isEmpty()) {
                 setFinalStatusBuilt();
             } else {
                 setStatusRunning();
-                containerRuntimeAdapter.createContainers(composeService);
+                pipeline.containerRuntimeAdapter.createContainers(composeService);
                 instances.forEach(JobInstance::start);
             }
         });

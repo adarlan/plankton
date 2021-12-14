@@ -67,8 +67,6 @@ public class PipelineInitializer {
             Job job = new Job();
             job.pipeline = pipeline;
             job.composeService = composeService;
-            job.composeDocument = pipeline.composeDocument;
-            job.containerRuntimeAdapter = pipeline.containerRuntimeAdapter;
             job.name = composeService.name();
             job.colorizedName = Colors.colorized(job.name);
             job.logPrefix = LogUtils.prefixOf(job.name);
@@ -83,9 +81,6 @@ public class PipelineInitializer {
             instance.job = job;
             instance.pipeline = job.pipeline;
             instance.index = instanceIndex;
-            instance.composeDocument = job.composeDocument;
-            instance.containerRuntimeAdapter = job.containerRuntimeAdapter;
-            instance.composeService = job.composeService;
             if (job.composeService.scale() > 1) {
                 instance.colorizedName = Colors.colorized(job.name + "_" + instanceIndex, job.name);
                 instance.logPrefix = LogUtils.prefixOf(job.name, "[" + instanceIndex + "]");

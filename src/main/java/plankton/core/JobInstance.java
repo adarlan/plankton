@@ -7,8 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
-import plankton.compose.ComposeDocument;
-import plankton.compose.ComposeService;
 
 @EqualsAndHashCode(of = { "pipeline", "job", "index" })
 public class JobInstance {
@@ -17,17 +15,11 @@ public class JobInstance {
     Job job;
     int index;
 
-    ComposeDocument composeDocument;
-    ComposeService composeService;
-    ContainerRuntimeAdapter containerRuntimeAdapter;
-
     private boolean running = false;
     private boolean exited = false;
-
     private Instant initialInstant = null;
     private Instant finalInstant = null;
     private Duration duration = null;
-
     private Integer exitCode = null;
 
     String colorizedName;
@@ -55,7 +47,7 @@ public class JobInstance {
     private void run() {
         initialInstant = Instant.now();
         running = true;
-        exitCode = containerRuntimeAdapter.runContainerAndGetExitCode(composeService, index);
+        exitCode = pipeline.containerRuntimeAdapter.runContainerAndGetExitCode(job.composeService, index);
         finalInstant = Instant.now();
         duration = Duration.between(initialInstant, finalInstant);
         running = false;
@@ -66,7 +58,7 @@ public class JobInstance {
     void stop() {
         synchronized (this) {
             logger.debug("{}Stopping instance", logPrefix);
-            containerRuntimeAdapter.stopContainer(composeService, index);
+            pipeline.containerRuntimeAdapter.stopContainer(job.composeService, index);
         }
     }
 
