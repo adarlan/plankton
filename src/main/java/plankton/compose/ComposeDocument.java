@@ -2,7 +2,6 @@ package plankton.compose;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,14 +14,11 @@ import org.slf4j.LoggerFactory;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import plankton.util.RegexUtils;
 import plankton.util.YamlUtils;
 
 @EqualsAndHashCode(of = { "filePath", "resolvePathsFrom" })
 @Accessors(fluent = true)
 public class ComposeDocument {
-
-    // TODO ignore services based on profiles
 
     @Getter
     private final Path filePath;
@@ -82,20 +78,6 @@ public class ComposeDocument {
         servicesMap.keySet().forEach(serviceNames::add);
         Set<String> invalidServices = new HashSet<>();
         servicesMap.forEach((serviceName, propertiesMap) -> {
-            // if (RegexUtils.stringMatchesRegex(serviceName,
-            // "[a-zA-Z0-9\\-\\_\\.]+\\.[a-zA-Z0-9\\-\\_]+")) {
-            // int dot = serviceName.indexOf(".", 1);
-            // String ext = serviceName.substring(dot);
-            // logger.debug("{}Auto extending: {} extends {}", logPrefix, serviceName, ext);
-            // if (propertiesMap.containsKey(ComposeService.Extends.KEY)) {
-            // throw new ComposeFileFormatException("Unexpected property '" +
-            // ComposeService.Extends.KEY
-            // + "' on service '" + serviceName + "'. This service automatically extends
-            // service '" + ext
-            // + "' because of the name suffix");
-            // }
-            // propertiesMap.put(ComposeService.Extends.KEY, ext);
-            // }
             ComposeService service = new ComposeService(this, serviceName, propertiesMap);
             services.add(service);
             servicesByName.put(serviceName, service);
@@ -169,8 +151,6 @@ public class ComposeDocument {
             @Override
             public Path resolvePathsFrom() {
                 return resolvePathsFrom;
-                // TODO resolve paths from the same path?
-                // or from its compose file parent directory?
             }
 
             @Override
