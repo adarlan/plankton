@@ -1,4 +1,4 @@
-package plankton.bash;
+package plankton.util;
 
 public class BashScriptException extends RuntimeException {
 

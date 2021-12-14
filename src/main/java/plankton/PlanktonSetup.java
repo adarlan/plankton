@@ -15,8 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
-import plankton.bash.BashScript;
-import plankton.bash.BashScriptFailedException;
 import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeDocumentConfiguration;
 import plankton.core.ContainerRuntimeAdapter;
@@ -33,6 +31,8 @@ import plankton.docker.daemon.DockerSandboxDaemon;
 import plankton.docker.inspect.Container;
 import plankton.docker.inspect.ContainerMount;
 import plankton.docker.inspect.DockerInspect;
+import plankton.util.BashScript;
+import plankton.util.BashScriptFailedException;
 import plankton.util.DockerUtils;
 
 @Component

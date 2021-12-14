@@ -1,8 +1,5 @@
 package plankton.util;
 
-import plankton.bash.BashScript;
-import plankton.bash.BashScriptFailedException;
-
 public class DockerUtils {
 
     private DockerUtils() {

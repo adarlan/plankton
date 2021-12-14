@@ -7,9 +7,9 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import plankton.bash.BashScript;
-import plankton.bash.BashScriptFailedException;
 import plankton.docker.daemon.DockerDaemon;
+import plankton.util.BashScript;
+import plankton.util.BashScriptFailedException;
 
 public class DockerClient {
 

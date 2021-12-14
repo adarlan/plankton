@@ -10,13 +10,13 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import plankton.bash.BashScript;
-import plankton.bash.BashScriptFailedException;
 import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeService;
 import plankton.core.ContainerRuntimeAdapter;
 import plankton.docker.client.DockerClient;
 import plankton.docker.daemon.DockerDaemon;
+import plankton.util.BashScript;
+import plankton.util.BashScriptFailedException;
 import plankton.util.Colors;
 import plankton.util.FileSystemUtils;
 import plankton.util.LogUtils;
