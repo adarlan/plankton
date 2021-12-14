@@ -33,7 +33,7 @@ import plankton.docker.daemon.DockerSandboxDaemon;
 import plankton.docker.inspect.Container;
 import plankton.docker.inspect.ContainerMount;
 import plankton.docker.inspect.DockerInspect;
-import plankton.docker.util.DockerUtils;
+import plankton.util.DockerUtils;
 
 @Component
 public class PlanktonSetup {

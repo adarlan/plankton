@@ -1,4 +1,4 @@
-package plankton.docker.util;
+package plankton.util;
 
 public class DockerUtilsException extends RuntimeException {
 

@@ -1,4 +1,4 @@
-package plankton.docker.util;
+package plankton.util;
 
 import plankton.bash.BashScript;
 import plankton.bash.BashScriptFailedException;
