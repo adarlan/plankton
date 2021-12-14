@@ -53,17 +53,17 @@ services:
     entrypoint:
       - docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD
       - docker push $IMAGE
+    depends_on:
+      - build_plankton_image
+      - build_plankton_sandbox_image
+      - test_saying-hello-world
 
   push_plankton_image:
     extends: .push_image
     environment:
       - IMAGE=adarlan/plankton
-    depends_on:
-      - test_saying-hello-world
 
   push_plankton_sandbox_image:
     extends: .push_image
     environment:
       - IMAGE=adarlan/plankton:sandbox
-    depends_on:
-      - test_saying-hello-world

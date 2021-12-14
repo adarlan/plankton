@@ -149,11 +149,9 @@ public class ComposeService {
     }
 
     private void extend() {
-        ComposeDocument otherComposeDocument;
-        if (extends1.file == null)
-            otherComposeDocument = this.composeDocument;
-        else
-            otherComposeDocument = this.composeDocument.getOther(extends1.file);
+        ComposeDocument otherComposeDocument = extends1.file == null
+                ? this.composeDocument
+                : this.composeDocument.getOther(extends1.file);
         extendFrom = otherComposeDocument.serviceOfName(extends1.service);
         if (extendFrom.extends1 != null && !extendFrom.alreadyExtended)
             extendFrom.extend();
@@ -430,10 +428,12 @@ public class ComposeService {
         }
 
         private DependsOn(DependsOn dependsOn, DependsOn extendFrom) {
-            throw new ComposeFormatException("Unable to extend 'depends_on' property");
-
-            // TODO it can extend
-            // but only if other service is from the same document
+            serviceConditionMap.putAll(extendFrom.serviceConditionMap);
+            if (dependsOn != null) {
+                serviceConditionMap.putAll(dependsOn.serviceConditionMap);
+                // TODO list overriden dependencies
+            }
+            // TODO do it only if other service is from the same document
         }
 
         // TODO initialize() prevent from circular dependency
