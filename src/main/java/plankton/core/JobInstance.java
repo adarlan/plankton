@@ -9,19 +9,17 @@ import org.slf4j.LoggerFactory;
 import lombok.EqualsAndHashCode;
 import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeService;
-import plankton.util.Colors;
-import plankton.util.LogUtils;
 
-@EqualsAndHashCode(of = { "job", "index" })
+@EqualsAndHashCode(of = { "pipeline", "job", "index" })
 public class JobInstance {
 
-    final Pipeline pipeline;
-    final Job job;
-    final int index;
+    Pipeline pipeline;
+    Job job;
+    int index;
 
-    final ComposeDocument composeDocument;
-    final ComposeService composeService;
-    final ContainerRuntimeAdapter containerRuntimeAdapter;
+    ComposeDocument composeDocument;
+    ComposeService composeService;
+    ContainerRuntimeAdapter containerRuntimeAdapter;
 
     private boolean running = false;
     private boolean exited = false;
@@ -32,25 +30,13 @@ public class JobInstance {
 
     private Integer exitCode = null;
 
+    String colorizedName;
+    String logPrefix;
+
     private static final Logger logger = LoggerFactory.getLogger(JobInstance.class);
-    private final String colorizedName;
-    private final String logPrefix;
 
-    JobInstance(Job job, int index) {
-        this.job = job;
-        this.pipeline = job.pipeline;
-        this.index = index;
-        this.composeDocument = job.composeDocument;
-        this.containerRuntimeAdapter = job.containerRuntimeAdapter;
-        this.composeService = job.composeService;
-
-        if (composeService.scale() > 1) {
-            colorizedName = Colors.colorized(job.name + "_" + index, job.name);
-            logPrefix = LogUtils.prefixOf(job.name, "[" + index + "]");
-        } else {
-            colorizedName = Colors.colorized(job.name);
-            logPrefix = LogUtils.prefixOf(job.name);
-        }
+    JobInstance() {
+        super();
     }
 
     @Override

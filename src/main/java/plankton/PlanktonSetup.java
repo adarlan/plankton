@@ -22,6 +22,7 @@ import plankton.compose.ComposeDocumentConfiguration;
 import plankton.core.ContainerRuntimeAdapter;
 import plankton.core.Pipeline;
 import plankton.core.PipelineConfiguration;
+import plankton.core.PipelineInitializer;
 import plankton.docker.adapter.DockerAdapter;
 import plankton.docker.adapter.DockerAdapterConfiguration;
 import plankton.docker.client.DockerClient;
@@ -193,7 +194,6 @@ public class PlanktonSetup {
         }
         throw new PlanktonSetupException(
                 "When running Plankton from within a container, you must bind the workspace directory");
-
         // TODO what if destination is a super directory of project path?
     }
 
@@ -263,7 +263,7 @@ public class PlanktonSetup {
     }
 
     private Pipeline pipeline() {
-        return new Pipeline(new PipelineConfiguration() {
+        PipelineConfiguration pipelineConfiguration = new PipelineConfiguration() {
 
             @Override
             public ComposeDocument composeDocument() {
@@ -274,6 +274,8 @@ public class PlanktonSetup {
             public ContainerRuntimeAdapter containerRuntimeAdapter() {
                 return dockerAdapter;
             }
-        });
+        };
+        PipelineInitializer pipelineInitializer = new PipelineInitializer(pipelineConfiguration);
+        return pipelineInitializer.getPipeline();
     }
 }

@@ -19,18 +19,17 @@ import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeService;
 import plankton.compose.DependsOnCondition;
 import plankton.util.Colors;
-import plankton.util.LogUtils;
 
 @EqualsAndHashCode(of = { "pipeline", "name" })
 public class Job {
 
-    final Pipeline pipeline;
-    final String name;
+    Pipeline pipeline;
+    String name;
     JobStatus status;
 
-    final ComposeDocument composeDocument;
-    final ComposeService composeService;
-    final ContainerRuntimeAdapter containerRuntimeAdapter;
+    ComposeDocument composeDocument;
+    ComposeService composeService;
+    ContainerRuntimeAdapter containerRuntimeAdapter;
 
     final Map<Job, DependsOnCondition> dependencyMap = new HashMap<>();
     Integer dependencyLevel;
@@ -40,18 +39,13 @@ public class Job {
     final Set<DependsOnCondition> requiredConditions = new HashSet<>();
     boolean autoStopWhenDirectDependentsHaveFinalStatus = false;
 
-    private static final Logger logger = LoggerFactory.getLogger(Job.class);
-    final String colorizedName;
-    final String logPrefix;
+    String colorizedName;
+    String logPrefix;
 
-    Job(Pipeline pipeline1, ComposeService composeService1) {
-        this.pipeline = pipeline1;
-        this.composeService = composeService1;
-        this.composeDocument = pipeline.composeDocument;
-        this.containerRuntimeAdapter = pipeline.containerRuntimeAdapter;
-        this.name = composeService.name();
-        this.colorizedName = Colors.colorized(name);
-        this.logPrefix = LogUtils.prefixOf(name);
+    private static final Logger logger = LoggerFactory.getLogger(Job.class);
+
+    Job() {
+        super();
     }
 
     private Thread thread = null;
@@ -115,8 +109,6 @@ public class Job {
         }
     }
 
-    // private boolean dependenciesSatisfied = false;
-    // private boolean dependenciesBlocked = false;
     private final Map<Job, DependsOnCondition> satisfiedByDependencies = new HashMap<>();
     private final Map<Job, DependsOnCondition> blockedByDependencies = new HashMap<>();
     private final Map<Job, DependsOnCondition> waitingForDependencies = new HashMap<>();
