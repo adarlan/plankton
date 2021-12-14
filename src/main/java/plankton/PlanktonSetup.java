@@ -247,11 +247,6 @@ public class PlanktonSetup {
         return new DockerAdapter(new DockerAdapterConfiguration() {
 
             @Override
-            public ComposeDocument composeDocument() {
-                return composeDocument;
-            }
-
-            @Override
             public DockerDaemon dockerDaemon() {
                 return dockerAdapterDaemon;
             }

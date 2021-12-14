@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeService;
 import plankton.docker.client.DockerClient;
 import plankton.docker.daemon.DockerDaemon;
@@ -23,7 +22,6 @@ import plankton.util.LogUtils;
 
 public class DockerAdapter implements ContainerRuntimeAdapter {
 
-    private final ComposeDocument composeDocument;
     private final String workspacePathFromRunnerPerspective;
     private final String workspacePathFromAdapterPerspective;
 
@@ -38,7 +36,6 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
 
     public DockerAdapter(DockerAdapterConfiguration configuration) {
 
-        this.composeDocument = configuration.composeDocument();
         this.workspacePathFromRunnerPerspective = configuration.workspacePathFromRunnerPerspective();
         this.workspacePathFromAdapterPerspective = configuration.workspacePathFromAdapterPerspective();
 
@@ -48,7 +45,6 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
 
         this.dockerClient = new DockerClient(daemon);
 
-        logger.debug("composeDocument={}", composeDocument);
         logger.debug("workspacePathFromRunnerPerspective={}", workspacePathFromRunnerPerspective);
         logger.debug("workspacePathFromAdapterPerspective={}", workspacePathFromAdapterPerspective);
 
