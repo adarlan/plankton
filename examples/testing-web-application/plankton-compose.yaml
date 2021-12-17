@@ -1,8 +1,11 @@
 services:
   build_app_image:
-    image: app
-    build: .
-    entrypoint: ""
+    image: docker
+    working_dir: /app
+    volumes:
+      - ./:/app
+    entrypoint:
+      - docker build -t app .
 
   app:
     depends_on:
@@ -15,4 +18,9 @@ services:
       app:
         condition: service_started
     image: curlimages/curl
-    entrypoint: curl http://app
+    environment:
+      - URL=http://app
+    entrypoint:
+      - set -eu
+      - HttpStatus=$(curl -sL -w "%{http_code}" -I $URL -o /dev/null)
+      - test $HttpStatus = 200

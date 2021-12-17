@@ -1,0 +1,6 @@
+services:
+  foo:
+    image: alpine
+    entrypoint:
+      - foo
+      - test $? != 0
