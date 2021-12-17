@@ -11,14 +11,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import plankton.compose.ComposeService;
+import plankton.compose.serviceprops.Build;
 import plankton.docker.client.DockerClient;
 import plankton.docker.daemon.DockerDaemon;
+import plankton.pipeline.ContainerConfiguration;
 import plankton.pipeline.ContainerRuntimeAdapter;
 import plankton.util.BashScript;
 import plankton.util.BashScriptFailedException;
-import plankton.util.Colors;
 import plankton.util.FileSystemUtils;
-import plankton.util.LogUtils;
 
 public class DockerAdapter implements ContainerRuntimeAdapter {
 
@@ -95,14 +95,13 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
     }
 
     @Override
-    public void pullImage(ComposeService service) {
+    public void pullImage(ContainerConfiguration config) {
+        ComposeService service = config.getService();
         String imageTag = service.image().orElseThrow();
         if (!imageExists(imageTag)) {
-            final String logPlaceholder = logPrefixOf(service)
-                    + "Pulling image '" + imageTag + "' ... " + MSG;
             dockerClient.imagePuller()
-                    .forEachOutput(msg -> logger.info(logPlaceholder, msg))
-                    .forEachError(msg -> logger.error(logPlaceholder, msg))
+                    .forEachOutput(config.getForEachOutput())
+                    .forEachError(config.getForEachError())
                     .pullImage(imageTag);
         }
     }
@@ -112,7 +111,8 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
     }
 
     @Override
-    public void buildImage(ComposeService service) {
+    public void buildImage(ContainerConfiguration config) {
+        ComposeService service = config.getService();
         String imageTag;
         Optional<String> optionalImageTag = service.image();
         if (optionalImageTag.isPresent())
@@ -121,91 +121,86 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
             imageTag = namespace + "_" + service.name();
         setBuildImage(imageTag);
         logger.debug("{}Building image for: {}", prefix, service);
-        ComposeService.Build build = service.build().orElseThrow();
-        String context = build.context;
-        String dockerfile = build.dockerfile;
-        String logPlaceholder = logPrefixOf(service) + MSG;
+        Build build = service.build().orElseThrow();
+        String context = build.getContext();
+        String dockerfile = build.getDockerfile();
         dockerClient.imageBuilder()
                 .context(context)
                 .option("-t " + imageTag)
                 .option(dockerfile == null ? "" : " -f " + dockerfile)
-                .forEachOutput(msg -> logger.info(logPlaceholder, msg))
-                .forEachError(msg -> logger.error(logPlaceholder, msg))
+                .forEachOutput(config.getForEachOutput())
+                .forEachError(config.getForEachError())
                 .buildImage();
 
         // TODO get more build options from service
     }
 
     @Override
-    public void createContainers(ComposeService service) {
+    public void createContainers(ContainerConfiguration config) {
+        ComposeService service = config.getService();
         logger.debug("{}Creating containers for: {}", prefix, service);
-        for (int i = 0; i < service.scale(); i++) {
-            createContainer(service, i);
+        for (int containerIndex = 0; containerIndex < service.scale(); containerIndex++) {
+
+            logger.debug("{}Creating container for: {}[{}]", prefix, service, containerIndex);
+
+            String containerName = containerNameOf(service, containerIndex);
+            setCreateContainer(containerName);
+
+            DockerClient.ContainerCreator containerCreator = dockerClient.containerCreator();
+
+            containerCreator.option("--name " + containerName);
+
+            containerCreator.option("--network " + networkName);
+            if (service.scale() == 1)
+                containerCreator.option("--hostname " + service.name());
+            else
+                containerCreator.option("--hostname " + service.name() + "_" + containerIndex);
+
+            service.environment().forEach(e -> containerCreator.option("--env \"" + e + "\""));
+            // TODO what if it contains: "
+
+            service.envFile().forEach(f -> containerCreator.option("--env-file " + f));
+            service.expose().forEach(p -> containerCreator.option("--expose " + p));
+            service.groupAdd().forEach(g -> containerCreator.option("--group-add " + g));
+            service.user().ifPresent(u -> containerCreator.option("--user " + u));
+            service.workingDir().ifPresent(w -> containerCreator.option("--workdir " + w));
+
+            if (service.entrypointIsReseted())
+                containerCreator.option("--entrypoint \"\"");
+            else if (!service.entrypoint().isEmpty()) {
+
+                runBashScript("mkdir -p " + workspacePathFromRunnerPerspective + "/.plankton");
+                String entrypointFileName = namespace + "_" + service.name() + ".entrypoint.sh";
+                String entrypointFilePathFromPlanktonPerspective = workspacePathFromRunnerPerspective + "/.plankton/"
+                        + entrypointFileName;
+                String entrypointFilePathFromAdapterPerspective = workspacePathFromAdapterPerspective + "/.plankton/"
+                        + entrypointFileName;
+                String entrypointFilePathFromJobContainerPerspective = "/docker-entrypoint.sh";
+
+                createEntrypointFile(service, entrypointFilePathFromPlanktonPerspective);
+                containerCreator.option("-v " + entrypointFilePathFromAdapterPerspective + ":"
+                        + entrypointFilePathFromJobContainerPerspective);
+                containerCreator.option("--entrypoint " + entrypointFilePathFromJobContainerPerspective);
+            }
+
+            service.healthcheck().ifPresent(h -> {
+                // TODO
+                // --health-cmd string
+                // --health-interval duration
+                // --health-retries int
+                // --health-start-period duration
+                // --health-timeout duration
+            });
+
+            service.volumes().forEach(v -> containerCreator.option("--volume " + v));
+
+            containerCreator.image(service.image().orElseThrow());
+            containerCreator.args(service.command().stream().collect(Collectors.joining(" ")));
+
+            containerCreator.forEachOutput(config.getForEachOutput());
+            containerCreator.forEachError(config.getForEachError());
+            containerCreator.createContainer();
         }
-    }
-
-    private void createContainer(ComposeService service, int containerIndex) {
-
-        logger.debug("{}Creating container for: {}[{}]", prefix, service, containerIndex);
-
-        String containerName = containerNameOf(service, containerIndex);
-        setCreateContainer(containerName);
-
-        DockerClient.ContainerCreator containerCreator = dockerClient.containerCreator();
-
-        containerCreator.option("--name " + containerName);
-
-        containerCreator.option("--network " + networkName);
-        if (service.scale() == 1)
-            containerCreator.option("--hostname " + service.name());
-        else
-            containerCreator.option("--hostname " + service.name() + "_" + containerIndex);
-
-        service.environment().forEach(e -> containerCreator.option("--env \"" + e + "\""));
-        // TODO what if it contains: "
-
-        service.envFile().forEach(f -> containerCreator.option("--env-file " + f));
-        service.expose().forEach(p -> containerCreator.option("--expose " + p));
-        service.groupAdd().forEach(g -> containerCreator.option("--group-add " + g));
-        service.user().ifPresent(u -> containerCreator.option("--user " + u));
-        service.workingDir().ifPresent(w -> containerCreator.option("--workdir " + w));
-
-        if (service.entrypointIsReseted())
-            containerCreator.option("--entrypoint \"\"");
-        else if (!service.entrypoint().isEmpty()) {
-
-            runBashScript("mkdir -p " + workspacePathFromRunnerPerspective + "/.plankton");
-            String entrypointFileName = namespace + "_" + service.name() + ".entrypoint.sh";
-            String entrypointFilePathFromPlanktonPerspective = workspacePathFromRunnerPerspective + "/.plankton/"
-                    + entrypointFileName;
-            String entrypointFilePathFromAdapterPerspective = workspacePathFromAdapterPerspective + "/.plankton/"
-                    + entrypointFileName;
-            String entrypointFilePathFromJobContainerPerspective = "/docker-entrypoint.sh";
-
-            createEntrypointFile(service, entrypointFilePathFromPlanktonPerspective);
-            containerCreator.option("-v " + entrypointFilePathFromAdapterPerspective + ":"
-                    + entrypointFilePathFromJobContainerPerspective);
-            containerCreator.option("--entrypoint " + entrypointFilePathFromJobContainerPerspective);
-        }
-
-        service.healthcheck().ifPresent(h -> {
-            // TODO
-            // --health-cmd string
-            // --health-interval duration
-            // --health-retries int
-            // --health-start-period duration
-            // --health-timeout duration
-        });
-
-        service.volumes().forEach(v -> containerCreator.option("--volume " + v));
-
-        containerCreator.image(service.image().orElseThrow());
-        containerCreator.args(service.command().stream().collect(Collectors.joining(" ")));
-
-        String logPlaceholder = logPrefixOf(service, containerIndex) + MSG;
-        containerCreator.forEachOutput(msg -> logger.info(logPlaceholder, msg));
-        containerCreator.forEachError(msg -> logger.error(logPlaceholder, msg));
-        containerCreator.createContainer();
     }
 
     private synchronized void createEntrypointFile(ComposeService service,
@@ -227,29 +222,27 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
     }
 
     @Override
-    public int runContainerAndGetExitCode(ComposeService service, int containerIndex) {
+    public int startContainerAndGetExitCode(ContainerConfiguration config) {
+        ComposeService service = config.getService();
+        int containerIndex = config.getIndex();
         String containerName = containerNameOf(service, containerIndex);
-        if (!createContainerSet.contains(containerName)) {
-            createContainer(service, containerIndex);
-        }
         setStartedContainer(containerName);
-        String logPlaceholder = logPrefixOf(service, containerIndex) + MSG;
         DockerClient.ContainerStarter containerStarter = dockerClient.containerStarter()
-                .forEachOutput(msg -> logger.info(logPlaceholder, msg))
-                .forEachError(msg -> logger.error(logPlaceholder, msg));
+                .forEachOutput(config.getForEachOutput())
+                .forEachError(config.getForEachError());
         int exitCode = containerStarter.startAndGetExitCode(containerName);
         setExitedContainers(containerName);
         return exitCode;
     }
 
     @Override
-    public void stopContainer(ComposeService service, int containerIndex) {
+    public void stopContainer(ContainerConfiguration config) {
+        ComposeService service = config.getService();
+        int containerIndex = config.getIndex();
         String containerName = containerNameOf(service, containerIndex);
-        final String logPlaceholder = logPrefixOf(service, containerIndex)
-                + "Stopping container ... " + MSG;
         dockerClient.containerStopper()
-                .forEachOutput(msg -> logger.info(logPlaceholder, msg))
-                .forEachError(msg -> logger.error(logPlaceholder, msg))
+                .forEachOutput(config.getForEachOutput())
+                .forEachError(config.getForEachError())
                 .stopContainer(containerName);
     }
 
@@ -271,18 +264,5 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
             Set<String> containersToKill = new HashSet<>(runningContainers);
             containersToKill.forEach(containerName -> new Thread(() -> killContainer(containerName)).start());
         }
-    }
-
-    private static final String MSG = "{}" + Colors.ANSI_RESET;
-
-    private String logPrefixOf(ComposeService service) {
-        return LogUtils.prefixOf(service.name());
-    }
-
-    private String logPrefixOf(ComposeService service, int containerIndex) {
-        if (service.scale() == 1)
-            return LogUtils.prefixOf(service.name());
-        else
-            return LogUtils.prefixOf(service.name(), "[" + containerIndex + "]");
     }
 }
