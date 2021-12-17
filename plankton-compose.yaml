@@ -1,5 +1,12 @@
 services:
+  # =====
+  # BUILD
+  # =====
+
+  .build:
+
   build_plankton_jar:
+    extends: .build
     image: maven:3.6-jdk-11
     entrypoint:
       - mvn package -DskipTests
@@ -11,6 +18,7 @@ services:
       - .m2/repository:/root/.m2/repository
 
   build_plankton_image:
+    extends: .build
     depends_on: build_plankton_jar
     image: docker:20.10
     entrypoint:
@@ -22,6 +30,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
   build_plankton_sandbox_image:
+    extends: .build
     image: docker:20.10
     entrypoint:
       - docker build -t adarlan/plankton:sandbox sandbox
@@ -30,6 +39,10 @@ services:
       - ./sandbox:/workspace/sandbox
       - /var/run/docker.sock:/var/run/docker.sock
 
+  # ====
+  # TEST
+  # ====
+
   .test:
     image: adarlan/plankton
     command:
@@ -37,12 +50,70 @@ services:
     working_dir: /workspace
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - .build
+
+  .test_group_1:
+    extends: .test
+
+  .test_group_2:
+    extends: .test
+    depends_on:
+      - .test_group_1
+
+  .test_group_3:
+    extends: .test
+    depends_on:
+      - .test_group_2
+
+  test_binding-volumes:
+    extends: .test_group_1
+    volumes:
+      - ./examples/binding-volumes:/workspace
+
+  test_building-docker-image:
+    extends: .test_group_1
+    volumes:
+      - ./examples/building-docker-image:/workspace
+
+  # test_failing-on-blocked-job:
+  #   extends: .test
+  #   volumes:
+  #     - ./examples/failing-on-blocked-job:/workspace
+
+  # test_failing-on-dependency-loop:
+  #   extends: .test
+  #   volumes:
+  #     - ./examples/failing-on-dependency-loop:/workspace
+
+  test_running-parallel-jobs:
+    extends: .test_group_2
+    volumes:
+      - ./examples/running-parallel-jobs:/workspace
 
   test_saying-hello-world:
-    extends: .test
-    depends_on: build_plankton_image
+    extends: .test_group_2
     volumes:
       - ./examples/saying-hello-world:/workspace
+
+  test_scaling-jobs:
+    extends: .test_group_3
+    volumes:
+      - ./examples/scaling-jobs:/workspace
+
+  test_testing-web-application:
+    extends: .test_group_3
+    volumes:
+      - ./examples/testing-web-application:/workspace
+
+  # test_testing-web-application-with-database:
+  #   extends: .test
+  #   volumes:
+  #     - ./examples/testing-web-application-with-database:/workspace
+
+  # ===========
+  # PUSH IMAGES
+  # ===========
 
   .push_image:
     image: docker
@@ -51,12 +122,11 @@ services:
     env_file:
       - plankton.env
     entrypoint:
+      - set -eu
       - docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD
       - docker push $IMAGE
     depends_on:
-      - build_plankton_image
-      - build_plankton_sandbox_image
-      - test_saying-hello-world
+      - .test
 
   push_plankton_image:
     extends: .push_image
