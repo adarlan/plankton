@@ -1,4 +1,4 @@
-package plankton;
+package plankton.spring;
 
 public class PlanktonSetupException extends RuntimeException {
 

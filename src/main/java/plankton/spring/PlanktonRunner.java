@@ -1,4 +1,4 @@
-package plankton;
+package plankton.spring;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;

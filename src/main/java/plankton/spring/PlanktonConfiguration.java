@@ -1,4 +1,4 @@
-package plankton;
+package plankton.spring;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -23,4 +23,7 @@ public class PlanktonConfiguration {
 
     @Value("${target}")
     private String target;
+
+    @Value("${skip}")
+    private String skip;
 }

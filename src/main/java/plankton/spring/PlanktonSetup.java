@@ -1,8 +1,10 @@
-package plankton;
+package plankton.spring;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component;
 import lombok.Getter;
 import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeDocumentConfiguration;
+import plankton.compose.ComposeInitializer;
 import plankton.docker.adapter.DockerAdapter;
 import plankton.docker.adapter.DockerAdapterConfiguration;
 import plankton.docker.client.DockerClient;
@@ -43,6 +46,7 @@ public class PlanktonSetup {
     private final boolean sandboxEnabled;
     private final String dockerHostSocketAddress;
     private final List<String> target;
+    private final List<String> skip;
     private final String namespace;
     private final DockerHostDaemon dockerHostDaemon;
     private final DockerClient dockerHostClient;
@@ -69,7 +73,8 @@ public class PlanktonSetup {
         file = file(planktonConfiguration.getFile());
         sandboxEnabled = planktonConfiguration.isSandbox();
         dockerHostSocketAddress = dockerHostSocketAddress(planktonConfiguration.getDocker());
-        target = target(planktonConfiguration.getTarget());
+        target = split(planktonConfiguration.getTarget());
+        skip = split(planktonConfiguration.getSkip());
         namespace = namespace();
         dockerHostDaemon = new DockerHostDaemon(() -> dockerHostSocketAddress);
         dockerHostClient = new DockerClient(dockerHostDaemon);
@@ -92,7 +97,7 @@ public class PlanktonSetup {
             dockerAdapterDaemon = dockerHostDaemon;
             workspacePathFromAdapterPerspective = workspacePathOnHost;
         }
-        composeFilePathFromAdapterPerspective = workspacePathFromAdapterPerspective + "/"
+        composeFilePathFromAdapterPerspective = workspacePathFromAdapterPerspective
                 + composeFilePathRelativeToWorkspace;
         composeDocument = composeDocument();
         dockerAdapter = dockerAdapter();
@@ -138,7 +143,7 @@ public class PlanktonSetup {
                 : s;
     }
 
-    private List<String> target(String s) {
+    private List<String> split(String s) {
         return (s == null || s.isBlank())
                 ? new ArrayList<>()
                 : Arrays.asList(s.split(","));
@@ -176,7 +181,7 @@ public class PlanktonSetup {
     }
 
     private ComposeDocument composeDocument() {
-        return new ComposeDocument(new ComposeDocumentConfiguration() {
+        ComposeInitializer composeInitializer = new ComposeInitializer(new ComposeDocumentConfiguration() {
 
             @Override
             public Path filePath() {
@@ -187,12 +192,8 @@ public class PlanktonSetup {
             public Path resolvePathsFrom() {
                 return Paths.get(composeFilePathFromAdapterPerspective).getParent();
             }
-
-            @Override
-            public Set<String> targetServices() {
-                return new HashSet<>(target);
-            }
         });
+        return composeInitializer.composeDocument();
     }
 
     private String workspacePathOnHostWhenRunningFromContainer() {
@@ -280,8 +281,23 @@ public class PlanktonSetup {
             public ContainerRuntimeAdapter containerRuntimeAdapter() {
                 return dockerAdapter;
             }
+
+            @Override
+            public Set<String> targetJobs() {
+                return new HashSet<>(target);
+            }
+
+            @Override
+            public Duration timeoutLimitForJobs() {
+                return Duration.of(10L, ChronoUnit.MINUTES);
+            }
+
+            @Override
+            public Set<String> skipJobs() {
+                return new HashSet<>(skip);
+            }
         };
         PipelineInitializer pipelineInitializer = new PipelineInitializer(pipelineConfiguration);
-        return pipelineInitializer.getPipeline();
+        return pipelineInitializer.pipeline();
     }
 }
