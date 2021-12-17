@@ -1,7 +1,7 @@
 package plankton.pipeline;
 
 public enum JobStatus {
-    WAITING, PULLING, BUILDING, RUNNING, BLOCKED, ERROR, BUILT, EXITED_ZERO, EXITED_NON_ZERO;
+    CREATED, WAITING, PULLING, BUILDING, RUNNING, BLOCKED, ERROR, BUILT, EXITED_ZERO, EXITED_NON_ZERO;
 
     public boolean isWaiting() {
         return this == WAITING;

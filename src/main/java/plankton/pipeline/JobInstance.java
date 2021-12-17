@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
+import plankton.util.Colors;
 
 @EqualsAndHashCode(of = { "pipeline", "job", "index" })
 public class JobInstance {
@@ -22,22 +23,39 @@ public class JobInstance {
     private Duration duration = null;
     private Integer exitCode = null;
 
-    String colorizedName;
-    String logPrefix;
-
+    private String colorizedName;
+    private String infoPlaceholder;
+    private String errorPlaceholder;
     private static final Logger logger = LoggerFactory.getLogger(JobInstance.class);
 
     JobInstance() {
         super();
     }
 
+    void initializeColorizedNameAndLogPlaceholders() {
+        String prefix;
+        if (job.composeService.scale() > 1) {
+            colorizedName = LogUtils.colorized(job.name + "_" + index, job.name);
+            prefix = LogUtils.prefixOf(job.name, "[" + index + "]");
+        } else {
+            colorizedName = LogUtils.colorized(job.name);
+            prefix = LogUtils.prefixOf(job.name);
+        }
+        infoPlaceholder = prefix
+                + Colors.BLUE + "INFO  " + Colors.ANSI_RESET + "{}";
+        errorPlaceholder = prefix
+                + Colors.RED + "ERROR " + Colors.ANSI_RESET + "{}";
+    }
+
     @Override
     public String toString() {
-        return colorizedName;
+        return colorizedName == null
+                ? job.name + "[" + index + "]"
+                : colorizedName;
     }
 
     void start() {
-        logger.debug("{}Starting instance", logPrefix);
+        logger.debug("Starting instance: {}", this);
         Thread thread = new Thread(this::run);
         thread.setUncaughtExceptionHandler(
                 (t, e) -> job.setFinalStatusError(e.getClass().getSimpleName() + ": " + e.getMessage()));
@@ -47,7 +65,13 @@ public class JobInstance {
     private void run() {
         initialInstant = Instant.now();
         running = true;
-        exitCode = pipeline.containerRuntimeAdapter.runContainerAndGetExitCode(job.composeService, index);
+        exitCode = pipeline.containerRuntimeAdapter
+                .startContainerAndGetExitCode(ContainerConfiguration.builder()
+                        .service(job.composeService)
+                        .index(index)
+                        .forEachOutput(msg -> logger.info(infoPlaceholder, msg))
+                        .forEachError(msg -> logger.error(errorPlaceholder, msg))
+                        .build());
         finalInstant = Instant.now();
         duration = Duration.between(initialInstant, finalInstant);
         running = false;
@@ -57,8 +81,18 @@ public class JobInstance {
 
     void stop() {
         synchronized (this) {
-            logger.debug("{}Stopping instance", logPrefix);
-            pipeline.containerRuntimeAdapter.stopContainer(job.composeService, index);
+            logger.debug("Stopping instance: {}", this);
+            pipeline.containerRuntimeAdapter
+                    .stopContainer(ContainerConfiguration.builder()
+                            .service(job.composeService)
+                            .index(index)
+                            .forEachOutput(msg -> logger.info(
+                                    "{}STOPPING_CONTAINER{}Index: {}",
+                                    job.redLabel, job.separator, index))
+                            .forEachError(msg -> logger.error(
+                                    "{}STOPPING_CONTAINER{}Index: {}",
+                                    job.redLabel, job.separator, index))
+                            .build());
         }
     }
 

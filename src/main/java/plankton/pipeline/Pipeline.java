@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
 import plankton.compose.ComposeDocument;
-import plankton.compose.ComposeService;
 import plankton.util.Colors;
 
 @EqualsAndHashCode(of = "composeDocument")
@@ -22,27 +21,29 @@ public class Pipeline {
 
     ComposeDocument composeDocument;
     ContainerRuntimeAdapter containerRuntimeAdapter;
-    Set<ComposeService> composeServices;
 
     final List<Job> jobs = new ArrayList<>();
     final Map<String, Job> jobsByName = new HashMap<>();
+
     List<Set<Job>> dependencyLevels = new ArrayList<>();
     Duration timeoutLimitForJobs;
     final Set<Job> autoStopJobs = new HashSet<>();
 
     private static final Logger logger = LoggerFactory.getLogger(Pipeline.class);
+    private String logPrefix;
 
     Pipeline() {
         super();
     }
 
+    void initializeLogPrefix() {
+        logPrefix = LogUtils.blankPrefix();
+    }
+
     public void start() {
-        line();
-        logger.info("{}                            PIPELINE STARTED{}", Colors.BRIGHT_WHITE, Colors.ANSI_RESET);
-        line();
-        if (jobs.isEmpty()) {
+        logger.info("{}{}PIPELINE_STARTED{}", logPrefix, Colors.BLUE, Colors.ANSI_RESET);
+        if (jobs.isEmpty())
             logger.warn("{} ... {}", this, "There are no jobs to run");
-        }
         jobs.forEach(Job::start);
     }
 
@@ -53,28 +54,21 @@ public class Pipeline {
             return;
         autoStopJobs();
         refreshFinished();
-        if (finished) {
-            line();
-            logger.info("{}                           PIPELINE FINISHED{}", Colors.BRIGHT_WHITE, Colors.ANSI_RESET);
-            line();
-            jobs.forEach(Job::logFinalStatus);
-            line();
-        }
+        if (finished)
+            logger.info("{}{}PIPELINE_FINISHED{}", logPrefix, Colors.BLUE, Colors.ANSI_RESET);
     }
 
     private void autoStopJobs() {
-        for (Job autoStopJob : autoStopJobs) {
+        autoStopJobs.forEach(job -> {
             boolean autoStopNow = true;
-            for (Job dependentJob : autoStopJob.directDependents) {
-                if (!dependentJob.status.isFinal()) {
+            for (Job dependentJob : job.dependents.keySet())
+                if (!dependentJob.status.isFinal())
                     autoStopNow = false;
-                }
-            }
             if (autoStopNow) {
-                logger.debug("Auto stopping {} because it is not required anymore", autoStopJob);
-                autoStopJob.stop();
+                logger.debug("Auto stopping {} because it is not required anymore", job);
+                job.stop();
             }
-        }
+        });
     }
 
     private void refreshFinished() {
@@ -84,11 +78,6 @@ public class Pipeline {
                 f = false;
         }
         finished = f;
-    }
-
-    private void line() {
-        String line = "------------------------------------------------------------------------";
-        logger.info("{}{}{}", Colors.BRIGHT_WHITE, line, Colors.ANSI_RESET);
     }
 
     public void stop() {

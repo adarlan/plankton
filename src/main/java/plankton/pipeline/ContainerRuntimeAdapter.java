@@ -1,16 +1,14 @@
 package plankton.pipeline;
 
-import plankton.compose.ComposeService;
-
 public interface ContainerRuntimeAdapter {
 
-    void pullImage(ComposeService service);
+    void pullImage(ContainerConfiguration configuration);
 
-    void buildImage(ComposeService service);
+    void buildImage(ContainerConfiguration configuration);
 
-    void createContainers(ComposeService service);
+    void createContainers(ContainerConfiguration configuration);
 
-    int runContainerAndGetExitCode(ComposeService service, int containerIndex);
+    int startContainerAndGetExitCode(ContainerConfiguration configuration);
 
-    void stopContainer(ComposeService service, int containerIndex);
+    void stopContainer(ContainerConfiguration configuration);
 }

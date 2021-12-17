@@ -16,7 +16,7 @@ public class JobDto {
     public JobDto(Job job) {
         this.name = job.name();
         this.status = statusOf(job);
-        job.dependencyMap().forEach((j, c) -> this.dependencies.put(j.name(), c.toString().toLowerCase()));
+        job.dependencies().forEach((j, c) -> this.dependencies.put(j.name(), c.toString().toLowerCase()));
     }
 
     private String statusOf(Job job) {
