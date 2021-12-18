@@ -150,7 +150,13 @@ public class PlanktonSetup {
     }
 
     private String namespace() {
-        return String.valueOf(Instant.now().getEpochSecond()).trim();
+        int min = 1;
+        int max = 1000000000;
+        double r = (Math.random() * ((max - min) + 1)) + min;
+        String a = String.valueOf((int) r);
+        String b = String.valueOf(Instant.now().getEpochSecond()).trim();
+        logger.debug("namespace: a={}; b={}", a, b);
+        return a + b;
     }
 
     private String workspacePathFromPlanktonPerspective() {
