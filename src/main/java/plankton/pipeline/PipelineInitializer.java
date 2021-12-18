@@ -132,11 +132,7 @@ public class PipelineInitializer {
         } else {
             if (job.dependencies.containsKey(dependencyJob)) {
                 DependsOnCondition previousCondition = job.dependencies.get(dependencyJob);
-                if (ambiguity(condition, previousCondition))
-                    throw new DependencyAmbiguityException(
-                            job.name + " has conflicting dependencies on " + dependencyJob.name
-                                    + " (" + condition + " and " + previousCondition + ")");
-                else if (condition.relevance() > previousCondition.relevance()) {
+                if (condition.relevance() > previousCondition.relevance()) {
                     job.dependencies.put(dependencyJob, condition);
                     dependencyJob.dependents.put(job, condition);
                     logger.debug(
@@ -150,14 +146,6 @@ public class PipelineInitializer {
                         condition);
             }
         }
-    }
-
-    private boolean ambiguity(DependsOnCondition c1, DependsOnCondition c2) {
-        Set<DependsOnCondition> set = new HashSet<>();
-        set.add(c1);
-        set.add(c2);
-        return set.contains(DependsOnCondition.SERVICE_COMPLETED_SUCCESSFULLY)
-                && set.contains(DependsOnCondition.SERVICE_FAILED);
     }
 
     private DependsOnCondition mostRelevant(DependsOnCondition c1, DependsOnCondition c2) {
@@ -316,8 +304,7 @@ public class PipelineInitializer {
         Collection<DependsOnCondition> requiredConditions = job.dependents.values();
         if ((requiredConditions.contains(DependsOnCondition.SERVICE_STARTED)
                 || requiredConditions.contains(DependsOnCondition.SERVICE_HEALTHY))
-                && !(requiredConditions.contains(DependsOnCondition.SERVICE_COMPLETED_SUCCESSFULLY)
-                        || requiredConditions.contains(DependsOnCondition.SERVICE_FAILED))) {
+                && !requiredConditions.contains(DependsOnCondition.SERVICE_COMPLETED_SUCCESSFULLY)) {
             job.autoStopWhenDirectDependentsHaveFinalStatus = true;
             pipeline.autoStopJobs.add(job);
         }

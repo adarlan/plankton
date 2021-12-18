@@ -188,8 +188,6 @@ public class Job {
                 return started;
             case SERVICE_COMPLETED_SUCCESSFULLY:
                 return status.isSucceeded();
-            case SERVICE_FAILED:
-                return status.isFailed();
             default:
                 throw new UnsupportedOperationException("Unsupported dependency condition: " + condition);
         }
@@ -201,8 +199,6 @@ public class Job {
                 return status.isFinal() && !started;
             case SERVICE_COMPLETED_SUCCESSFULLY:
                 return status.isFailed();
-            case SERVICE_FAILED:
-                return status.isSucceeded();
             default:
                 throw new UnsupportedOperationException("Unsupported dependency condition: " + condition);
         }
