@@ -25,11 +25,9 @@ import plankton.compose.serviceprops.Healthcheck;
 import plankton.compose.serviceprops.Image;
 import plankton.compose.serviceprops.Labels;
 import plankton.compose.serviceprops.Profiles;
-import plankton.compose.serviceprops.Scale;
 import plankton.compose.serviceprops.User;
 import plankton.compose.serviceprops.Volumes;
 import plankton.compose.serviceprops.WorkingDir;
-import plankton.util.Colors;
 import plankton.util.YamlUtils;
 
 public class ComposeInitializer {
@@ -75,8 +73,6 @@ public class ComposeInitializer {
                 logger.debug("{} labels = {}", service, service.labels);
             if (service.profiles != null)
                 logger.debug("{} profiles = {}", service, service.profiles);
-            if (service.scale != null)
-                logger.debug("{} scale = {}", service, service.scale);
             if (service.user != null)
                 logger.debug("{} user = {}", service, service.user);
             if (service.volumes != null)
@@ -96,12 +92,7 @@ public class ComposeInitializer {
         ComposeDocument doc = new ComposeDocument();
         doc.filePath = filePath;
         doc.key = configuration.resolvePathsFrom().relativize(doc.filePath).toString();
-
-        doc.resolvePathsFrom = doc.filePath.getParent();
-        // TODO read option from config to determine if it is resolved from file parent
-        // or from workspace
-        // resolvePathsFrom: WORKSPACE_PERSPECTIVE or COMPOSE_FILES_PERSPECTIVE
-
+        doc.resolvePathsFrom = configuration.resolvePathsFrom();
         initializeDocumentMap(doc);
         initializeServicesMap(doc);
         doc.documentMap.keySet()
@@ -149,7 +140,6 @@ public class ComposeInitializer {
         doc.services().forEach(s -> s.image = initializeProperty(doc, s, Image::new));
         doc.services().forEach(s -> s.labels = initializeProperty(doc, s, Labels::new));
         doc.services().forEach(s -> s.profiles = initializeProperty(doc, s, Profiles::new));
-        doc.services().forEach(s -> s.scale = initializeProperty(doc, s, Scale::new));
         doc.services().forEach(s -> s.user = initializeProperty(doc, s, User::new));
         doc.services().forEach(s -> s.volumes = initializeProperty(doc, s, Volumes::new));
         doc.services().forEach(s -> s.workingDir = initializeProperty(doc, s, WorkingDir::new));
@@ -222,7 +212,6 @@ public class ComposeInitializer {
         service.image = extendProperty(parent.image, service.image);
         service.labels = extendProperty(parent.labels, service.labels);
         service.profiles = extendProperty(parent.profiles, service.profiles);
-        service.scale = extendProperty(parent.scale, service.scale);
         service.user = extendProperty(parent.user, service.user);
         service.volumes = extendProperty(parent.volumes, service.volumes);
         service.workingDir = extendProperty(parent.workingDir, service.workingDir);

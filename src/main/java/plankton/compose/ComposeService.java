@@ -23,7 +23,6 @@ import plankton.compose.serviceprops.Healthcheck;
 import plankton.compose.serviceprops.Image;
 import plankton.compose.serviceprops.Labels;
 import plankton.compose.serviceprops.Profiles;
-import plankton.compose.serviceprops.Scale;
 import plankton.compose.serviceprops.User;
 import plankton.compose.serviceprops.Volumes;
 import plankton.compose.serviceprops.WorkingDir;
@@ -51,7 +50,6 @@ public class ComposeService {
     Image image;
     Labels labels;
     Profiles profiles;
-    Scale scale;
     User user;
     Volumes volumes;
     WorkingDir workingDir;
@@ -164,12 +162,6 @@ public class ComposeService {
         return profiles == null
                 ? new ArrayList<>()
                 : profiles.list();
-    }
-
-    public int scale() {
-        return scale == null
-                ? 1
-                : scale.getNumber();
     }
 
     public Optional<User> user() {
