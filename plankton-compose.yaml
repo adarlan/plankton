@@ -5,7 +5,7 @@ services:
 
   .build:
 
-  build_plankton_jar:
+  build_runner_jar:
     extends: .build
     image: maven:3.6-jdk-11
     entrypoint:
@@ -17,9 +17,9 @@ services:
       - ./target:/workspace/target
       - .m2/repository:/root/.m2/repository
 
-  build_plankton_image:
+  build_runner_image:
     extends: .build
-    depends_on: build_plankton_jar
+    depends_on: build_runner_jar
     image: docker:20.10
     entrypoint:
       - docker build -t adarlan/plankton .
@@ -29,7 +29,7 @@ services:
       - ./target:/workspace/target
       - /var/run/docker.sock:/var/run/docker.sock
 
-  build_plankton_sandbox_image:
+  build_sandbox_image:
     extends: .build
     image: docker:20.10
     entrypoint:
@@ -53,67 +53,44 @@ services:
     depends_on:
       - .build
 
-  .test_group_1:
+  test_binding-mounts:
     extends: .test
-
-  .test_group_2:
-    extends: .test
-    depends_on:
-      - .test_group_1
-
-  .test_group_3:
-    extends: .test
-    depends_on:
-      - .test_group_2
-
-  test_binding-volumes:
-    extends: .test_group_1
     volumes:
-      - ./examples/binding-volumes:/workspace
+      - ./examples/binding-mounts:/workspace
 
   test_building-docker-image:
-    extends: .test_group_1
+    extends: .test
     volumes:
       - ./examples/building-docker-image:/workspace
 
-  # test_failing-on-blocked-job:
-  #   extends: .test
-  #   volumes:
-  #     - ./examples/failing-on-blocked-job:/workspace
-
-  # test_failing-on-dependency-loop:
-  #   extends: .test
-  #   volumes:
-  #     - ./examples/failing-on-dependency-loop:/workspace
-
   test_running-parallel-jobs:
-    extends: .test_group_2
+    extends: .test
     volumes:
       - ./examples/running-parallel-jobs:/workspace
 
   test_saying-hello-world:
-    extends: .test_group_2
+    extends: .test
     volumes:
       - ./examples/saying-hello-world:/workspace
 
-  test_scaling-jobs:
-    extends: .test_group_3
+  test_scaling-job:
+    extends: .test
     volumes:
-      - ./examples/scaling-jobs:/workspace
+      - ./examples/scaling-job:/workspace
 
-  test_testing-web-application:
-    extends: .test_group_3
+  test_testing-failure:
+    extends: .test
     volumes:
-      - ./examples/testing-web-application:/workspace
+      - ./examples/testing-failure:/workspace
 
-  # test_testing-web-application-with-database:
-  #   extends: .test
-  #   volumes:
-  #     - ./examples/testing-web-application-with-database:/workspace
+  test_writing-and-reading-file:
+    extends: .test
+    volumes:
+      - ./examples/writing-and-reading-file:/workspace
 
-  # ===========
-  # PUSH IMAGES
-  # ===========
+  # ====
+  # PUSH
+  # ====
 
   .push_image:
     image: docker
@@ -128,12 +105,12 @@ services:
     depends_on:
       - .test
 
-  push_plankton_image:
+  push_runner_image:
     extends: .push_image
     environment:
       - IMAGE=adarlan/plankton
 
-  push_plankton_sandbox_image:
+  push_sandbox_image:
     extends: .push_image
     environment:
       - IMAGE=adarlan/plankton:sandbox
