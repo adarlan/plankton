@@ -2,7 +2,7 @@ package plankton.pipeline;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -55,7 +55,6 @@ public class PipelineInitializer {
 
         removeAbstractAndNonElectedJobs();
 
-        pipeline.jobs.forEach(this::initializeJobInstances);
         pipeline.jobs.forEach(this::initializeJobDependencyLevel);
         sortJobsByDependencyLevel();
         pipeline.jobs.forEach(this::initializeJobStopMode);
@@ -113,22 +112,21 @@ public class PipelineInitializer {
     }
 
     private void resolveJobDependency(Job job, Job dependencyJob, DependsOnCondition condition) {
-        Set<ComposeService> childServices = dependencyJob.composeService.childServices();
-        if (!childServices.isEmpty()) {
-            childServices.forEach(childService -> {
-                Job dependencyJobChild = pipeline.jobsByName.get(childService.name());
-                logger.debug(
-                        "  - Forwarding {} dependency resolution from {} to its child {}", job, dependencyJob,
-                        dependencyJobChild);
-                resolveJobDependency(job, dependencyJobChild, condition);
-            });
-        }
+        dependencyJob.composeService.childServices().stream()
+                .map(service -> pipeline.jobsByName.get(service.name())).collect(Collectors.toSet())
+                .forEach(dependencyJobChild -> {
+                    logger.debug(
+                            "  - Forwarding {} dependency resolution from {} to its child {}", job, dependencyJob,
+                            dependencyJobChild);
+                    resolveJobDependency(job, dependencyJobChild, condition);
+                });
         if (dependencyJob.name.startsWith(".")) {
-            dependencyJob.dependencies.forEach((j, c) -> {
-                logger.debug(
-                        "  - Forwarding {} dependency resolution from {} to its dependency {}", job, dependencyJob, j);
-                resolveJobDependency(job, j, mostRelevant(condition, c));
-            });
+            // dependencyJob.dependencies.forEach((j, c) -> {
+            // logger.debug(
+            // " - Forwarding {} dependency resolution from {} to its dependency {}", job,
+            // dependencyJob, j);
+            // resolveJobDependency(job, j, mostRelevant(condition, c));
+            // });
         } else {
             if (job.dependencies.containsKey(dependencyJob)) {
                 DependsOnCondition previousCondition = job.dependencies.get(dependencyJob);
@@ -147,6 +145,25 @@ public class PipelineInitializer {
             }
         }
     }
+
+    // private void forwardJobDependencyResolutionToDependencyChilds(
+    // Job job,
+    // Job dependencyJob,
+    // DependsOnCondition condition) {
+    // dependencyJob.composeService
+    // .childServices()
+    // .stream()
+    // .map(service -> pipeline.jobsByName.get(service.name()))
+    // .collect(Collectors.toSet())
+    // .forEach(dependencyJobChild -> {
+    // logger.debug(
+    // " - Forwarding {} dependency resolution from {} to its child {}", job,
+    // dependencyJob,
+    // dependencyJobChild);
+    // forwardJobDependencyResolutionToDependencyChilds(job, dependencyJobChild,
+    // condition);
+    // });
+    // }
 
     private DependsOnCondition mostRelevant(DependsOnCondition c1, DependsOnCondition c2) {
         return c1.relevance() > c2.relevance()
@@ -260,16 +277,6 @@ public class PipelineInitializer {
         return pipeline;
     }
 
-    private void initializeJobInstances(Job job) {
-        for (int instanceIndex = 0; instanceIndex < job.composeService.scale(); instanceIndex++) {
-            JobInstance instance = new JobInstance();
-            instance.job = job;
-            instance.pipeline = job.pipeline;
-            instance.index = instanceIndex;
-            job.instances.add(instance);
-        }
-    }
-
     private void initializeJobDependencyLevel(Job job) {
         int dependencyLevel = dependencyLevelOf(job, new ArrayList<>());
         for (int i = pipeline.dependencyLevels.size(); i <= dependencyLevel; i++)
@@ -314,18 +321,13 @@ public class PipelineInitializer {
         Set<String> ns = new HashSet<>();
         pipeline.jobs.forEach(job -> {
             ComposeService service = job.composeService;
-            ns.add(service.scale() > 1
-                    ? service.name() + "[" + service.scale() + "]"
-                    : service.name());
+            ns.add(service.name());
         });
         LogUtils.initializePrefixLength(ns);
     }
 
     private void initializeColorizedNamesAndLogPrefixes() {
         pipeline.initializeLogPrefix();
-        pipeline.jobs.forEach(job -> {
-            job.initializeColorizedNameAndLogPlaceholders();
-            job.instances.forEach(JobInstance::initializeColorizedNameAndLogPlaceholders);
-        });
+        pipeline.jobs.forEach(Job::initializeColorizedNameAndLogPlaceholders);
     }
 }

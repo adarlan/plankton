@@ -136,71 +136,64 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
     }
 
     @Override
-    public void createContainers(ContainerConfiguration config) {
+    public void createContainer(ContainerConfiguration config) {
         ComposeService service = config.getService();
         logger.debug("{}Creating containers for: {}", prefix, service);
-        for (int containerIndex = 0; containerIndex < service.scale(); containerIndex++) {
 
-            logger.debug("{}Creating container for: {}[{}]", prefix, service, containerIndex);
+        String containerName = namespace + "_" + service.name();
+        setCreateContainer(containerName);
 
-            String containerName = containerNameOf(service, containerIndex);
-            setCreateContainer(containerName);
+        DockerClient.ContainerCreator containerCreator = dockerClient.containerCreator();
 
-            DockerClient.ContainerCreator containerCreator = dockerClient.containerCreator();
+        containerCreator.option("--name " + containerName);
 
-            containerCreator.option("--name " + containerName);
+        containerCreator.option("--network " + networkName);
+        containerCreator.option("--hostname " + service.name());
 
-            containerCreator.option("--network " + networkName);
-            if (service.scale() == 1)
-                containerCreator.option("--hostname " + service.name());
-            else
-                containerCreator.option("--hostname " + service.name() + "_" + containerIndex);
+        service.environment().forEach(e -> containerCreator.option("--env \"" + e + "\""));
+        // TODO what if it contains: "
 
-            service.environment().forEach(e -> containerCreator.option("--env \"" + e + "\""));
-            // TODO what if it contains: "
+        service.envFile().forEach(f -> containerCreator.option("--env-file " + f));
+        service.expose().forEach(p -> containerCreator.option("--expose " + p));
+        service.groupAdd().forEach(g -> containerCreator.option("--group-add " + g));
+        service.user().ifPresent(u -> containerCreator.option("--user " + u));
+        service.workingDir().ifPresent(w -> containerCreator.option("--workdir " + w));
 
-            service.envFile().forEach(f -> containerCreator.option("--env-file " + f));
-            service.expose().forEach(p -> containerCreator.option("--expose " + p));
-            service.groupAdd().forEach(g -> containerCreator.option("--group-add " + g));
-            service.user().ifPresent(u -> containerCreator.option("--user " + u));
-            service.workingDir().ifPresent(w -> containerCreator.option("--workdir " + w));
+        if (service.entrypointIsReseted())
+            containerCreator.option("--entrypoint \"\"");
+        else if (!service.entrypoint().isEmpty()) {
 
-            if (service.entrypointIsReseted())
-                containerCreator.option("--entrypoint \"\"");
-            else if (!service.entrypoint().isEmpty()) {
+            runBashScript("mkdir -p " + workspacePathFromRunnerPerspective + "/.plankton");
+            String entrypointFileName = namespace + "_" + service.name() + ".entrypoint.sh";
+            String entrypointFilePathFromPlanktonPerspective = workspacePathFromRunnerPerspective + "/.plankton/"
+                    + entrypointFileName;
+            String entrypointFilePathFromAdapterPerspective = workspacePathFromAdapterPerspective + "/.plankton/"
+                    + entrypointFileName;
+            String entrypointFilePathFromJobContainerPerspective = "/docker-entrypoint.sh";
 
-                runBashScript("mkdir -p " + workspacePathFromRunnerPerspective + "/.plankton");
-                String entrypointFileName = namespace + "_" + service.name() + ".entrypoint.sh";
-                String entrypointFilePathFromPlanktonPerspective = workspacePathFromRunnerPerspective + "/.plankton/"
-                        + entrypointFileName;
-                String entrypointFilePathFromAdapterPerspective = workspacePathFromAdapterPerspective + "/.plankton/"
-                        + entrypointFileName;
-                String entrypointFilePathFromJobContainerPerspective = "/docker-entrypoint.sh";
-
-                createEntrypointFile(service, entrypointFilePathFromPlanktonPerspective);
-                containerCreator.option("-v " + entrypointFilePathFromAdapterPerspective + ":"
-                        + entrypointFilePathFromJobContainerPerspective);
-                containerCreator.option("--entrypoint " + entrypointFilePathFromJobContainerPerspective);
-            }
-
-            service.healthcheck().ifPresent(h -> {
-                // TODO
-                // --health-cmd string
-                // --health-interval duration
-                // --health-retries int
-                // --health-start-period duration
-                // --health-timeout duration
-            });
-
-            service.volumes().forEach(v -> containerCreator.option("--volume " + v));
-
-            containerCreator.image(service.image().orElseThrow());
-            containerCreator.args(service.command().stream().collect(Collectors.joining(" ")));
-
-            containerCreator.forEachOutput(config.getForEachOutput());
-            containerCreator.forEachError(config.getForEachError());
-            containerCreator.createContainer();
+            createEntrypointFile(service, entrypointFilePathFromPlanktonPerspective);
+            containerCreator.option("-v " + entrypointFilePathFromAdapterPerspective + ":"
+                    + entrypointFilePathFromJobContainerPerspective);
+            containerCreator.option("--entrypoint " + entrypointFilePathFromJobContainerPerspective);
         }
+
+        service.healthcheck().ifPresent(h -> {
+            // TODO
+            // --health-cmd string
+            // --health-interval duration
+            // --health-retries int
+            // --health-start-period duration
+            // --health-timeout duration
+        });
+
+        service.volumes().forEach(v -> containerCreator.option("--volume " + v));
+
+        containerCreator.image(service.image().orElseThrow());
+        containerCreator.args(service.command().stream().collect(Collectors.joining(" ")));
+
+        containerCreator.forEachOutput(config.getForEachOutput());
+        containerCreator.forEachError(config.getForEachError());
+        containerCreator.createContainer();
     }
 
     private synchronized void createEntrypointFile(ComposeService service,
@@ -224,8 +217,7 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
     @Override
     public int startContainerAndGetExitCode(ContainerConfiguration config) {
         ComposeService service = config.getService();
-        int containerIndex = config.getIndex();
-        String containerName = containerNameOf(service, containerIndex);
+        String containerName = namespace + "_" + service.name();
         setStartedContainer(containerName);
         DockerClient.ContainerStarter containerStarter = dockerClient.containerStarter()
                 .forEachOutput(config.getForEachOutput())
@@ -238,16 +230,11 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
     @Override
     public void stopContainer(ContainerConfiguration config) {
         ComposeService service = config.getService();
-        int containerIndex = config.getIndex();
-        String containerName = containerNameOf(service, containerIndex);
+        String containerName = namespace + "_" + service.name();
         dockerClient.containerStopper()
                 .forEachOutput(config.getForEachOutput())
                 .forEachError(config.getForEachError())
                 .stopContainer(containerName);
-    }
-
-    private String containerNameOf(ComposeService service, int containerIndex) {
-        return namespace + "_" + service.name() + (service.scale() > 1 ? ("_" + containerIndex) : "");
     }
 
     private void killContainer(String containerName) {

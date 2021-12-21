@@ -13,8 +13,6 @@ public class ContainerConfiguration {
     private ComposeService service;
     // The adapter implementation should not know about Compose
 
-    private Integer index;
-
     private Consumer<String> forEachOutput;
     private Consumer<String> forEachError;
 }

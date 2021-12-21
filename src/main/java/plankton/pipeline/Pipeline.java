@@ -8,16 +8,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.EqualsAndHashCode;
 import plankton.compose.ComposeDocument;
+import plankton.compose.DependsOnCondition;
 import plankton.util.Colors;
 
 @EqualsAndHashCode(of = "composeDocument")
 public class Pipeline {
+
+    private static final String PLACEHOLDER = "{}{}{}{}";
+    private static final String PIPELINE_STARTED = "PIPELINE_STARTED";
+    private static final String PIPELINE_COMPLETED_SUCCESSFULLY = "PIPELINE_COMPLETED_SUCCESSFULLY";
+    private static final String PIPELINE_FAILED = "PIPELINE_FAILED";
 
     ComposeDocument composeDocument;
     ContainerRuntimeAdapter containerRuntimeAdapter;
@@ -28,6 +35,13 @@ public class Pipeline {
     List<Set<Job>> dependencyLevels = new ArrayList<>();
     Duration timeoutLimitForJobs;
     final Set<Job> autoStopJobs = new HashSet<>();
+
+    private int jobsRunningLimit = 3;
+
+    private final List<Job> jobsWaitingForDependencies = new ArrayList<>();
+    private final List<Job> jobsScheduled = new ArrayList<>();
+    private final List<Job> jobsRunning = new ArrayList<>();
+    private final List<Job> jobsFinished = new ArrayList<>();
 
     private static final Logger logger = LoggerFactory.getLogger(Pipeline.class);
     private String logPrefix;
@@ -41,47 +55,94 @@ public class Pipeline {
     }
 
     public void start() {
-        logger.info("{}{}PIPELINE_STARTED{}", logPrefix, Colors.BLUE, Colors.ANSI_RESET);
-        if (jobs.isEmpty())
-            logger.warn("{} ... {}", this, "There are no jobs to run");
-        jobs.forEach(Job::start);
+        logger.info(PLACEHOLDER, logPrefix, Colors.BLUE, PIPELINE_STARTED, Colors.ANSI_RESET);
+        initializeQueue();
+        updateQueue();
     }
 
-    private boolean finished = false;
+    private void initializeQueue() {
+        jobs.forEach(jobsWaitingForDependencies::add);
+    }
 
-    synchronized void refresh() {
-        if (finished)
-            return;
+    private synchronized void updateQueue() {
+        new ArrayList<>(jobsWaitingForDependencies).forEach(job -> {
+            if (job.dependencies.isEmpty()) {
+                jobsWaitingForDependencies.remove(job);
+                jobsScheduled.add(job);
+                logger.debug("Job scheduled: {}", job);
+            }
+        });
+        while (jobsRunning.size() < jobsRunningLimit && !jobsScheduled.isEmpty()) {
+            Job job = jobsScheduled.remove(0);
+            jobsRunning.add(job);
+            job.start();
+            logger.debug("Job started: {}", job);
+        }
+        updateStatus();
+    }
+
+    private void updateStatus() {
+        if (jobsFinished.size() == jobs.size()) {
+            if (jobsFinished.stream()
+                    .filter(job -> job.exitCode() != 0)
+                    .collect(Collectors.toList()).isEmpty())
+                logger.info(PLACEHOLDER, logPrefix, Colors.GREEN, PIPELINE_COMPLETED_SUCCESSFULLY, Colors.ANSI_RESET);
+            else
+                logger.info(PLACEHOLDER, logPrefix, Colors.RED, PIPELINE_FAILED, Colors.ANSI_RESET);
+        }
+    }
+
+    synchronized void notifyJobStarted(Job job) {
+        removeDependenciesOnJob(job, DependsOnCondition.SERVICE_STARTED);
+    }
+
+    synchronized void notifyJobHealthy(Job job) {
+        removeDependenciesOnJob(job, DependsOnCondition.SERVICE_HEALTHY);
+    }
+
+    synchronized void notifyJobFailed(Job job) {
+        if (jobsWaitingForDependencies.contains(job))
+            jobsWaitingForDependencies.remove(job);
+        else
+            jobsRunning.remove(job);
+        jobsFinished.add(job);
+        job.dependents.forEach((dependentJob, condition) -> dependentJob.block());
         autoStopJobs();
-        refreshFinished();
-        if (finished)
-            logger.info("{}{}PIPELINE_FINISHED{}", logPrefix, Colors.BLUE, Colors.ANSI_RESET);
+    }
+
+    synchronized void notifyJobCompletedSuccessfully(Job job) {
+        jobsRunning.remove(job);
+        jobsFinished.add(job);
+        removeDependenciesOnJob(job, DependsOnCondition.SERVICE_COMPLETED_SUCCESSFULLY);
+        autoStopJobs();
+    }
+
+    synchronized void removeDependenciesOnJob(Job job, DependsOnCondition satisfiedCondition) {
+        new HashMap<>(job.dependents).forEach((dependentJob, requiredCondition) -> {
+            if (satisfiedCondition == requiredCondition) {
+                dependentJob.dependencies.remove(job);
+                job.dependents.remove(dependentJob);
+                logger.debug("Dependency satisfied: {} depends on {} with status {}", dependentJob, job,
+                        satisfiedCondition);
+            }
+        });
+        updateQueue();
     }
 
     private void autoStopJobs() {
         autoStopJobs.forEach(job -> {
-            boolean autoStopNow = true;
-            for (Job dependentJob : job.dependents.keySet())
-                if (!dependentJob.status.isFinal())
-                    autoStopNow = false;
-            if (autoStopNow) {
-                logger.debug("Auto stopping {} because it is not required anymore", job);
+
+            if (job.dependents.isEmpty()) {
+                // TODO keep in mind that the dependents are removed...
+
+                logger.debug("Auto stopping job: {}", job);
                 job.stop();
             }
         });
     }
 
-    private void refreshFinished() {
-        boolean f = true;
-        for (Job job : jobs) {
-            if (!job.status.isFinal())
-                f = false;
-        }
-        finished = f;
-    }
-
     public void stop() {
-        logger.debug("{} ... Stopping", this);
+        logger.debug("Stopping pipeline");
         jobs.forEach(Job::stop);
     }
 
