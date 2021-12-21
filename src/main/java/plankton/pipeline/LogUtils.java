@@ -13,7 +13,7 @@ import plankton.util.Colors;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class LogUtils {
 
-    private static final boolean COLORFUL = false;
+    private static final boolean COLORFUL = true;
 
     private static int prefixLength = 0;
     private static final List<String> colors = new ArrayList<>();
@@ -27,14 +27,15 @@ public class LogUtils {
     }
 
     private static void initializeColors() {
-        colors.add(Colors.BRIGHT_YELLOW);
         colors.add(Colors.BRIGHT_CYAN);
-        colors.add(Colors.BRIGHT_PURPLE);
-        if (COLORFUL) {
+        colors.add(Colors.BRIGHT_YELLOW);
+        if (COLORFUL)
             colors.add(Colors.BRIGHT_BLUE);
+        if (COLORFUL)
             colors.add(Colors.BRIGHT_GREEN);
+        colors.add(Colors.BRIGHT_PURPLE);
+        if (COLORFUL)
             colors.add(Colors.BRIGHT_RED);
-        }
     }
 
     static String prefixOf(String string) {
