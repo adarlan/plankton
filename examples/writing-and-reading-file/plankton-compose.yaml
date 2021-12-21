@@ -1,0 +1,17 @@
+services:
+  write:
+    image: alpine
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    entrypoint:
+      - echo "Hello, World!" > hello.txt
+
+  read:
+    depends_on: write
+    image: alpine
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    entrypoint:
+      - cat hello.txt

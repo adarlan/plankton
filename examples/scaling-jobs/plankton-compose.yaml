@@ -1,8 +1,0 @@
-services:
-  foo:
-    image: alpine
-    environment:
-      FOO: "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z"
-    entrypoint:
-      - for x in $FOO; do echo $x; sleep 1; done
-    scale: 3
