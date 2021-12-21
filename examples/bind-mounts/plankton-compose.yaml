@@ -1,22 +1,16 @@
 services:
-  read:
+  foo:
     image: alpine
-    working_dir: /ws
+    working_dir: /workspace
     volumes:
-      - ./file:/ws/file:ro
-      - ./dir:/ws/dir:ro
+      - ./:/workspace
     entrypoint:
-      - set -e
-      - cat file
-      - cd dir
-      - ls
+      - cat foo.txt
 
-  write:
+  bar:
     image: alpine
-    working_dir: /ws
+    working_dir: /workspace
     volumes:
-      - ./dir:/ws/dir
+      - ./bar:/workspace
     entrypoint:
-      - set -e
-      - cd dir
-      - echo Hello > hello.txt
+      - cat bar.txt
