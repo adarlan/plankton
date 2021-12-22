@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import lombok.EqualsAndHashCode;
 import plankton.compose.ComposeService;
 import plankton.compose.DependsOnCondition;
-import plankton.util.Colors;
 
 @EqualsAndHashCode(of = { "pipeline", "name" })
 public class Job {
