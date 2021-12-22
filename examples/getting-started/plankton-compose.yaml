@@ -1,0 +1,14 @@
+services:
+  build:
+    image: docker
+    entrypoint:
+      - docker build -t hello-plankton .
+    working_dir: /app
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./:/app
+
+  run:
+    image: hello-plankton
+    depends_on: build
+
