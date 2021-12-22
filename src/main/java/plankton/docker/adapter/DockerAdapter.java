@@ -1,5 +1,6 @@
 package plankton.docker.adapter;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -18,7 +19,6 @@ import plankton.pipeline.ContainerConfiguration;
 import plankton.pipeline.ContainerRuntimeAdapter;
 import plankton.util.BashScript;
 import plankton.util.BashScriptFailedException;
-import plankton.util.FileSystemUtils;
 
 public class DockerAdapter implements ContainerRuntimeAdapter {
 
@@ -202,7 +202,11 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
         List<String> commands = new ArrayList<>();
         commands.add("#!/bin/sh");
         entrypointList.forEach(commands::add);
-        FileSystemUtils.writeFile(entrypointFilePathFromPlanktonPerspective, commands);
+        try {
+            FileSystemUtils.writeFile(entrypointFilePathFromPlanktonPerspective, commands);
+        } catch (IOException e) {
+            throw new DockerAdapterException("Unable to write entrypoint file", e);
+        }
         runBashScript("chmod +x " + entrypointFilePathFromPlanktonPerspective);
     }
 
