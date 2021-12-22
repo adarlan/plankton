@@ -1,5 +1,6 @@
 package plankton.compose;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -28,7 +29,6 @@ import plankton.compose.serviceprops.Profiles;
 import plankton.compose.serviceprops.User;
 import plankton.compose.serviceprops.Volumes;
 import plankton.compose.serviceprops.WorkingDir;
-import plankton.util.YamlUtils;
 
 public class ComposeInitializer {
 
@@ -107,7 +107,11 @@ public class ComposeInitializer {
     }
 
     private void initializeDocumentMap(ComposeDocument composeDocument) {
-        composeDocument.documentMap = YamlUtils.loadFrom(composeDocument.filePath);
+        try {
+            composeDocument.documentMap = YamlUtils.loadFrom(composeDocument.filePath);
+        } catch (IOException e) {
+            throw new ComposeFormatException("Unable to initialize the Compose document map", e);
+        }
     }
 
     @SuppressWarnings("unchecked")
