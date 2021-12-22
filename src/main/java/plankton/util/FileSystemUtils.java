@@ -12,31 +12,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FileSystemUtils {
 
-    public static void createDirectory(String path) {
-        try {
-            BashScript.run("mkdir -p " + path);
-        } catch (BashScriptFailedException e) {
-            throw new FileSystemUtilsException("Unable to create directory " + path, e);
-        }
-    }
-
-    public static void copyFile(String fromPath, String toPath) {
-        try {
-            BashScript.run("cp " + fromPath + " " + toPath);
-        } catch (BashScriptFailedException e) {
-            throw new FileSystemUtilsException("Unable to copy file from " + fromPath + " to " + toPath, e);
-        }
-    }
-
-    public static void copyDirectoryContent(String fromPath, String toPath) {
-        try {
-            BashScript.run("cp -R " + fromPath + "/. " + toPath + "/");
-        } catch (BashScriptFailedException e) {
-            throw new FileSystemUtilsException("Unable to copy directory content from " + fromPath + " to " + toPath,
-                    e);
-        }
-    }
-
     public static void writeFile(String filePath, Iterable<String> strings) {
         File file = new File(filePath);
         writeFile(file, strings);
