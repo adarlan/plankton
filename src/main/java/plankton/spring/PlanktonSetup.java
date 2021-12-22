@@ -36,7 +36,6 @@ import plankton.pipeline.PipelineConfiguration;
 import plankton.pipeline.PipelineInitializer;
 import plankton.util.BashScript;
 import plankton.util.BashScriptFailedException;
-import plankton.util.DockerUtils;
 
 @Component
 public class PlanktonSetup {

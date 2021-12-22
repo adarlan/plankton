@@ -1,12 +1,16 @@
-package plankton.util;
+package plankton.spring;
 
-public class DockerUtils {
+import plankton.util.BashScript;
+import plankton.util.BashScriptFailedException;
+import plankton.util.DockerUtilsException;
+
+class DockerUtils {
 
     private DockerUtils() {
         super();
     }
 
-    public static String getCurrentContainerId() {
+    static String getCurrentContainerId() {
         try {
             String containerId = BashScript
                     .runAndGetOutputString("cat /proc/self/cgroup | grep docker | head -n 1 | cut -d/ -f3");
