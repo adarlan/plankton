@@ -327,7 +327,6 @@ public class PipelineInitializer {
     }
 
     private void initializeColorizedNamesAndLogPrefixes() {
-        pipeline.initializeLogPrefix();
         pipeline.jobs.forEach(Job::initializeColorizedNameAndLogPlaceholders);
     }
 }

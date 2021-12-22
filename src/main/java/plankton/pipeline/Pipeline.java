@@ -16,15 +16,9 @@ import org.slf4j.LoggerFactory;
 import lombok.EqualsAndHashCode;
 import plankton.compose.ComposeDocument;
 import plankton.compose.DependsOnCondition;
-import plankton.util.Colors;
 
 @EqualsAndHashCode(of = "composeDocument")
 public class Pipeline {
-
-    private static final String PLACEHOLDER = "{}{}{}{}";
-    private static final String PIPELINE_STARTED = "PIPELINE_STARTED";
-    private static final String PIPELINE_COMPLETED_SUCCESSFULLY = "PIPELINE_COMPLETED_SUCCESSFULLY";
-    private static final String PIPELINE_FAILED = "PIPELINE_FAILED";
 
     ComposeDocument composeDocument;
     ContainerRuntimeAdapter containerRuntimeAdapter;
@@ -44,18 +38,13 @@ public class Pipeline {
     private final List<Job> jobsFinished = new ArrayList<>();
 
     private static final Logger logger = LoggerFactory.getLogger(Pipeline.class);
-    private String logPrefix;
 
     Pipeline() {
         super();
     }
 
-    void initializeLogPrefix() {
-        logPrefix = LogUtils.blankPrefix();
-    }
-
     public void start() {
-        logger.info(PLACEHOLDER, logPrefix, Colors.BLUE, PIPELINE_STARTED, Colors.ANSI_RESET);
+        logger.info("Pipeline started");
         initializeQueue();
         updateQueue();
     }
@@ -86,9 +75,9 @@ public class Pipeline {
             if (jobsFinished.stream()
                     .filter(job -> job.exitCode() != 0)
                     .collect(Collectors.toList()).isEmpty())
-                logger.info(PLACEHOLDER, logPrefix, Colors.GREEN, PIPELINE_COMPLETED_SUCCESSFULLY, Colors.ANSI_RESET);
+                logger.info("Pipeline completed successfully");
             else
-                logger.info(PLACEHOLDER, logPrefix, Colors.RED, PIPELINE_FAILED, Colors.ANSI_RESET);
+                logger.info("Pipeline failed");
         }
     }
 
