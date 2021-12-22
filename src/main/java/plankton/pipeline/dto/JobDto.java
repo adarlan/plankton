@@ -21,6 +21,7 @@ public class JobDto {
 
     private String statusOf(Job job) {
         switch (job.status()) {
+            case CREATED:
             case WAITING:
                 return "waiting";
             case PULLING:
