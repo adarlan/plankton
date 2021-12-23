@@ -1,7 +1,7 @@
 # Plankton
 
 Plankton is a Container-Native CI/CD tool
-based on the [Compose Specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md).
+based on the Compose Specification.
 
 Just have a `plankton-compose.yaml` file containing the pipeline configuration
 and execute a `docker run` command to start it.
@@ -15,11 +15,11 @@ The `plankton-compose.yaml` file is configured using the
 services:
   foo:
     image: foo
-    command: --foo
+    entrypoint: foo
 
   bar:
     image: bar
-    command: --bar
+    entrypoint: bar
 ```
 
 It's the same configuration format used by Docker Compose,
@@ -42,8 +42,6 @@ not only Docker containers.
 At first, Plankton only supports Docker containers,
 but the design patterns used in the code allow it to be extended by adding new adapters for other container systems.
 
-![class-diagram.png](docs/img/class-diagram.png)
-
 ## Run pipelines locally
 
 Many CI/CD tools require you to push the source code to a remote repository
@@ -54,9 +52,9 @@ just executing a `docker run` command.
 
 ### Example
 
-Follow the steps below to create a simple web application
-and configure a pipeline to build and deploy it.
-Then run the pipeline locally,
+Follow the steps below to create a simple application
+and configure a pipeline to build and run it.
+Then start the pipeline locally,
 tracking its progress through terminal logs or the web interface in the browser.
 
 > It requires Docker installed
@@ -64,55 +62,46 @@ tracking its progress through terminal logs or the web interface in the browser.
 #### Create a `Dockerfile`
 
 ```Dockerfile
-FROM nginx
-RUN echo "Hello, Plankton!" > /usr/share/nginx/html/index.html
+FROM alpine
+ENTRYPOINT echo "Hello, Plankton!"
 ```
 
-This is the web application we are creating.
-Just an Nginx web server
-serving an index page that says "Hello, Plankton!".
+This is the application we are creating.
+It just echoes "Hello, Plankton!".
 
 #### Create a `plankton-compose.yaml` file
 
 ```yaml
 services:
-  build-app:
+  build:
     image: docker
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - .:/app
+      - ./:/app
     working_dir: /app
-    entrypoint: docker build -t hello-plankton .
+    entrypoint:
+      - docker build -t hello-plankton .
 
-  deploy-app:
-    depends_on: build-app
-    image: docker
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    entrypoint: docker run -d -p 8080:80 hello-plankton
+  run:
+    image: hello-plankton
+    depends_on: build
 ```
 
 This is the pipeline configuration.
-
-`build-app` and `deploy-app` are the pipeline jobs.
-
-> **Note**: The pipeline jobs are under the `services` key
-> because the Compose Specification defines the components as "services".
-> But, for CI/CD purposes, it would be better to call it "jobs".
-
-The `build-app` job will build the application image.
-
-The `deploy-app` job will run the application container.
-Note that it depends on the success of the `build_app` job.
+Note that `run` depends on `build`.
 
 #### Run the pipeline
 
 ```shell
-docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v $PWD:/app -w /app -p 1329:1329 adarlan/plankton
+docker run -it \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $PWD:/app -w /app \
+  -p 1329:1329 \
+  adarlan/plankton
 ```
 
 - `-v /var/run/docker.sock:/var/run/docker.sock` is because Plankton needs access to the Docker host
-- `-v $PWD:/app` and `-w /app` is because Plankton needs access to the directory containing the `plankton-compose.yaml` file
+- `-v $PWD:/app` and `-w /app` is because Plankton needs access to the directory containing the application files
 - `-p 1329:1329` is because Plankton provides a web interface, which you can open at `http://localhost:1329`
 
 #### Follow the logs
@@ -144,7 +133,11 @@ The Plankton sandbox can be enabled by adding the `--sandbox` option.
 Example:
 
 ```shell
-docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v $PWD:/app -w /app -p 1329:1329 adarlan/plankton --sandbox
+docker run -it \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $PWD:/app -w /app \
+  -p 1329:1329 \
+  adarlan/plankton --sandbox
 ```
 
 > It requires Sysbox installed
@@ -175,3 +168,14 @@ setting the following variables:
 
 - `REGISTRY_USER`
 - `REGISTRY_PASSWORD`
+
+## Conclusion
+
+Plankton is an Open-Source and Container-Native CI/CD tool
+with the potential to be more than a portfolio project
+and become a real choice for CI/CD pipelines.
+
+To contribute to Plankton,
+please share this project,
+send a pull request
+or give a feedback to [@adarlan on Twitter](httpl://twitter.com/adarlan).
