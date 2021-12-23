@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
+import plankton.bash.BashScript;
+import plankton.bash.BashScriptFailedException;
 import plankton.compose.ComposeDocument;
 import plankton.compose.ComposeDocumentConfiguration;
 import plankton.compose.ComposeInitializer;
@@ -31,7 +33,6 @@ import plankton.docker.daemon.DockerSandboxDaemon;
 import plankton.docker.inspect.Container;
 import plankton.docker.inspect.ContainerMount;
 import plankton.docker.inspect.DockerInspect;
-import plankton.docker.util.DockerUtils;
 import plankton.pipeline.ContainerRuntimeAdapter;
 import plankton.pipeline.Pipeline;
 import plankton.pipeline.PipelineConfiguration;
@@ -80,7 +81,7 @@ public class PlanktonSetup {
         workspacePathFromPlanktonPerspective = workspacePathFromPlanktonPerspective();
         composeFilePathFromPlanktonPerspective = composeFilePathFromPlanktonPerspective();
         composeFilePathRelativeToWorkspace = composeFilePathRelativeToWorkspace();
-        runningFromContainerId = DockerUtils.getCurrentContainerId();
+        runningFromContainerId = getCurrentContainerId();
         runningFromHost = (runningFromContainerId == null);
         if (runningFromHost) {
             workspacePathOnHost = workspacePathFromPlanktonPerspective;
@@ -183,6 +184,27 @@ public class PlanktonSetup {
 
     private String composeFilePathRelativeToWorkspace() {
         return composeFilePathFromPlanktonPerspective.substring(workspacePathFromPlanktonPerspective.length());
+    }
+
+    private String getCurrentContainerId() {
+        List<String> output = new ArrayList<>();
+        BashScript script = new BashScript();
+        script.command("cat /proc/self/cgroup | grep docker | head -n 1 | cut -d/ -f3");
+        script.forEachOutput(output::add);
+        try {
+            script.run();
+        } catch (BashScriptFailedException e) {
+            return null;
+        }
+        if (script.exitCode() != 0
+                || script.hasError()
+                || output.size() != 1) {
+            return null;
+        } else {
+            String containerId;
+            containerId = output.get(0);
+            return (containerId == null || containerId.isBlank()) ? null : containerId;
+        }
     }
 
     private ComposeDocument composeDocument() {
