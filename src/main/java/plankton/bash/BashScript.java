@@ -1,4 +1,4 @@
-package plankton.docker.bash;
+package plankton.bash;
 
 import java.io.BufferedReader;
 import java.io.File;

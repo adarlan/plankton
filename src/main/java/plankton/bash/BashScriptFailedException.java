@@ -1,4 +1,4 @@
-package plankton.docker.bash;
+package plankton.bash;
 
 public class BashScriptFailedException extends Exception {
 

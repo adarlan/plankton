@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import plankton.docker.bash.BashScript;
-import plankton.docker.bash.BashScriptFailedException;
+import plankton.bash.BashScript;
+import plankton.bash.BashScriptFailedException;
 import plankton.docker.daemon.DockerDaemon;
 
 public class DockerClient {
