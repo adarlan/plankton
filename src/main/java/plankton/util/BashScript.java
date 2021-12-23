@@ -10,58 +10,12 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BashScript {
-
-    public static void run(String command) throws BashScriptFailedException {
-        BashScript script = new BashScript();
-        script.command(command);
-        script.run();
-    }
-
-    public static String runAndGetOutputString(String command) throws BashScriptFailedException {
-        List<String> output = new ArrayList<>();
-        BashScript script = new BashScript();
-        script.command(command);
-        script.forEachOutput(output::add);
-        script.run();
-        return output.stream().collect(Collectors.joining());
-    }
-
-    public String runAndGetOutputString() throws BashScriptFailedException {
-        List<String> output = new ArrayList<>();
-        forEachOutput(output::add);
-        run();
-        return output.stream().collect(Collectors.joining());
-    }
-
-    public static <T> T runAndGetOutputJson(String command, Class<T> class1) throws BashScriptFailedException {
-        String json = runAndGetOutputString(command);
-        try {
-            return new ObjectMapper().readValue(json, class1);
-        } catch (JsonProcessingException e) {
-            throw new BashScriptException("Unable to parse JSON", e);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public static Map<String, Object> runAndGetOutputJsonObject(String command) throws BashScriptFailedException {
-        return runAndGetOutputJson(command, Map.class);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static List<Object> runAndGetOutputJsonArray(String command) throws BashScriptFailedException {
-        return runAndGetOutputJson(command, List.class);
-    }
 
     private List<String> variables = new ArrayList<>();
     private List<String> commands = new ArrayList<>();

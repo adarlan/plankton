@@ -211,8 +211,10 @@ public class DockerAdapter implements ContainerRuntimeAdapter {
     }
 
     private void runBashScript(String command) {
+        BashScript script = new BashScript();
+        script.command(command);
         try {
-            BashScript.run(command);
+            script.run();
         } catch (BashScriptFailedException e) {
             throw new DockerAdapterException("Unable to run bash script", e);
         }

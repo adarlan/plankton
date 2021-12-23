@@ -3,6 +3,7 @@ package plankton.docker.client;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -224,13 +225,22 @@ public class DockerClient {
     }
 
     public String inspectContainerAndGetJson(String containerId) {
+        List<String> output = new ArrayList<>();
         BashScript script = createBashScript();
         script.command("docker container inspect " + containerId + " | jq '.[0]'");
+        script.forEachOutput(output::add);
         try {
-            return script.runAndGetOutputString();
+            script.run();
         } catch (BashScriptFailedException e) {
             throw new DockerClientException("Unable to inspect container: " + containerId, e);
         }
+        if (script.exitCode() != 0)
+            throw new DockerClientException(
+                    "Unable to inspect container (script returned non-zero code): " + containerId);
+        if (script.hasError())
+            throw new DockerClientException(
+                    "Unable to inspect container (script has error message): " + containerId);
+        return output.stream().collect(Collectors.joining());
     }
 
     private BashScript createBashScript() {
