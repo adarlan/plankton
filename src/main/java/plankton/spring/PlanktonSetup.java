@@ -1,5 +1,6 @@
 package plankton.spring;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -35,8 +36,6 @@ import plankton.pipeline.ContainerRuntimeAdapter;
 import plankton.pipeline.Pipeline;
 import plankton.pipeline.PipelineConfiguration;
 import plankton.pipeline.PipelineInitializer;
-import plankton.util.BashScript;
-import plankton.util.BashScriptFailedException;
 
 @Component
 public class PlanktonSetup {
@@ -161,8 +160,8 @@ public class PlanktonSetup {
 
     private String workspacePathFromPlanktonPerspective() {
         try {
-            return BashScript.runAndGetOutputString("realpath " + workspace);
-        } catch (BashScriptFailedException e) {
+            return Paths.get(workspace).toAbsolutePath().toFile().getCanonicalPath();
+        } catch (IOException e) {
             throw new PlanktonSetupException("Unable to initialize the workspace path from Plankton perspective", e);
         }
         // TODO Check if directory exist
@@ -171,9 +170,9 @@ public class PlanktonSetup {
     private String composeFilePathFromPlanktonPerspective() {
         String result;
         try {
-            result = BashScript
-                    .runAndGetOutputString("cd " + workspacePathFromPlanktonPerspective + " && realpath " + file);
-        } catch (BashScriptFailedException e) {
+            result = Paths.get(workspacePathFromPlanktonPerspective)
+                    .resolve(Paths.get(file)).toAbsolutePath().toFile().getCanonicalPath();
+        } catch (IOException e) {
             throw new PlanktonSetupException("Unable to initialize the compose file path from Plankton perspective", e);
         }
         if (!result.startsWith(workspacePathFromPlanktonPerspective))
