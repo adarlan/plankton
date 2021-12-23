@@ -1,4 +1,4 @@
-# Plankton
+![cover.png](docs/img/cover.png)
 
 Plankton is a Container-Native CI/CD tool
 based on the Compose Specification.
