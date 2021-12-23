@@ -1,3 +1,2 @@
 FROM alpine
-ENTRYPOINT ["echo"]
-CMD ["Hello", "World"]
+ENTRYPOINT echo "Hello, Plankton!"
