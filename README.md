@@ -178,4 +178,4 @@ and become a real choice for CI/CD pipelines.
 To contribute to Plankton,
 please share this project,
 send a pull request
-or give a feedback to [adarlan on Twitter](httpl://twitter.com/adarlan).
+or give a feedback to [@adarlan on Twitter](https://twitter.com/adarlan).
