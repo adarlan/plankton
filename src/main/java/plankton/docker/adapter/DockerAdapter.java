@@ -13,12 +13,12 @@ import org.slf4j.LoggerFactory;
 
 import plankton.compose.ComposeService;
 import plankton.compose.serviceprops.Build;
+import plankton.docker.bash.BashScript;
+import plankton.docker.bash.BashScriptFailedException;
 import plankton.docker.client.DockerClient;
 import plankton.docker.daemon.DockerDaemon;
 import plankton.pipeline.ContainerConfiguration;
 import plankton.pipeline.ContainerRuntimeAdapter;
-import plankton.util.BashScript;
-import plankton.util.BashScriptFailedException;
 
 public class DockerAdapter implements ContainerRuntimeAdapter {
 

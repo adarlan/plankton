@@ -1,4 +1,4 @@
-package plankton.util;
+package plankton.docker.bash;
 
 public class BashScriptException extends RuntimeException {
 

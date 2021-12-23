@@ -3,8 +3,8 @@ package plankton.docker.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import plankton.util.BashScript;
-import plankton.util.BashScriptFailedException;
+import plankton.docker.bash.BashScript;
+import plankton.docker.bash.BashScriptFailedException;
 
 public class DockerUtils {
 

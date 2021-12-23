@@ -10,8 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.ToString;
-import plankton.util.BashScript;
-import plankton.util.BashScriptFailedException;
+import plankton.docker.bash.BashScript;
+import plankton.docker.bash.BashScriptFailedException;
 
 @ToString(of = { "namespace", "dockerHostSocketAddress", "socketAddress" })
 public class DockerSandboxDaemon implements DockerDaemon {
