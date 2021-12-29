@@ -227,8 +227,10 @@ public class DockerClient {
     public String inspectContainerAndGetJson(String containerId) {
         List<String> output = new ArrayList<>();
         BashScript script = createBashScript();
-        script.command("docker container inspect " + containerId + " | jq '.[0]'");
+        String line = "docker container inspect " + containerId + " | jq '.[0]'";
+        script.command(line);
         script.forEachOutput(output::add);
+        logger.debug("{} ... Running command: {}", daemon.getClass().getSimpleName(), line);
         try {
             script.run();
         } catch (BashScriptFailedException e) {
