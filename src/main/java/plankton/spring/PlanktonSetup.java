@@ -189,7 +189,8 @@ public class PlanktonSetup {
     private String getCurrentContainerId() {
         List<String> output = new ArrayList<>();
         BashScript script = new BashScript();
-        script.command("cat /proc/self/cgroup | grep docker | head -n 1 | cut -d/ -f3");
+        script.command("FOO=$(cat /proc/self/cgroup | grep docker | head -n 1)");
+        script.command("[ -z \"$FOO\" ] || echo ${FOO##*/docker/}");
         script.forEachOutput(output::add);
         try {
             script.run();
