@@ -100,9 +100,10 @@ docker run -it \
   adarlan/plankton
 ```
 
-- `-v /var/run/docker.sock:/var/run/docker.sock` is because Plankton needs access to the Docker host
-- `-v $PWD:/app` and `-w /app` is because Plankton needs access to the directory containing the application files
-- `-p 1329:1329` is because Plankton provides a web interface, which you can open at `http://localhost:1329`
+> Note that Plankton requires access to the Docker host via `/var/run/docker.sock`.
+> If you are concerned (and rightly so) with running third-party containers
+> with access to the Docker host, you can try Plankton using
+> [Play-with-Docker](https://labs.play-with-docker.com).
 
 #### Follow the logs
 
