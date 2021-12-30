@@ -1,0 +1,31 @@
+---
+- name: Install Sysbox
+  hosts: all
+  become: yes
+  user: ubuntu
+  gather_facts: no
+
+  pre_tasks:
+    - name: "update apt-get repository"
+      raw: "apt-get update"
+
+  tasks:
+    - name: Stop Docker
+      systemd:
+        name: docker
+        enabled: yes
+        state: stopped
+        daemon_reload: yes
+
+    - name: Stop Docker
+      systemd:
+        name: docker
+        enabled: yes
+        state: stopped
+        daemon_reload: yes
+
+    - name: Download Sysbox
+      shell: curl -L -o /sysbox.deb https://downloads.nestybox.com/sysbox/releases/v0.4.1/sysbox-ce_0.4.1-0.ubuntu-bionic_amd64.deb
+
+    - name: Install Sysbox
+      shell: apt-get install /sysbox.deb
