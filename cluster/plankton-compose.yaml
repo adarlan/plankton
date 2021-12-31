@@ -1,0 +1,61 @@
+services:
+  terraform_plan_destroy:
+    profiles:
+      - destroy
+      - recreate
+    image: hashicorp/terraform
+    entrypoint:
+      - rm -rf tfplan_destroy
+      - cp $PUBLIC_KEY ./id_rsa.pub
+      - terraform init
+      - terraform plan -destroy -out tfplan_destroy
+
+  apply-destroy:
+    profiles:
+      - destroy
+      - recreate
+    image: hashicorp/terraform
+    entrypoint:
+      - cp $PUBLIC_KEY ./id_rsa.pub
+      - terraform init
+      - terraform apply tfplan_destroy
+
+  plan-create:
+    profiles:
+      - create
+      - destroy
+      - recreate
+    image: hashicorp/terraform
+    entrypoint:
+      - rm -rf tfplan
+      - cp $PUBLIC_KEY ./id_rsa.pub
+      - terraform init
+      - terraform plan -out tfplan
+
+  apply-create:
+    profiles:
+      - create
+      - destroy
+      - recreate
+    image: hashicorp/terraform
+    entrypoint:
+      - cp $PUBLIC_KEY ./id_rsa.pub
+      - terraform init
+      - terraform apply tfplan
+
+  ansible:
+    profiles:
+      - create
+      - destroy
+      - recreate
+    image: adarlan/ansible
+    entrypoint:
+      - mkdir ~/.ssh
+      - ssh-keyscan $SERVER_IP > ~/.ssh/known_hosts
+      - chmod 644 ~/.ssh/known_hosts
+      - eval $(ssh-agent -s)
+      - chmod 400 $PRIVATE_KEY
+      - ssh-add $PRIVATE_KEY
+      - echo $SERVER_IP > hosts
+      - cp $ACME_JSON ./acme.json
+      - ansible-playbook -i hosts -u ubuntu playbook.yml
