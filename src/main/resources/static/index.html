@@ -92,7 +92,14 @@
     </div>
 
     <script>
-      const pipelineUrl = "http://localhost:1329/pipeline";
+      const pipelineUrl =
+        window.location.protocol +
+        "//" +
+        window.location.hostname +
+        (window.location.port ? ":" + window.location.port : "") +
+        "/pipeline";
+      console.log(pipelineUrl);
+
       let pipeline;
       let pipid = "";
       let firstTime = true;
