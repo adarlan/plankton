@@ -5,6 +5,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import plankton.pipeline.Pipeline;
+import plankton.setup.PlanktonSetup;
 
 @Component
 public class PlanktonRunner implements CommandLineRunner {

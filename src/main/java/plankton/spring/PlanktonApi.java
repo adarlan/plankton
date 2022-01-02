@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import plankton.pipeline.Pipeline;
 import plankton.pipeline.dto.PipelineDto;
+import plankton.setup.PlanktonSetup;
 
 @RestController
 @CrossOrigin(origins = "*")
