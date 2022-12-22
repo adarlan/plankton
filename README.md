@@ -45,8 +45,14 @@ but the design patterns used in the code allow it to be extended by adding new a
 Many CI/CD tools require you to push the source code to a remote repository
 in order to run the pipeline on a server.
 
-Plankton can be used to run pipelines locally,
+Plankton does not have yet a server
+to listen for changes in code repositories
+and start the pipelines automatically,
+but it can be used to run pipelines locally,
 just executing a `docker run` command.
+
+Once the pipeline is running,
+you can track its progress on the terminal or the web interface in your browser.
 
 ## Example
 
