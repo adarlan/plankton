@@ -15,12 +15,12 @@ The `plankton-compose.yaml` file is configured using the
 
 ```yaml
 services:
-  job1: ...
-  job2: ...
-  job3: ...
+  job1: {}
+  job2: {}
+  job3: {}
 ```
 
-It's the same configuration format used by Docker Compose,
+Note that this is the same configuration format used by Docker Compose,
 but it's not exclusive to Docker Compose.
 
 The Compose Specification
@@ -32,7 +32,7 @@ and maintained by a global community.
 
 ## Container-Native
 
-The Compose Specification is defined as Container-Native.
+The Compose Specification is Container-Native.
 That is, it allows the use of any container system that follows
 the [Open Container Initiative](https://opencontainers.org/),
 not only Docker containers.
@@ -45,10 +45,10 @@ but the design patterns used in the code allow it to be extended by adding new a
 Many CI/CD tools require you to push the source code to a remote repository
 in order to run the pipeline on a server.
 
-An interesting feature of Plankton is the possibility to run pipelines locally,
+Plankton can be used to run pipelines locally,
 just executing a `docker run` command.
 
-### Example
+## Example
 
 Create a `plankton-compose.yaml` file:
 
@@ -87,59 +87,43 @@ docker run -it \
 ```
 
 > It requires Docker installed.
-
 > Note that Plankton requires access to a Docker host via `/var/run/docker.sock`.
-> If you are concerned (and rightly so) with running third-party containers
+> If you don't have Docker installed
+> or if you are concerned (and rightly so) with running third-party containers
 > with access to your Docker host, you can try Plankton using
 > [Play-with-Docker](https://labs.play-with-docker.com).
 
-Follow the logs on your terminal:
-
-![pipeline-logs.png](docs/img/pipeline-logs.png)
-
-Open the web interface at [http://localhost:1329](http://localhost:1329)
+Track the pipeline progress on the web interface at: [http://localhost:1329](http://localhost:1329)
 
 ![pipeline-page.png](docs/img/pipeline-page.png)
 
-#### More examples
+Follow the pipeline logs on terminal:
+
+![pipeline-logs.png](docs/img/pipeline-logs.png)
 
 [Here](https://github.com/adarlan/plankton/tree/master/examples)
-you can find some other use cases of Plankton.
+you can find some other examples.
 
 ## Plankton uses itself
 
 In the Plankton repository there is a `plankton-compose.yaml` file,
-where is configured a pipeline to build, test and deploy itself.
+where is configured a pipeline to build, test and deploy Plankton itself.
 
 ![using-itself-page.png](docs/img/using-itself-page.png)
 
-In this case, does not make sense to run the pipeline using the `docker run` command,
-because it will always use the previous version of Plankton to test the current version.
-
-Instead, run the pipeline executing:
+To do this, run the pipeline by executing:
 
 ```shell
 mvn spring-boot:run
 ```
 
-> It requires Maven and Docker installed.
-
-So it will run the current version of Plankton over itself.
-
-To be able to push the Plankton images to the container registry,
-you need to provide the registry credentials in the `plankton.env` file,
-setting the following variables:
-
-- `REGISTRY_USER`
-- `REGISTRY_PASSWORD`
-
 ## Contribute
 
-Plankton is an Open-Source and Container-Native CI/CD tool
+Plankton is an open source CI/CD tool
 with the potential to be more than a portfolio project
 and become a real choice for CI/CD pipelines.
 
-To contribute to Plankton,
+To contribute,
 please share this project,
 send a pull request
 or give a feedback to [@adarlan on Twitter](https://twitter.com/adarlan).
