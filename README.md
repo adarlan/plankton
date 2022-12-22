@@ -92,13 +92,6 @@ docker run -it \
   adarlan/plankton
 ```
 
-> It requires Docker installed.
-> Note that Plankton requires access to a Docker host via `/var/run/docker.sock`.
-> If you don't have Docker installed
-> or if you are concerned (and rightly so) with running third-party containers
-> with access to your Docker host, you can try Plankton using
-> [Play-with-Docker](https://labs.play-with-docker.com).
-
 Track the pipeline progress on the web interface at: [http://localhost:1329](http://localhost:1329)
 
 ![pipeline-page.png](docs/img/pipeline-page.png)
