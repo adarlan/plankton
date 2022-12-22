@@ -13,13 +13,9 @@ The `plankton-compose.yaml` file is configured using the
 
 ```yaml
 services:
-  foo:
-    image: foo
-    entrypoint: foo
-
-  bar:
-    image: bar
-    entrypoint: bar
+  job1: ...
+  job2: ...
+  job3: ...
 ```
 
 It's the same configuration format used by Docker Compose,
@@ -52,45 +48,33 @@ just executing a `docker run` command.
 
 ### Example
 
-Follow the steps below to create a simple application
-and configure a pipeline to build and run it.
-Then start the pipeline locally,
-tracking its progress through terminal logs or the web interface in the browser.
-
-> It requires Docker installed
-
-#### Create a `Dockerfile`
-
-```Dockerfile
-FROM alpine
-ENTRYPOINT echo "Hello, Plankton!"
-```
-
-This is the application we are creating.
-It just echoes "Hello, Plankton!".
-
-#### Create a `plankton-compose.yaml` file
+Create a `plankton-compose.yaml` file:
 
 ```yaml
 services:
-  build:
-    image: docker
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./:/app
-    working_dir: /app
-    entrypoint:
-      - docker build -t hello-plankton .
 
-  run:
-    image: hello-plankton
-    depends_on: build
+  list_cars:
+    image: alpine
+    entrypoint:
+      - CARS="Saab Volvo BMW Fiat"
+      - for car in $CARS; do echo $car; sleep 1; done
+
+  list_fruits:
+    depends_on: list_cars
+    image: alpine
+    entrypoint:
+      - FRUITS="Banana Apple Mango"
+      - for fruit in $FRUITS; do echo $fruit; sleep 1; done
+
+  list_colors:
+    depends_on: list_cars
+    image: alpine
+    entrypoint:
+      - COLORS="Red Yellow Black Green Blue Brown White"
+      - for color in $COLORS; do echo $color; sleep 1; done
 ```
 
-This is the pipeline configuration.
-Note that `run` depends on `build`.
-
-#### Run the pipeline
+Run the pipeline:
 
 ```shell
 docker run -it \
@@ -100,20 +84,22 @@ docker run -it \
   adarlan/plankton
 ```
 
-> Note that Plankton requires access to the Docker host via `/var/run/docker.sock`.
+> It requires Docker installed.
+
+> Note that Plankton requires access to a Docker host via `/var/run/docker.sock`.
 > If you are concerned (and rightly so) with running third-party containers
-> with access to the Docker host, you can try Plankton using
+> with access to your Docker host, you can try Plankton using
 > [Play-with-Docker](https://labs.play-with-docker.com).
 
-#### Follow the logs
+Follow the logs on your terminal:
 
 ![pipeline-logs.png](docs/img/pipeline-logs.png)
 
-#### Open the web interface at [http://localhost:1329](http://localhost:1329)
+Open the web interface at [http://localhost:1329](http://localhost:1329)
 
 ![pipeline-page.png](docs/img/pipeline-page.png)
 
-### More examples
+#### More examples
 
 [Here](https://github.com/adarlan/plankton/tree/master/examples)
 you can find some other use cases of Plankton.
@@ -141,7 +127,7 @@ docker run -it \
   adarlan/plankton --sandbox
 ```
 
-> It requires Sysbox installed
+> It requires Sysbox installed.
 
 ## Plankton uses itself
 
@@ -159,7 +145,7 @@ Instead, run the pipeline executing:
 mvn spring-boot:run
 ```
 
-> It requires Maven and Docker installed
+> It requires Maven and Docker installed.
 
 So it will run the current version of Plankton over itself.
 
@@ -170,7 +156,7 @@ setting the following variables:
 - `REGISTRY_USER`
 - `REGISTRY_PASSWORD`
 
-## Conclusion
+## Contribute
 
 Plankton is an Open-Source and Container-Native CI/CD tool
 with the potential to be more than a portfolio project
