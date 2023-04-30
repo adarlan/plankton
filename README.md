@@ -4,11 +4,8 @@
 
 Plankton is an open-source CI/CD tool based on the Compose Specification.
 
-It uses Docker containers to run CI/CD pipelines.
-
 Just create a `plankton.yaml` file containing the pipeline configuration,
 and execute a `docker run` command to start it.
-
 Once the pipeline is running,
 you can track its progress on the terminal or the web interface in your browser.
 
@@ -29,6 +26,7 @@ services:
 
   build:
     depends_on: test
+    image: alpine
     volumes:
       - ./:/usr/src/app
     working_dir: /usr/src/app
@@ -37,6 +35,7 @@ services:
 
   deploy:
     depends_on: build
+    image: alpine
     volumes:
       - ./:/usr/src/app
     working_dir: /usr/src/app
