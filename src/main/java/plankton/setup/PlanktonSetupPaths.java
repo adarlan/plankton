@@ -71,7 +71,7 @@ public class PlanktonSetupPaths {
 
     private String file(String f) {
         return (f == null || f.isBlank())
-                ? "plankton-compose.yaml"
+                ? "plankton.yaml"
                 : f;
     }
 

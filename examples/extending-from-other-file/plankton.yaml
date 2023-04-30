@@ -1,7 +1,7 @@
 services:
   foo:
     extends:
-      file: other/plankton-compose.yaml
+      file: other/plankton.yaml
       service: alpine
     entrypoint:
       - echo Foo

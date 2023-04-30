@@ -15,7 +15,7 @@
 ### file
 
 - Optional
-- Default: `plankton-compose.yaml`
+- Default: `plankton.yaml`
 
 > **Note**: When running Plankton from within a container,
 > the file path is related to the container file system,

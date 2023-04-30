@@ -1,6 +1,6 @@
 ## Plankton uses itself
 
-In the Plankton repository there is a `plankton-compose.yaml` file,
+In the Plankton repository there is a `plankton.yaml` file,
 where is configured a pipeline to build, test and deploy the Plankton itself.
 
 ![using-itself-page.png](img/using-itself-page.png)
