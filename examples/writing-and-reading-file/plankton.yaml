@@ -1,4 +1,4 @@
-services:
+jobs:
   write:
     image: alpine
     working_dir: /workspace

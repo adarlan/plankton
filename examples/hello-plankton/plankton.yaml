@@ -1,4 +1,4 @@
-services:
+jobs:
   build:
     image: docker
     volumes:

@@ -1,4 +1,4 @@
-services:
+jobs:
 
   test:
     image: alpine
@@ -6,7 +6,10 @@ services:
       - ./:/usr/src/app
     working_dir: /usr/src/app
     entrypoint:
-      - for i in $(seq 1 5); do echo "Testing..."; sleep 1; done
+      - for i in $(seq 1 5); do
+      - echo "Testing..."
+      - sleep 1
+      - done
 
   build:
     depends_on: test
@@ -15,7 +18,10 @@ services:
       - ./:/usr/src/app
     working_dir: /usr/src/app
     entrypoint:
-      - for i in $(seq 1 7); do echo "Building..."; sleep 1; done
+      - for i in $(seq 1 7); do
+      - echo "Building..."
+      - sleep 1
+      - done
 
   deploy:
     depends_on: build
@@ -24,4 +30,7 @@ services:
       - ./:/usr/src/app
     working_dir: /usr/src/app
     entrypoint:
-      - for i in $(seq 1 3); do echo "Deploying..."; sleep 1; done
+      - for i in $(seq 1 3); do
+      - echo "Deploying..."
+      - sleep 1
+      - done

@@ -5,7 +5,7 @@
 ### build
 
 ```yaml
-services:
+jobs:
   SERVICE:
     build: CONTEXT
   SERVICE:
@@ -17,7 +17,7 @@ services:
 ### command
 
 ```yaml
-services:
+jobs:
   SERVICE:
     command: COMMAND
   SERVICE:
@@ -28,7 +28,7 @@ services:
 ### credential_spec ???
 
 ```yaml
-services:
+jobs:
   SERVICE:
     credential_spec: # ???
 ```
@@ -36,7 +36,7 @@ services:
 ### depends_on
 
 ```yaml
-services:
+jobs:
   SERVICE:
     depends_on:
       - SERVICE
@@ -52,7 +52,7 @@ services:
 ### entrypoint
 
 ```yaml
-services:
+jobs:
   SERVICE:
     entrypoint: ENTRYPOINT
   SERVICE:
@@ -63,7 +63,7 @@ services:
 ### environment
 
 ```yaml
-services:
+jobs:
   SERVICE:
     environment:
       - VARIABLE=VALUE
@@ -75,7 +75,7 @@ services:
 ### env_file
 
 ```yaml
-services:
+jobs:
   SERVICE:
     env_file: ENV_FILE
   SERVICE:
@@ -86,7 +86,7 @@ services:
 ### expose
 
 ```yaml
-services:
+jobs:
   SERVICE:
     expose:
       - PORT
@@ -95,7 +95,7 @@ services:
 ### extends
 
 ```yaml
-services:
+jobs:
   SERVICE:
     extends:
       file: FILE
@@ -105,7 +105,7 @@ services:
 ### group_add
 
 ```yaml
-services:
+jobs:
   SERVICE:
     group_add:
       - GROUP
@@ -114,7 +114,7 @@ services:
 ### healthcheck
 
 ```yaml
-services:
+jobs:
   SERVICE:
     healthcheck:
       test: TEST
@@ -130,7 +130,7 @@ services:
 ### image
 
 ```yaml
-services:
+jobs:
   SERVICE:
     image: IMAGE
 ```
@@ -138,7 +138,7 @@ services:
 ### profiles
 
 ```yaml
-services:
+jobs:
   SERVICE:
     profiles:
       - PROFILE
@@ -147,7 +147,7 @@ services:
 ### scale
 
 ```yaml
-services:
+jobs:
   SERVICE:
     scale: SCALE # [DEPRECATED]
 ```
@@ -155,7 +155,7 @@ services:
 ### user
 
 ```yaml
-services:
+jobs:
   SERVICE:
     user: USER
 ```
@@ -163,7 +163,7 @@ services:
 ### volumes
 
 ```yaml
-services:
+jobs:
   SERVICE:
     volumes:
       - type: bind
@@ -180,7 +180,7 @@ services:
 ### working_dir
 
 ```yaml
-services:
+jobs:
   SERVICE:
     working_dir: WORKING_DIR
 ```

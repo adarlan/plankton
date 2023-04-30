@@ -1,4 +1,4 @@
-services:
+jobs:
   # =====
   # BUILD
   # =====
@@ -105,12 +105,12 @@ services:
     depends_on:
       - .test
 
-  push_runner_image:
+  deploy_runner:
     extends: .push_image
     environment:
       - IMAGE=adarlan/plankton
 
-  push_sandbox_image:
+  deploy_sandbox:
     extends: .push_image
     environment:
       - IMAGE=adarlan/plankton:sandbox

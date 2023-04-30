@@ -30,7 +30,7 @@ import plankton.compose.serviceprops.WorkingDir;
 @EqualsAndHashCode(of = { "key" })
 public class ComposeService {
 
-    static final String PARENT_KEY = "services";
+    static final String PARENT_KEY = "jobs";
 
     ComposeDocument composeDocument;
     String name;

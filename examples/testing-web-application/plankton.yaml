@@ -1,4 +1,4 @@
-services:
+jobs:
   build_app_image:
     image: docker
     working_dir: /app
