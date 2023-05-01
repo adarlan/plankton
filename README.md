@@ -55,7 +55,7 @@ jobs:
 - `entrypoint`: specifies the commands to run within the container.
 - `depends_on`: used to indicate that a job depends on the successful completion of the previous job in the pipeline.
 
-> View all job properties in the [Plankton Pipeline Configuration Reference](docs/img/pipeline-configuration.md).
+> View all job properties in the [Plankton Pipeline Configuration Reference](docs/pipeline-configuration.md).
 
 ## Run Your Pipeline with Docker
 
