@@ -20,8 +20,8 @@ jobs:
     working_dir: /usr/src/app
     entrypoint:
       - for i in $(seq 1 5); do
-      - echo "Testing..."
-      - sleep 1
+      -   echo "Testing..."
+      -   sleep 1
       - done
 
   build:
@@ -32,8 +32,8 @@ jobs:
     working_dir: /usr/src/app
     entrypoint:
       - for i in $(seq 1 7); do
-      - echo "Building..."
-      - sleep 1
+      -   echo "Building..."
+      -   sleep 1
       - done
 
   deploy:
@@ -44,10 +44,18 @@ jobs:
     working_dir: /usr/src/app
     entrypoint:
       - for i in $(seq 1 3); do
-      - echo "Deploying..."
-      - sleep 1
+      -   echo "Deploying..."
+      -   sleep 1
       - done
 ```
+
+- `image`: specifies the Docker image that the job should run on.
+- `volumes`: mounts a local directory ./ as /usr/src/app within the container.
+- `working_dir`: sets the working directory within the container to /usr/src/app.
+- `entrypoint`: specifies the command to run within the container. In this example, each job runs a loop using the for command to output a message and then wait for 1 second before repeating, for a certain number of iterations specified by the seq command.
+- `depends_on`: used in the build and deploy jobs to indicate that they depend on the successful completion of the previous job in the pipeline. In this case, the build job depends on the test job, and the deploy job depends on the build job.
+
+## Run the pipeline using Docker
 
 To run the pipeline, execute the following command:
 
@@ -55,7 +63,14 @@ To run the pipeline, execute the following command:
 docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v $PWD:/usr/src/app -w /usr/src/app -p 1329:1329 adarlan/plankton
 ```
 
-You can track the progress of your pipeline in your browser by visiting [http://localhost:1329](http://localhost:1329):
+- `-v /var/run/docker.sock:/var/run/docker.sock`: This option mounts the Docker socket file on the host machine inside the container, allowing the container to communicate with the Docker engine running on the host. This is necessary for running Docker commands from within the container. If you are concerned (and rightly so) with running third-party containers with access to the Docker host, you can easily [try Plankton using Play-with-Docker](docs/running-in-pwd.md).
+- `-v $PWD:/usr/src/app`: This option mounts the current directory (`$PWD`) on the host machine as a volume inside the container at `/usr/src/app`. This allows the container to access the files in the current directory, which is where the `plankton.yaml` file is located.
+- `-w /usr/src/app`: This option sets the working directory for the container to `/usr/src/app`. This means that when the container starts, it will start in the directory where the `plankton.yaml` file is located.
+- `-p 1329:1329`: This option maps port `1329` on the host machine to port `1329` inside the container. This allows you to access the Plankton web interface from your host machine's web browser.
+
+### Web interface
+
+You can track the progress of your pipeline in your browser by opening [http://localhost:1329](http://localhost:1329).
 
 ![plankton-web.png](docs/img/plankton-web.png)
 
@@ -95,3 +110,7 @@ Check out the following resources to find out more about Plankton:
 - [Running parallel jobs with Plankton](examples/running-parallel-jobs/)
 - [Using Plankton to test, build and deploy itself](docs/building-itself.md)
 - [Running Plankton jobs in a sandbox](docs/sandbox.md)
+
+<!-- ## Contributing -->
+
+<!-- Plankton is a Spring-Boot Java application, but its core package is pure Java. -->
