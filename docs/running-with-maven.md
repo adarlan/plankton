@@ -1,4 +1,4 @@
-# Plankton - Running with Maven
+# Running Plankton Using Maven
 
 ## It requires
 
@@ -6,21 +6,15 @@
 - Java
 - Docker
 - Bash
-- [gettext](https://www.gnu.org/software/gettext/)
 - [jq](https://stedolan.github.io/jq/)
+
+<!-- - [gettext](https://www.gnu.org/software/gettext/) -->
 
 ## Run over itself
 
 ```shell
 mvn spring-boot:run
 ```
-
-To be able to push the Plankton images to the container registry,
-you need to provide the registry credentials in the `plankton.env` file,
-setting the following variables:
-
-- `REGISTRY_USER`
-- `REGISTRY_PASSWORD`
 
 ## Run example project
 
